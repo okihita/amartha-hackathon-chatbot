@@ -6,6 +6,14 @@ class UserController {
     res.json(await UserService.getAllUsers());
   });
 
+  getCompleteProfile = handle(async (req, res) => {
+    const profile = await UserService.getCompleteProfile(req.params.phone);
+    if (!profile) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(profile);
+  });
+
   getImages = handle(async (req, res) => {
     const data = await UserService.getBusinessIntelligence(req.params.phone);
     res.json(data.filter(item => item.has_image && item.image_data));

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -20,12 +21,14 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
     "googleapis": "^128.0.0",
     "lucide-preact": "^0.554.0",
     "preact-router": "^4.1.2"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.2",
+    "jest": "^30.2.0",
     "preact": "^10.27.2",
     "vite": "^7.2.4"
   }

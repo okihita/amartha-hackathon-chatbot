@@ -1,5 +1,7 @@
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
 const UserService = require('../services/UserService');
+const QuizService = require('../services/QuizService');
+const { sendQuizQuestion } = require('./whatsapp');
 const { retrieveKnowledge } = require('./knowledge');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -22,10 +24,22 @@ const registerUserTool = {
   },
 };
 
+const startQuizTool = {
+  name: "startQuiz",
+  description: "Start or resume financial literacy quiz when user says: 'mulai kuis', 'quiz', 'belajar', 'tes', or similar.",
+  parameters: { type: "OBJECT", properties: {} },
+};
+
+const showProgressTool = {
+  name: "showProgress",
+  description: "Show user's financial literacy progress/scores when they ask about: 'progress', 'nilai', 'hasil', 'skor'.",
+  parameters: { type: "OBJECT", properties: {} },
+};
+
 const model = genAI.getGenerativeModel({ 
   model: "gemini-2.5-flash", 
   generationConfig: { maxOutputTokens: 1500, temperature: 0.4 },
-  tools: [{ functionDeclarations: [registerUserTool] }],
+  tools: [{ functionDeclarations: [registerUserTool, startQuizTool, showProgressTool] }],
   safetySettings: [
     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -82,26 +96,45 @@ async function getGeminiResponse(userText, senderPhone) {
     const lowerText = userText.toLowerCase().trim();
     if (lowerText === 'debug' || lowerText === 'cek data') {
       if (!userProfile) {
-        return "❌ Data tidak ditemukan. Anda belum terdaftar.";
+        return "❌ *Data tidak ditemukan*\n\nAnda belum terdaftar di sistem Amartha. Silakan daftar terlebih dahulu.";
       }
+      
       const majelisInfo = userProfile.majelis_name 
-        ? `${userProfile.majelis_name} (${userProfile.majelis_day})`
-        : 'Belum terdaftar di Majelis';
+        ? `${userProfile.majelis_name} (${userProfile.majelis_day}, ${userProfile.majelis_time || ''})`
+        : '❌ Belum terdaftar';
+      
+      const currentDebt = userProfile.loan?.history?.length > 0
+        ? userProfile.loan.history[userProfile.loan.history.length - 1].balance_after
+        : 0;
       
       const loanInfo = userProfile.loan?.limit > 0
-        ? `\n💰 Limit Pinjaman: Rp ${userProfile.loan.limit.toLocaleString('id-ID')}\n` +
-          `💳 Sisa Limit: Rp ${userProfile.loan.remaining.toLocaleString('id-ID')}\n` +
-          `📅 Cicilan Berikutnya: ${userProfile.loan.next_payment_date ? new Date(userProfile.loan.next_payment_date).toLocaleDateString('id-ID') : 'Tidak ada'}\n` +
-          `💵 Jumlah Cicilan: Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
-        : '';
+        ? `\n\n💰 *INFORMASI PINJAMAN*\n` +
+          `• Limit Total: Rp ${userProfile.loan.limit.toLocaleString('id-ID')}\n` +
+          `• Sisa Limit: Rp ${userProfile.loan.remaining.toLocaleString('id-ID')}\n` +
+          `• Hutang Saat Ini: Rp ${currentDebt.toLocaleString('id-ID')}\n` +
+          `• Cicilan Berikutnya: ${userProfile.loan.next_payment_date ? new Date(userProfile.loan.next_payment_date).toLocaleDateString('id-ID') : '-'}\n` +
+          `• Jumlah Cicilan: Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
+        : '\n\n💰 *INFORMASI PINJAMAN*\n❌ Belum memiliki pinjaman aktif';
       
-      return `📊 *Data Profil Anda:*\n\n` +
+      const literacyInfo = userProfile.literacy 
+        ? (() => {
+            const weeks = Object.keys(userProfile.literacy).filter(k => k.startsWith('week_'));
+            const completed = weeks.filter(w => userProfile.literacy[w]?.score >= 70).length;
+            const percentage = Math.round((completed / 15) * 100);
+            return `\n\n📚 *LITERASI KEUANGAN*\n• Progress: ${completed}/15 minggu (${percentage}%)\n• Status: ${completed >= 15 ? '✅ Selesai' : '🔄 Sedang berjalan'}`;
+          })()
+        : '\n\n📚 *LITERASI KEUANGAN*\n❌ Belum memulai program';
+      
+      return `✅ *PROFIL ANDA*\n\n` +
              `👤 Nama: ${userProfile.name}\n` +
-             `🏪 Usaha: ${userProfile.business?.name || 'Belum diisi'}\n` +
-             `📍 Lokasi: ${userProfile.business?.location || 'Belum diisi'}\n` +
-             `📅 Majelis: ${majelisInfo}\n` +
-             `✅ Status: ${userProfile.status === 'active' ? 'Terverifikasi' : 'Belum Verifikasi'}` +
-             loanInfo;
+             `📱 No. HP: ${userProfile.phone}\n` +
+             `🏪 Usaha: ${userProfile.business?.name || '-'}\n` +
+             `📍 Lokasi: ${userProfile.business?.location || '-'}\n` +
+             `⭐ Tingkat Usaha: ${userProfile.business?.maturity_level || 1}/5\n` +
+             `👥 Majelis: ${majelisInfo}\n` +
+             `✅ Status: ${userProfile.status === 'active' ? 'Terverifikasi' : 'Menunggu Verifikasi'}` +
+             loanInfo +
+             literacyInfo;
     }
     
     // 💰 POPULATE LOAN COMMAND (for testing)
@@ -200,6 +233,7 @@ async function getGeminiResponse(userText, senderPhone) {
     
     if (functionCall) {
       const { name, args } = functionCall;
+      
       if (name === "registerUser") {
         // Execute DB Update
         const newUser = await UserService.createUser(senderPhone, args);
@@ -218,6 +252,58 @@ async function getGeminiResponse(userText, senderPhone) {
           }
         ]);
         return finalResult.response.text();
+      }
+      
+      if (name === "startQuiz") {
+        const quizResult = await QuizService.startQuiz(senderPhone);
+        
+        if (quizResult.completed) {
+          return quizResult.message;
+        }
+        
+        if (quizResult.resumed) {
+          return "Anda masih memiliki sesi quiz aktif. Silakan selesaikan pertanyaan yang sedang berjalan.";
+        }
+        
+        if (quizResult.started && quizResult.question) {
+          // Send first question via WhatsApp interactive message
+          await sendQuizQuestion(senderPhone, quizResult.question, 1, 4);
+          
+          return `📚 Quiz Minggu ${quizResult.weekInfo.week_number} dimulai!\n\n` +
+                 `Topik: ${quizResult.weekInfo.module_name}\n\n` +
+                 `Anda akan menjawab 4 pertanyaan. Setiap jawaban benar bernilai 25%. ` +
+                 `Nilai minimal lulus: 70%.\n\n` +
+                 `Silakan pilih jawaban dari daftar yang muncul! 👆`;
+        }
+      }
+      
+      if (name === "showProgress") {
+        const progress = await QuizService.getProgress(senderPhone);
+        
+        let message = `📊 Progress Literasi Keuangan Anda:\n\n`;
+        message += `✅ Selesai: ${progress.total_completed}/15 minggu (${progress.percentage}%)\n\n`;
+        
+        if (progress.completed.length > 0) {
+          message += `🎯 Minggu yang Lulus:\n`;
+          progress.completed.forEach(w => {
+            message += `• Minggu ${w.week}: ${w.score}%\n`;
+          });
+        }
+        
+        if (progress.inProgress.length > 0) {
+          message += `\n📝 Dalam Progress:\n`;
+          progress.inProgress.forEach(w => {
+            message += `• Minggu ${w.week}: ${w.score}% (belum lulus)\n`;
+          });
+        }
+        
+        if (progress.total_completed < 15) {
+          message += `\n💡 Ketik "quiz" untuk melanjutkan!`;
+        } else {
+          message += `\n🎉 Selamat! Anda telah menyelesaikan semua minggu!`;
+        }
+        
+        return message;
       }
     }
 

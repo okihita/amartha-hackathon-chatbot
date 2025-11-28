@@ -2,7 +2,7 @@ const UserRepository = require('../repositories/UserRepository');
 const BusinessIntelligenceRepository = require('../repositories/BusinessIntelligenceRepository');
 const MajelisRepository = require('../repositories/MajelisRepository');
 const User = require('../core/User');
-const { MOCK_USERS } = require('../config/mockData');
+const { MOCK_USERS, MOCK_BI_DATA } = require('../config/mockData');
 
 class UserService {
   async getUser(phoneNumber) {
@@ -17,6 +17,31 @@ class UserService {
       }
     }
     
+    return user;
+  }
+
+  async getCompleteProfile(phoneNumber) {
+    const user = await UserRepository.findByPhone(phoneNumber);
+    if (!user) return null;
+
+    // Add majelis info if user is member
+    if (user.majelis_id) {
+      const majelis = await MajelisRepository.findById(user.majelis_id);
+      if (majelis) {
+        user.majelis = {
+          id: majelis.id,
+          name: majelis.name,
+          schedule_day: majelis.schedule_day,
+          schedule_time: majelis.schedule_time,
+          location: majelis.location,
+          member_count: majelis.members?.length || 0
+        };
+      }
+    }
+
+    // Add business intelligence
+    user.business_intelligence = await BusinessIntelligenceRepository.findByUser(phoneNumber);
+
     return user;
   }
 
@@ -98,11 +123,26 @@ class UserService {
     for (const user of MOCK_USERS) {
       const existing = await UserRepository.findByPhone(user.phone);
       if (!existing) {
-        await UserRepository.create(user.phone, { 
-          name: user.name,
-          business_name: user.business_name,
-          business_location: user.business_location
-        });
+        await UserRepository.create(user.phone, user);
+        
+        // Add mock BI data for each user
+        for (const biData of MOCK_BI_DATA) {
+          // Add image URL for building and inventory types
+          let imageUrl = null;
+          if (biData.type === 'building') {
+            imageUrl = `https://picsum.photos/seed/building-${user.phone}/800/600`;
+          } else if (biData.type === 'inventory') {
+            imageUrl = `https://picsum.photos/seed/inventory-${user.phone}/800/600`;
+          }
+          
+          await BusinessIntelligenceRepository.save(
+            user.phone,
+            biData,
+            imageUrl,
+            `Mock ${biData.type} data for ${user.name}`
+          );
+        }
+        
         count++;
       }
     }

@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 
 // Validate required environment variables
 const requiredEnvVars = ['MY_VERIFY_TOKEN', 'WHATSAPP_TOKEN', 'PHONE_NUMBER_ID', 'GEMINI_API_KEY', 'GCP_PROJECT_ID'];
@@ -25,6 +26,18 @@ const ragRoutes = require('./src/routes/ragRoutes');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// Trust proxy for Cloud Run
+app.set('trust proxy', 1);
+
+// Rate limiting for webhook (100 requests per minute per IP)
+const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: 'Too many requests from this IP',
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
@@ -41,12 +54,13 @@ dashboardRoutes.forEach(route => {
   app.get(route, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;");
     res.sendFile(path.join(__dirname, 'public/index.html'));
   });
 });
 
 // API routes
-app.use('/webhook', webhookRoutes);
+app.use('/webhook', webhookLimiter, webhookRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/majelis', majelisRoutes);
 app.use('/api/superadmin', superadminRoutes);

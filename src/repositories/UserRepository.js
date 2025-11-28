@@ -43,8 +43,8 @@ class UserRepository {
     await Promise.all([
       this.updateProfile(clean, User.createProfile(userData)),
       this.updateBusiness(clean, User.createBusiness(userData)),
-      this.updateLoan(clean, User.createLoan()),
-      this.updateLiteracy(clean, User.createLiteracy())
+      this.updateLoan(clean, User.createLoan(userData)),
+      this.updateLiteracy(clean, User.createLiteracy(userData))
     ]);
 
     return this.findByPhone(clean);

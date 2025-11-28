@@ -30,8 +30,13 @@ Business Intelligence (BI) data captures unstructured business information from 
   },
   
   // AI analysis metadata
-  category: string,             // AI-detected category
-  credit_metrics: object,       // Credit scoring metrics
+  analysis_category: string,    // AI-detected category (e.g., 'financial_record', 'asset')
+  
+  // Optional AI fields (for future enhancement)
+  credit_metrics: object,       // Credit scoring metrics (optional)
+  insights: [string],           // AI insights in Indonesian (optional)
+  recommendations: [string],    // AI recommendations (optional)
+  confidence: number,           // 0-1 confidence score (optional)
   insights: [string],           // AI insights in Indonesian
   recommendations: [string],    // AI recommendations
   confidence: number,           // 0-1 confidence score
@@ -142,7 +147,7 @@ credit_metrics: {
 ```javascript
 const biData = {
   type: 'ledger',
-  category: 'financial_record',
+  analysis_category: 'financial_record',
   extracted: {
     record_type: 'buku_kas',
     transactions: [
@@ -152,14 +157,11 @@ const biData = {
     daily_income_estimate: 150000,
     daily_expense_estimate: 80000,
     monthly_cashflow_estimate: 2100000
-  },
-  credit_metrics: { /* ... */ },
-  insights: ['Cashflow positif', 'Pembukuan teratur'],
-  recommendations: ['Tingkatkan pencatatan harian'],
-  confidence: 0.85
+  }
+  // Optional: credit_metrics, insights, recommendations, confidence
 };
 
-await UserService.saveBusinessIntelligence(
+await BusinessIntelligenceRepository.save(
   phone, 
   biData, 
   null,  // No image URL
@@ -167,26 +169,26 @@ await UserService.saveBusinessIntelligence(
 );
 ```
 
+**Note:** The `extracted` field is mapped to `data` in storage. Pass structured data in `extracted` when calling the repository.
+```
+
 ### Save Building Photo (Image)
 
 ```javascript
 const biData = {
   type: 'building',
-  category: 'building',
+  analysis_category: 'building',
   extracted: {
     building_type: 'warung',
     condition: 'baik',
     location_type: 'pinggir_jalan',
     estimated_value: 50000000,
     strategic_score: 8
-  },
-  credit_metrics: { /* ... */ },
-  insights: ['Lokasi strategis', 'Kondisi bangunan baik'],
-  recommendations: ['Pertahankan kebersihan'],
-  confidence: 0.92
+  }
+  // Optional: credit_metrics, insights, recommendations, confidence
 };
 
-await UserService.saveBusinessIntelligence(
+await BusinessIntelligenceRepository.save(
   phone,
   biData,
   'gs://bucket/images/abc123.jpg',  // Image URL

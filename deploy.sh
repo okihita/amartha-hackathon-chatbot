@@ -22,6 +22,12 @@ gcloud builds submit \
   --quiet
 
 echo "🚀 Deploying to Cloud Run..."
+
+# Load env vars from .env file
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+fi
+
 gcloud run deploy ${SERVICE_NAME} \
   --image ${IMAGE_NAME} \
   --region ${REGION} \
@@ -33,6 +39,7 @@ gcloud run deploy ${SERVICE_NAME} \
   --min-instances 0 \
   --timeout 300 \
   --concurrency 80 \
+  --set-env-vars "GCP_PROJECT_ID=${PROJECT_ID},MY_VERIFY_TOKEN=${MY_VERIFY_TOKEN},WHATSAPP_TOKEN=${WHATSAPP_TOKEN},PHONE_NUMBER_ID=${PHONE_NUMBER_ID},GEMINI_API_KEY=${GEMINI_API_KEY}" \
   --quiet
 
 echo "✅ Deployment complete!"

@@ -22,7 +22,7 @@ class BusinessIntelligenceRepository {
         text: data.text || null,
         caption: caption
       },
-      category: data.category || 'uncategorized',
+      analysis_category: data.analysis_category || 'uncategorized',
       analyzed_at: now,
       created_at: now
     };

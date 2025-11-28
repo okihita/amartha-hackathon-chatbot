@@ -17,6 +17,7 @@ This chatbot serves as a digital assistant for Amartha's field agents and UMKM m
 ### For UMKM Members
 - **Smart Registration**: Natural language registration via WhatsApp
 - **Financial Coaching**: AI-powered business advice in Indonesian
+- **Interactive Quiz**: 15-week financial literacy course with progress tracking
 - **Loan Tracking**: Check limits, payments, and transaction history
 - **Image Analysis**: Upload business photos for AI insights
 - **Majelis Info**: View group schedule and meeting details
@@ -34,6 +35,12 @@ This chatbot serves as a digital assistant for Amartha's field agents and UMKM m
 - **Gemini Vision**: Image classification and data extraction
 - **Context-Aware**: Personalized responses based on user profile
 - **Input Validation**: Spam detection and topic filtering
+- **Interactive Quiz**: WhatsApp list messages for multiple choice questions
+
+### Security & Performance
+- **Rate Limiting**: 100 requests/minute per IP on webhook endpoint
+- **Environment Validation**: Startup checks for required credentials
+- **Error Handling**: Unhandled promise rejection tracking
 
 ## 🏗️ Tech Stack
 
@@ -42,6 +49,7 @@ This chatbot serves as a digital assistant for Amartha's field agents and UMKM m
 - **AI**: Google Gemini (Text + Vision)
 - **Messaging**: WhatsApp Business API
 - **Deployment**: Google Cloud Run
+- **Security**: express-rate-limit
 - **Frontend**: Vanilla HTML/CSS/JavaScript
 
 ## 📦 Installation

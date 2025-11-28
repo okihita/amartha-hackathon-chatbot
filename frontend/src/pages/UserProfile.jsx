@@ -1,255 +1,329 @@
+import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import { User, TrendingUp, Briefcase, Search, BookOpen } from 'lucide-preact';
-import { route } from 'preact-router';
+import { User, Building2, CreditCard, BookOpen, Users as UsersIcon, ArrowLeft } from 'lucide-preact';
 
 export default function UserProfile({ phone }) {
-  const [user, setUser] = useState(null);
-  const [images, setImages] = useState([]);
-  const [biData, setBiData] = useState([]);
-  const [literacyWeeks, setLiteracyWeeks] = useState([]);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    if (phone) loadProfile();
+    fetchProfile();
   }, [phone]);
 
-  const loadProfile = async () => {
+  const fetchProfile = async () => {
     try {
-      const [usersRes, imagesRes, biRes, literacyRes] = await Promise.all([
-        fetch('/api/users'),
-        fetch(`/api/users/${phone}/images`),
-        fetch(`/api/users/${phone}/business-intelligence`),
-        fetch('/api/knowledge/financial-literacy')
-      ]);
-
-      const users = await usersRes.json();
-      const foundUser = users.find(u => u.phone === phone);
-
-      if (!foundUser) {
-        alert('User not found');
-        route('/');
-        return;
-      }
-
-      setUser(foundUser);
-      setImages(await imagesRes.json());
-      setBiData(await biRes.json());
-      setLiteracyWeeks(await literacyRes.json());
-    } catch (error) {
-      console.error('Error loading profile:', error);
+      setLoading(true);
+      const res = await fetch(`/api/users/${phone}/complete`);
+      if (!res.ok) throw new Error('User not found');
+      setData(await res.json());
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const recalculateCredit = async () => {
-    try {
-      const res = await fetch(`/api/users/${phone}/recalculate-credit`, { method: 'POST' });
-      const result = await res.json();
+  if (loading) return <div class="card" style="text-align: center; padding: 40px;">Loading...</div>;
+  if (error) return <div class="card" style="text-align: center; padding: 40px; color: var(--color-danger);">{error}</div>;
+  if (!data) return null;
 
-      if (res.ok) {
-        alert(`✅ Credit score recalculated!\n\nScore: ${result.credit_score}/100\nRisk Level: ${result.credit_metrics?.risk_level}\nData Points: ${result.data_points} images`);
-        loadProfile();
-      } else {
-        alert(`❌ ${result.error}\n\n${result.message || ''}`);
-      }
-    } catch (error) {
-      alert('❌ Failed to recalculate credit score');
-    }
+  const statusColors = {
+    active: 'var(--color-success)',
+    pending: 'var(--color-warning)',
+    suspended: 'var(--color-danger)',
+    inactive: 'var(--color-neutral)'
   };
 
-  if (loading) return <div class="loading">Loading user profile...</div>;
-  if (!user) return <div class="loading">User not found</div>;
+  const maturityStars = (level) => '⭐'.repeat(level) + '☆'.repeat(5 - level);
 
-  const majelisInfo = user.majelis_name || 'Not assigned';
-  const hasCredit = user.credit_score && user.credit_metrics;
-  const cm = user.credit_metrics || {};
+  const literacyProgress = () => {
+    if (!data.literacy) return { completed: 0, total: 15, percentage: 0 };
+    const weeks = Object.keys(data.literacy).filter(k => k.startsWith('week_'));
+    const completed = weeks.filter(w => data.literacy[w]?.score >= 70).length;
+    return { completed, total: 15, percentage: Math.round((completed / 15) * 100) };
+  };
+
+  const currentDebt = data.loan?.history?.length > 0
+    ? data.loan.history[data.loan.history.length - 1].balance_after
+    : 0;
+
+  const filteredBI = activeTab === 'all'
+    ? data.business_intelligence
+    : data.business_intelligence?.filter(bi => bi.type === activeTab);
 
   return (
-    <>
-      <div class="profile-header">
-        <a href="/" class="back-btn">← Back to Users</a>
-        {biData.length > 0 && (
-          <button class="btn btn-primary" onClick={recalculateCredit}>
-            🔄 Recalculate Credit Score
-          </button>
-        )}
+    <div style="padding: 20px;">
+      {/* Header */}
+      <div class="card" style="margin-bottom: 20px;">
+        <button onClick={() => window.history.back()} class="btn" style="margin-bottom: 16px;">
+          <ArrowLeft size={20} style="margin-right: 8px;" />
+          Back
+        </button>
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div>
+            <h1 style="margin: 0 0 8px 0;">{data.name}</h1>
+            <p style="color: var(--color-neutral); margin: 0 0 4px 0;">{data.phone}</p>
+            <p style="color: var(--color-neutral); font-size: 14px; margin: 0;">
+              Joined {new Date(data.created_at).toLocaleDateString('id-ID')}
+            </p>
+          </div>
+          <span class="status" style={`background: ${statusColors[data.status]}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 14px;`}>
+            {data.status}
+          </span>
+        </div>
       </div>
 
-      <div class="profile-grid">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        {/* Personal Info */}
         <div class="card">
-          <h2 style="display: flex; align-items: center; gap: 8px;">
-            <User size={20} /> Personal Information
-          </h2>
-          <div class="profile-row">
-            <span class="profile-label">Name</span>
-            <span class="profile-value">{user.name}</span>
+          <div style="display: flex; align-items: center; margin-bottom: 16px;">
+            <User size={24} style="color: var(--color-primary); margin-right: 8px;" />
+            <h2 style="margin: 0;">Personal Info</h2>
           </div>
-          <div class="profile-row">
-            <span class="profile-label">Phone</span>
-            <span class="profile-value">{user.phone}</span>
-          </div>
-          <div class="profile-row">
-            <span class="profile-label">Business</span>
-            <span class="profile-value">{user.business_type}</span>
-          </div>
-          <div class="profile-row">
-            <span class="profile-label">Location</span>
-            <span class="profile-value">{user.location}</span>
-          </div>
-          <div class="profile-row">
-            <span class="profile-label">Majelis</span>
-            <span class="profile-value">{majelisInfo}</span>
-          </div>
-          <div class="profile-row">
-            <span class="profile-label">Status</span>
-            <span class="profile-value">
-              <span class={`status ${user.is_verified ? 'verified' : 'pending'}`}>
-                {user.is_verified ? 'Verified' : 'Pending'}
-              </span>
-            </span>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2 style="display: flex; align-items: center; gap: 8px;">
-            <BookOpen size={20} /> Financial Literacy Progress
-          </h2>
-          {literacyWeeks.length > 0 ? (
-            <div class="literacy-grid">
-              {literacyWeeks.map((module) => {
-                const weekNumber = module.week_number;
-                const weekKey = `week_${String(weekNumber).padStart(2, '0')}`;
-                const userProgress = user.literacy?.[weekKey];
-                const score = userProgress?.score || 0;
-                const completedDate = userProgress?.last_updated 
-                  ? new Date(userProgress.last_updated).toLocaleDateString('id-ID')
-                  : 'N/A';
-
-                return (
-                  <div key={weekKey} class="literacy-week">
-                    <div class="literacy-week-header">
-                      <span class="literacy-week-number">Week {weekNumber}</span>
-                      <span class={`literacy-score ${score >= 70 ? 'score-pass' : 'score-pending'}`}>
-                        {score}%
-                      </span>
-                    </div>
-                    <div class="literacy-week-date">
-                      Completed: {completedDate}
-                    </div>
-                  </div>
-                );
-              })}
+          {data.profile ? (
+            <div>
+              <p><strong>DOB:</strong> {data.profile.dob ? new Date(data.profile.dob).toLocaleDateString('id-ID') : '-'}</p>
+              <p><strong>Gender:</strong> {data.profile.gender || '-'}</p>
+              <p><strong>Address:</strong> {data.profile.address || '-'}</p>
             </div>
           ) : (
-            <p class="empty-data-message">No literacy courses available</p>
+            <p style="color: var(--color-neutral);">No profile data</p>
           )}
         </div>
 
+        {/* Business Info */}
         <div class="card">
-          <h2 style="display: flex; align-items: center; gap: 8px;">
-            <TrendingUp size={20} /> Credit Score
-          </h2>
-          {hasCredit ? (
-            <>
-              <div class="score-display">
-                <div class="score-label">Overall Credit Score</div>
-                <div class={`score-number score-color-${user.credit_score >= 70 ? 'success' : user.credit_score >= 50 ? 'warning' : 'danger'}`}>
-                  {user.credit_score}
+          <div style="display: flex; align-items: center; margin-bottom: 16px;">
+            <Building2 size={24} style="color: var(--color-primary); margin-right: 8px;" />
+            <h2 style="margin: 0;">Business Info</h2>
+          </div>
+          {data.business ? (
+            <div>
+              <p><strong>Name:</strong> {data.business.name || '-'}</p>
+              <p><strong>Location:</strong> {data.business.location || '-'}</p>
+              <p><strong>Category:</strong> {data.business.category || '-'}</p>
+              <p><strong>Maturity:</strong> {maturityStars(data.business.maturity_level)}</p>
+            </div>
+          ) : (
+            <p style="color: var(--color-neutral);">No business data</p>
+          )}
+        </div>
+
+        {/* Loan Status */}
+        <div class="card" style="grid-column: 1 / -1;">
+          <div style="display: flex; align-items: center; margin-bottom: 16px;">
+            <CreditCard size={24} style="color: var(--color-success); margin-right: 8px;" />
+            <h2 style="margin: 0;">Loan Status</h2>
+          </div>
+          {data.loan && data.loan.limit > 0 ? (
+            <div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                <div style="text-align: center; padding: 16px; background: var(--color-primary); color: white; border-radius: 8px;">
+                  <div style="font-size: 14px;">Total Limit</div>
+                  <div style="font-size: 24px; font-weight: bold;">Rp {data.loan.limit.toLocaleString('id-ID')}</div>
                 </div>
-                <div class="score-label">out of 100</div>
+                <div style="text-align: center; padding: 16px; background: var(--color-warning); color: white; border-radius: 8px;">
+                  <div style="font-size: 14px;">Current Debt</div>
+                  <div style="font-size: 24px; font-weight: bold;">Rp {currentDebt.toLocaleString('id-ID')}</div>
+                </div>
+                <div style="text-align: center; padding: 16px; background: var(--color-success); color: white; border-radius: 8px;">
+                  <div style="font-size: 14px;">Remaining</div>
+                  <div style="font-size: 24px; font-weight: bold;">Rp {data.loan.remaining.toLocaleString('id-ID')}</div>
+                </div>
               </div>
-              <div class="profile-row">
-                <span class="profile-label">Risk Level</span>
-                <span class={`profile-value risk-level-${cm.risk_level === 'rendah' ? 'low' : cm.risk_level === 'sedang' ? 'medium' : 'high'}`}>
-                  {cm.risk_level || 'N/A'}
-                </span>
-              </div>
-              <div class="profile-row">
-                <span class="profile-label">Data Points</span>
-                <span class="profile-value">{cm.data_points || 0} images analyzed</span>
-              </div>
-            </>
-          ) : (
-            <p class="empty-data-message">No credit data available yet</p>
-          )}
-        </div>
-
-        {hasCredit && (
-          <div class="card full-width">
-            <h2 style="display: flex; align-items: center; gap: 8px;">
-              <Briefcase size={20} /> Business Metrics
-            </h2>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">{cm.business_health_score || 0}</div>
-                <div class="metric-label">Business Health</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">{cm.asset_score || 0}</div>
-                <div class="metric-label">Asset Score</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">{cm.cashflow_score || 0}</div>
-                <div class="metric-label">Cashflow Score</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">{cm.management_score || 0}</div>
-                <div class="metric-label">Management Score</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">{cm.growth_potential || 0}</div>
-                <div class="metric-label">Growth Potential</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">Rp {(cm.total_asset_value || 0).toLocaleString('id-ID')}</div>
-                <div class="metric-label">Total Assets</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">Rp {(cm.total_inventory_value || 0).toLocaleString('id-ID')}</div>
-                <div class="metric-label">Inventory Value</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">Rp {(cm.estimated_monthly_cashflow || 0).toLocaleString('id-ID')}</div>
-                <div class="metric-label">Monthly Cashflow</div>
-              </div>
-              <div class="metric-item metric-full-width">
-                <div class="metric-value metric-value-highlight">Rp {(cm.recommended_loan_amount || 0).toLocaleString('id-ID')}</div>
-                <div class="metric-label">Recommended Loan Amount</div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {biData.length > 0 && (
-        <div class="card">
-          <h2 style="display: flex; align-items: center; gap: 8px;">
-            <Search size={20} /> Business Intelligence Analysis
-          </h2>
-          {biData.map((bi, index) => (
-            <div key={bi.id || index} class="bi-card">
-              <div class="bi-header">
+              {data.loan.next_payment_date && (
+                <div style="padding: 16px; background: var(--color-warning-bg); border-radius: 8px; margin-bottom: 16px;">
+                  <div style="font-weight: bold;">Next Payment</div>
+                  <div>{new Date(data.loan.next_payment_date).toLocaleDateString('id-ID')} - Rp {data.loan.next_payment_amount.toLocaleString('id-ID')}</div>
+                </div>
+              )}
+              {data.loan.history?.length > 0 && (
                 <div>
-                  <div class="bi-category">{bi.category}</div>
-                  <div class="bi-date">📅 {new Date(bi.analyzed_at).toLocaleString('id-ID')}</div>
-                </div>
-                <div class="bi-tag">
-                  #{index + 1}
-                </div>
-              </div>
-              {bi.insights && bi.insights.length > 0 && (
-                <div class="bi-insights">
-                  <strong class="bi-insights-title">Insights:</strong>
-                  <ul class="bi-insights-list">
-                    {bi.insights.map((insight, i) => <li key={i}>{insight}</li>)}
-                  </ul>
+                  <h3>Transaction History</h3>
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th style="text-align: right;">Amount</th>
+                        <th style="text-align: right;">Balance After</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.loan.history.map(txn => (
+                        <tr key={txn.id}>
+                          <td>{new Date(txn.date).toLocaleDateString('id-ID')}</td>
+                          <td>
+                            <span class="status" style={`background: ${txn.type === 'disbursement' ? 'var(--color-primary)' : 'var(--color-success)'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;`}>
+                              {txn.type}
+                            </span>
+                          </td>
+                          <td style="text-align: right;">Rp {txn.amount.toLocaleString('id-ID')}</td>
+                          <td style="text-align: right; font-weight: bold;">Rp {txn.balance_after.toLocaleString('id-ID')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
-          ))}
+          ) : (
+            <p style="color: var(--color-neutral);">No active loan</p>
+          )}
         </div>
-      )}
-    </>
+
+        {/* Literacy Progress */}
+        <div class="card">
+          <div style="display: flex; align-items: center; margin-bottom: 16px;">
+            <BookOpen size={24} style="color: var(--color-primary); margin-right: 8px;" />
+            <h2 style="margin: 0;">Literacy Progress</h2>
+          </div>
+          {data.literacy ? (
+            <div>
+              <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span style="font-size: 14px; font-weight: bold;">Progress</span>
+                  <span style="font-size: 14px; font-weight: bold;">{literacyProgress().percentage}%</span>
+                </div>
+                <div style="width: 100%; background: #e0e0e0; border-radius: 4px; height: 8px;">
+                  <div style={`background: var(--color-primary); height: 8px; border-radius: 4px; width: ${literacyProgress().percentage}%`}></div>
+                </div>
+                <p style="font-size: 14px; color: var(--color-neutral); margin-top: 4px;">
+                  {literacyProgress().completed} of {literacyProgress().total} weeks completed
+                </p>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+                {Array.from({ length: 15 }, (_, i) => {
+                  const weekKey = `week_${String(i + 1).padStart(2, '0')}`;
+                  const week = data.literacy[weekKey];
+                  const score = week?.score || 0;
+                  const color = score >= 70 ? 'var(--color-success)' : score > 0 ? 'var(--color-warning)' : '#ccc';
+                  return (
+                    <div key={weekKey} style={`background: ${color}; color: white; text-align: center; padding: 8px; border-radius: 4px; font-size: 12px; font-weight: bold;`} title={`Week ${i + 1}: ${score}`}>
+                      {i + 1}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <p style="color: var(--color-neutral);">No literacy data</p>
+          )}
+        </div>
+
+        {/* Majelis */}
+        <div class="card">
+          <div style="display: flex; align-items: center; margin-bottom: 16px;">
+            <UsersIcon size={24} style="color: var(--color-primary); margin-right: 8px;" />
+            <h2 style="margin: 0;">Majelis</h2>
+          </div>
+          {data.majelis ? (
+            <div>
+              <p><strong>Name:</strong> {data.majelis.name}</p>
+              <p><strong>Schedule:</strong> {data.majelis.schedule_day}, {data.majelis.schedule_time}</p>
+              <p><strong>Location:</strong> {data.majelis.location}</p>
+              <p><strong>Members:</strong> {data.majelis.member_count}</p>
+            </div>
+          ) : (
+            <p style="color: var(--color-neutral);">Not in any majelis</p>
+          )}
+        </div>
+
+        {/* Business Intelligence */}
+        <div class="card" style="grid-column: 1 / -1;">
+          <h2>Business Intelligence</h2>
+          <div style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;">
+            {['all', 'ledger', 'inventory', 'building', 'transaction'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                class="btn"
+                style={activeTab === tab ? 'background: var(--color-primary); color: white;' : ''}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+          {filteredBI?.length > 0 ? (
+            <div style="display: grid; gap: 16px;">
+              {filteredBI.map(bi => (
+                <div key={bi.id} style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                    <div>
+                      <span style="font-weight: bold; font-size: 16px;">{bi.type.toUpperCase()}</span>
+                      <span style="font-size: 14px; color: var(--color-neutral); margin-left: 8px;">({bi.analysis_category})</span>
+                    </div>
+                    <span style="font-size: 12px; color: var(--color-neutral);">{new Date(bi.analyzed_at).toLocaleDateString('id-ID')}</span>
+                  </div>
+                  
+                  {/* Ledger Details */}
+                  {bi.type === 'ledger' && bi.data && (
+                    <div style="background: var(--color-success-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                      <p style="margin: 4px 0;"><strong>Record Type:</strong> {bi.data.record_type}</p>
+                      <p style="margin: 4px 0;"><strong>Daily Income:</strong> Rp {bi.data.daily_income_estimate?.toLocaleString('id-ID')}</p>
+                      <p style="margin: 4px 0;"><strong>Daily Expense:</strong> Rp {bi.data.daily_expense_estimate?.toLocaleString('id-ID')}</p>
+                      <p style="margin: 4px 0;"><strong>Daily Profit:</strong> Rp {bi.data.daily_profit_estimate?.toLocaleString('id-ID')}</p>
+                      <p style="margin: 4px 0;"><strong>Monthly Cashflow:</strong> Rp {bi.data.monthly_cashflow_estimate?.toLocaleString('id-ID')}</p>
+                      {bi.data.record_quality && <p style="margin: 4px 0;"><strong>Quality:</strong> {bi.data.record_quality}</p>}
+                    </div>
+                  )}
+                  
+                  {/* Inventory Details */}
+                  {bi.type === 'inventory' && bi.data && (
+                    <div style="background: var(--color-warning-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                      <p style="margin: 4px 0;"><strong>Total Items:</strong> {bi.data.total_items_count}</p>
+                      <p style="margin: 4px 0;"><strong>Inventory Value:</strong> Rp {bi.data.inventory_value_estimate?.toLocaleString('id-ID')}</p>
+                      <p style="margin: 4px 0;"><strong>Stock Level:</strong> {bi.data.stock_level}</p>
+                      {bi.data.turnover_indicator && <p style="margin: 4px 0;"><strong>Turnover:</strong> {bi.data.turnover_indicator}</p>}
+                      {bi.data.items && bi.data.items.length > 0 && (
+                        <div style="margin-top: 8px;">
+                          <strong>Sample Items:</strong>
+                          <ul style="margin: 4px 0; padding-left: 20px;">
+                            {bi.data.items.slice(0, 3).map((item, idx) => (
+                              <li key={idx}>{item.name} - {item.quantity_estimate} {item.unit}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Building Details */}
+                  {bi.type === 'building' && bi.data && (
+                    <div style="background: var(--color-primary-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                      <p style="margin: 4px 0;"><strong>Type:</strong> {bi.data.building_type}</p>
+                      <p style="margin: 4px 0;"><strong>Condition:</strong> {bi.data.condition}</p>
+                      {bi.data.size_estimate && <p style="margin: 4px 0;"><strong>Size:</strong> {bi.data.size_estimate}</p>}
+                      <p style="margin: 4px 0;"><strong>Location:</strong> {bi.data.location_type}</p>
+                      {bi.data.visibility && <p style="margin: 4px 0;"><strong>Visibility:</strong> {bi.data.visibility}</p>}
+                      <p style="margin: 4px 0;"><strong>Estimated Value:</strong> Rp {bi.data.estimated_value?.toLocaleString('id-ID')}</p>
+                    </div>
+                  )}
+                  
+                  {/* Transaction Details */}
+                  {bi.type === 'transaction' && bi.data && (
+                    <div style="background: var(--color-neutral-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                      <p style="margin: 4px 0;"><strong>Transaction Count:</strong> {bi.data.transaction_count}</p>
+                      <p style="margin: 4px 0;"><strong>Total Amount:</strong> Rp {bi.data.total_amount?.toLocaleString('id-ID')}</p>
+                    </div>
+                  )}
+                  
+                  {bi.source?.image_url && (
+                    <img src={bi.source.image_url} alt="BI" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;" />
+                  )}
+                  {bi.source?.caption && (
+                    <p style="font-size: 14px; color: var(--color-neutral); font-style: italic; margin: 8px 0 0 0;">"{bi.source.caption}"</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style="color: var(--color-neutral);">No business intelligence data</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

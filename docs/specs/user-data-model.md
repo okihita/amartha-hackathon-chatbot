@@ -86,6 +86,14 @@
 - `disbursement`: Loan given to member (increases balance)
 - `payment`: Member payment (decreases balance)
 
+**Balance Calculation Rules:**
+- `balance_after` is a running balance (cumulative debt)
+- For disbursement: `balance_after = previous_balance + amount`
+- For payment: `balance_after = previous_balance - amount`
+- First transaction: `balance_after = amount` (if disbursement) or `0 - amount` (if payment)
+- Server must calculate and validate `balance_after` when adding transactions
+- Client should not manually set `balance_after`
+
 ### Literacy Collection (`users/{phone}/literacy/data`)
 
 ```javascript
@@ -95,7 +103,7 @@
     last_updated: string      // ISO 8601
   },
   week_02: { score, last_updated },
-  // ... up to week_52
+  // ... up to week_15
   created_at: string,
   updated_at: string
 }
@@ -103,7 +111,7 @@
 
 ## Literacy Rules
 
-- Week naming: `week_01`, `week_02`, ..., `week_52` (zero-padded)
+- Week naming: `week_01`, `week_02`, ..., `week_15` (zero-padded)
 - Passing score: 70% or higher
 - Initial value: 0
 
