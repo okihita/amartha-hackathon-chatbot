@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Briefcase, Package, TrendingUp, Target, AlertTriangle, Zap, BarChart3 } from 'lucide-preact';
+import { Briefcase, RefreshCw, TrendingUp, Target, AlertTriangle, Zap, ChevronRight } from 'lucide-preact';
 
 const BUSINESS_ICONS = {
   'warung sembako': '🏪', 'kelontong': '🏪', 'warung makan': '🍽️',
@@ -24,26 +24,30 @@ function getBusinessIcon(businessType) {
 }
 
 export default function BusinessTypes() {
-  const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [businessTypes, setBusinessTypes] = useState([]);
+  const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchBusinessTypes();
   }, []);
 
-  const fetchBusinessTypes = async () => {
+  const fetchBusinessTypes = async (forceRefresh = false) => {
     const CACHE_KEY = 'businessTypes';
-    const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+    const CACHE_TTL = 24 * 60 * 60 * 1000;
     
     try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_TTL) {
-          setBusinessTypes(data);
-          setLoading(false);
-          return;
+      if (!forceRefresh) {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp < CACHE_TTL) {
+            setBusinessTypes(data);
+            if (data.length > 0) setSelectedBusiness(data[0]);
+            setLoading(false);
+            return;
+          }
         }
       }
       
@@ -53,216 +57,175 @@ export default function BusinessTypes() {
       
       localStorage.setItem(CACHE_KEY, JSON.stringify({ data: sorted, timestamp: Date.now() }));
       setBusinessTypes(sorted);
+      if (sorted.length > 0) setSelectedBusiness(sorted[0]);
     } catch (error) {
       console.error('Failed to fetch business types', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchBusinessTypes(true);
   };
 
   if (loading) return <div class="loading">Loading business types...</div>;
 
-  if (businessTypes.length === 0) {
-    return (
-      <div class="card">
-        <div class="empty-state">
-          <div class="empty-state-icon"><Package size={48} color="#6c757d" /></div>
-          <h3>No Business Types Found</h3>
-          <p>Business classifications haven't been imported yet.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <>
-      <div class="card">
-        <h2 style="display: flex; align-items: center; gap: 8px;">
-          <Briefcase size={20} /> Business Classifications & Maturity Levels
-        </h2>
-        <div class="business-grid">
+    <div style={{ display: 'flex', gap: '16px', height: 'calc(100vh - 140px)', minHeight: '500px' }}>
+      {/* Left: Business List */}
+      <div style={{ width: '280px', background: '#fff', borderRadius: '8px', display: 'flex', flexDirection: 'column', border: '1px solid #dee2e6', flexShrink: 0 }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid #dee2e6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Briefcase size={16} /> 25 Kategori UMKM
+          </h3>
+          <button onClick={handleRefresh} disabled={refreshing} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+            <RefreshCw size={14} class={refreshing ? 'spin' : ''} />
+          </button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto' }}>
           {businessTypes.map(bt => {
-            const categoryNum = bt.category_number ? `Kategori ${bt.category_number}` : 'Mikro';
-            const icon = getBusinessIcon(bt.business_type);
-            const goals = (bt.maturity_levels || [])
-              .filter(level => level.goal)
-              .map(level => `Level ${level.level}: ${level.goal}`);
-
+            const isActive = selectedBusiness?.category_id === bt.category_id;
             return (
-              <div 
-                key={bt.id} 
-                class="business-card" 
+              <div
+                key={bt.category_id}
                 onClick={() => setSelectedBusiness(bt)}
-                style={{ cursor: 'pointer' }}
+                style={{
+                  padding: '10px 16px',
+                  cursor: 'pointer',
+                  borderLeft: isActive ? '3px solid #0d6efd' : '3px solid transparent',
+                  background: isActive ? '#e7f1ff' : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
               >
-                <div class="card-header">
-                  <div class="card-icon">{icon}</div>
-                  <div class="card-title-section">
-                    <div class="category">{categoryNum}</div>
-                    <h3>{bt.business_type}</h3>
+                <span style={{ fontSize: '20px' }}>{getBusinessIcon(bt.business_type)}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '10px', color: '#6c757d' }}>Kategori {bt.category_number}</div>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: isActive ? '#0d6efd' : '#212529', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {bt.business_type}
                   </div>
                 </div>
-                {goals.length > 0 && (
-                  <div class="goals">
-                    <strong class="business-type-header">
-                      Level Up Goals:
-                    </strong>
-                    {goals.map((goal, i) => (
-                      <div key={i} class="goal-item">{goal}</div>
-                    ))}
-                  </div>
-                )}
+                {isActive && <ChevronRight size={14} color="#0d6efd" />}
               </div>
             );
           })}
         </div>
       </div>
 
-      {selectedBusiness && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '20px'
-          }}
-          onClick={() => setSelectedBusiness(null)}
-        >
-          <div 
-            style={{
-              background: 'white',
-              borderRadius: '12px',
-              maxWidth: '800px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflow: 'auto',
-              position: 'relative'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ position: 'sticky', top: 0, background: 'white', zIndex: 1, padding: '24px 24px 16px', borderBottom: '1px solid #eee' }}>
-              <button 
-                onClick={() => setSelectedBusiness(null)}
-                style={{
-                  position: 'absolute',
-                  top: '16px',
-                  right: '16px',
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '28px',
-                  cursor: 'pointer',
-                  color: '#999',
-                  lineHeight: 1
-                }}
-              >&times;</button>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={{ fontSize: '40px', width: '60px', height: '60px', background: '#f5f5f5', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {getBusinessIcon(selectedBusiness.business_type)}
-                </div>
+      {/* Right: All Levels Stacked */}
+      <div style={{ flex: 1, background: '#fff', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column', border: '1px solid #dee2e6' }}>
+        {selectedBusiness ? (
+          <>
+            {/* Header */}
+            <div style={{ padding: '16px', borderBottom: '1px solid #dee2e6', background: '#f8f9fa' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '32px' }}>{getBusinessIcon(selectedBusiness.business_type)}</span>
                 <div>
-                  <div style={{ display: 'inline-block', padding: '4px 12px', background: '#e3f2fd', color: '#1976d2', borderRadius: '12px', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
-                    {selectedBusiness.category_number ? `Kategori ${selectedBusiness.category_number}` : 'Mikro'}
-                  </div>
-                  <h2 style={{ margin: 0, fontSize: '24px' }}>{selectedBusiness.business_type}</h2>
+                  <div style={{ fontSize: '11px', color: '#6c757d' }}>Kategori {selectedBusiness.category_number}</div>
+                  <h2 style={{ margin: 0, fontSize: '18px' }}>{selectedBusiness.business_type}</h2>
+                  {selectedBusiness.business_character && (
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{selectedBusiness.business_character}</div>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div style={{ padding: '24px' }}>
-              {selectedBusiness.description && (
-                <div style={{ marginBottom: '24px', color: '#555', lineHeight: 1.6 }}>
-                  {selectedBusiness.description}
-                </div>
-              )}
-
-              <h3 style={{ fontSize: '18px', marginBottom: '16px', color: '#333', borderBottom: '2px solid #f0f0f0', paddingBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <TrendingUp size={20} /> Maturity Levels & Roadmap
-              </h3>
-
+            {/* All Levels */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
               {(selectedBusiness.maturity_levels || []).sort((a, b) => a.level - b.level).map((level, idx) => (
-                <div key={idx} style={{ marginBottom: '24px', padding: '20px', background: '#fafafa', border: '1px solid #e0e0e0', borderRadius: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', paddingBottom: '10px', borderBottom: '1px solid #ddd' }}>
-                    <div style={{ fontWeight: 800, color: '#007bff', fontSize: '16px' }}>LEVEL {level.level}</div>
-                    <div style={{ fontWeight: 600, color: '#333', fontSize: '16px' }}>{level.name || level.goal}</div>
+                <div key={level.level} style={{ marginBottom: '20px', border: '1px solid #dee2e6', borderRadius: '8px', overflow: 'hidden' }}>
+                  {/* Level Header */}
+                  <div style={{ padding: '12px 16px', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#0d6efd', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '14px' }}>
+                      {level.level}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#212529' }}>Level {level.level}</div>
+                      {level.goal && <div style={{ fontSize: '11px', color: '#6c757d' }}>{level.goal}</div>}
+                    </div>
                   </div>
 
-                  {level.character?.length > 0 && (
-                    <div style={{ marginBottom: '16px' }}>
-                      <h4 style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>Karakteristik</h4>
-                      <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: '#555' }}>
-                        {level.character.map((c, i) => <li key={i}>{c}</li>)}
-                      </ul>
-                    </div>
-                  )}
-
-                  {(level.swot?.strengths?.length > 0 || level.swot?.weaknesses?.length > 0 || level.swot?.opportunities?.length > 0 || level.swot?.threats?.length > 0) && (
-                    <div style={{ marginBottom: '16px' }}>
-                      <h4 style={{ fontSize: '14px', color: '#666', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}><BarChart3 size={14} /> SWOT Analysis</h4>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        {level.swot?.strengths?.length > 0 && (
-                          <div style={{ background: '#e3f2fd', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #2196f3' }}>
-                            <strong style={{ color: '#1976d2', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', fontSize: '13px' }}><Zap size={12} /> Strengths</strong>
-                            <ul style={{ margin: 0, paddingLeft: '15px', fontSize: '12px' }}>
-                              {level.swot.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                            </ul>
-                          </div>
-                        )}
-                        {level.swot?.weaknesses?.length > 0 && (
-                          <div style={{ background: '#ffebee', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #f44336' }}>
-                            <strong style={{ color: '#c62828', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', fontSize: '13px' }}><AlertTriangle size={12} /> Weaknesses</strong>
-                            <ul style={{ margin: 0, paddingLeft: '15px', fontSize: '12px' }}>
-                              {level.swot.weaknesses.map((s, i) => <li key={i}>{s}</li>)}
-                            </ul>
-                          </div>
-                        )}
-                        {level.swot?.opportunities?.length > 0 && (
-                          <div style={{ background: '#e8f5e9', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #4caf50' }}>
-                            <strong style={{ color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', fontSize: '13px' }}><Target size={12} /> Opportunities</strong>
-                            <ul style={{ margin: 0, paddingLeft: '15px', fontSize: '12px' }}>
-                              {level.swot.opportunities.map((s, i) => <li key={i}>{s}</li>)}
-                            </ul>
-                          </div>
-                        )}
-                        {level.swot?.threats?.length > 0 && (
-                          <div style={{ background: '#fff8e1', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #ff9800' }}>
-                            <strong style={{ color: '#e65100', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', fontSize: '13px' }}><AlertTriangle size={12} /> Threats</strong>
-                            <ul style={{ margin: 0, paddingLeft: '15px', fontSize: '12px' }}>
-                              {level.swot.threats.map((s, i) => <li key={i}>{s}</li>)}
-                            </ul>
-                          </div>
-                        )}
+                  <div style={{ padding: '12px 16px' }}>
+                    {/* Karakteristik */}
+                    {level.character?.length > 0 && (
+                      <div style={{ marginBottom: '12px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#6c757d', marginBottom: '6px', textTransform: 'uppercase' }}>Karakteristik</div>
+                        {level.character.map((c, i) => (
+                          <div key={i} style={{ fontSize: '12px', color: '#495057', padding: '2px 0' }}>• {c}</div>
+                        ))}
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {(level.roadmap?.description || level.roadmap?.kpis?.length > 0) && (
-                    <div style={{ background: 'white', padding: '15px', borderRadius: '8px', border: '1px dashed #ccc' }}>
-                      <h4 style={{ fontSize: '14px', color: '#333', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}><TrendingUp size={14} /> How to Level Up</h4>
-                      {level.roadmap?.description && <p style={{ fontSize: '13px', color: '#555', marginBottom: '10px', fontStyle: 'italic' }}>{level.roadmap.description}</p>}
-                      {level.roadmap?.kpis?.length > 0 && (
-                        <div>
-                          <strong style={{ fontSize: '13px', color: '#666' }}>Target KPIs:</strong>
-                          <ul style={{ margin: '5px 0 0', paddingLeft: '20px', fontSize: '12px' }}>
-                            {level.roadmap.kpis.map((kpi, i) => <li key={i}>{kpi}</li>)}
-                          </ul>
+                    {/* SWOT - Compact */}
+                    {(level.swot?.strengths?.length > 0 || level.swot?.weaknesses?.length > 0) && (
+                      <div style={{ marginBottom: '12px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#6c757d', marginBottom: '6px', textTransform: 'uppercase' }}>SWOT</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                          {level.swot?.strengths?.length > 0 && (
+                            <div style={{ background: '#d1e7dd', padding: '8px', borderRadius: '4px', fontSize: '11px' }}>
+                              <strong style={{ color: '#0f5132' }}>S:</strong> {level.swot.strengths[0]}
+                            </div>
+                          )}
+                          {level.swot?.weaknesses?.length > 0 && (
+                            <div style={{ background: '#f8d7da', padding: '8px', borderRadius: '4px', fontSize: '11px' }}>
+                              <strong style={{ color: '#842029' }}>W:</strong> {level.swot.weaknesses[0]}
+                            </div>
+                          )}
+                          {level.swot?.opportunities?.length > 0 && (
+                            <div style={{ background: '#cff4fc', padding: '8px', borderRadius: '4px', fontSize: '11px' }}>
+                              <strong style={{ color: '#055160' }}>O:</strong> {level.swot.opportunities[0]}
+                            </div>
+                          )}
+                          {level.swot?.threats?.length > 0 && (
+                            <div style={{ background: '#fff3cd', padding: '8px', borderRadius: '4px', fontSize: '11px' }}>
+                              <strong style={{ color: '#664d03' }}>T:</strong> {level.swot.threats[0]}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+
+                    {/* KPIs to Level Up */}
+                    {level.roadmap?.kpis?.length > 0 && level.level < 5 && (
+                      <div style={{ background: '#e7f1ff', borderRadius: '6px', padding: '10px', border: '1px solid #b6d4fe' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#084298', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <TrendingUp size={12} /> KPI Naik ke Level {level.level + 1}
+                        </div>
+                        {level.roadmap.description && (
+                          <div style={{ fontSize: '11px', color: '#084298', marginBottom: '6px', fontStyle: 'italic' }}>
+                            Tujuan: {level.roadmap.description}
+                          </div>
+                        )}
+                        {level.roadmap.kpis.map((kpi, i) => (
+                          <div key={i} style={{ fontSize: '11px', color: '#0a58ca', padding: '3px 0', display: 'flex' }}>
+                            <span style={{ minWidth: '18px', fontWeight: 600 }}>{i + 1}.</span>
+                            <span>{kpi}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {level.level === 5 && (
+                      <div style={{ background: '#d1e7dd', borderRadius: '6px', padding: '10px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '16px' }}>🏆</span>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#0f5132', marginLeft: '6px' }}>Level Maksimal - Korporasi</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
+          </>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#6c757d' }}>
+            Select a business category
           </div>
-        </div>
-      )}
-    </>
+        )}
+      </div>
+    </div>
   );
 }

@@ -69,7 +69,8 @@ export default function HowItWorks() {
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
           <div style={cardStyle('#e3f2fd', '#2196f3')}>
             <strong style="display: flex; align-items: center; gap: 4px;"><Menu size={14} /> MENU</strong>
-            <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">menu, bantuan, help, tolong, halo, hi, hai</p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">menu, bantuan, help, halo, hi, hai, hello, test, ping</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">User baru: welcome + cara daftar<br/>User lama: menu dengan nama</p>
           </div>
           <div style={cardStyle('#e8f5e9', '#4caf50')}>
             <strong style="display: flex; align-items: center; gap: 4px;"><BookOpen size={14} /> KUIS</strong>

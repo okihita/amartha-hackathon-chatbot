@@ -25,10 +25,26 @@ class User {
 
   static createBusiness(data) {
     const now = new Date().toISOString();
+    
+    // Handle category_id from category number
+    let categoryId = data.category_id || null;
+    let categoryName = data.business_category || data.category || null;
+    
+    // If we have a category number, convert to category_id
+    if (data.business_category_num) {
+      const { BUSINESS_CATEGORIES } = require('../config/constants');
+      const cat = BUSINESS_CATEGORIES.find(c => c.num === data.business_category_num);
+      if (cat) {
+        categoryId = cat.id;
+        categoryName = cat.name;
+      }
+    }
+    
     return {
       name: data.business_name || null,
       location: data.business_location || data.location || null,
-      category: data.business_category || data.category || data.business_type || null,
+      category_id: categoryId,
+      category: categoryName,
       maturity_level: 1, // Always start at level 1
       created_at: now,
       updated_at: now

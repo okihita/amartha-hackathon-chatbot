@@ -1,4 +1,11 @@
 // 📚 AMARTHA KNOWLEDGE BASE (RAG)
+const { Firestore } = require('@google-cloud/firestore');
+const { COLLECTIONS } = require('../config/constants');
+
+const db = new Firestore({
+  projectId: process.env.GCP_PROJECT_ID,
+});
+
 const amarthaKnowledge = [
   {
     id: "majelis",
@@ -57,12 +64,6 @@ async function retrieveKnowledge(userText) {
 
   // Check Firestore financial literacy modules
   try {
-    const { Firestore } = require('@google-cloud/firestore');
-    const { COLLECTIONS } = require('../config/constants');
-    const db = new Firestore({
-      projectId: process.env.GCP_PROJECT_ID,
-    });
-    
     const snapshot = await db.collection(COLLECTIONS.FINANCIAL_LITERACY).get();
     
     snapshot.forEach(doc => {
@@ -103,4 +104,33 @@ async function retrieveKnowledge(userText) {
   return foundKnowledge.join("\n\n");
 }
 
-module.exports = { retrieveKnowledge };
+// Get business KPIs for user's category and maturity level
+async function getBusinessKPIs(categoryId, maturityLevel = 1) {
+  if (!categoryId) return null;
+  
+  try {
+    // Direct document lookup by category_id
+    const doc = await db.collection('business_classifications').doc(categoryId).get();
+    
+    if (!doc.exists) return null;
+    
+    const data = doc.data();
+    const currentLevel = data.maturity_levels?.find(l => l.level === maturityLevel);
+    if (!currentLevel?.roadmap) return null;
+    
+    return {
+      business_type: data.business_type,
+      current_level: maturityLevel,
+      next_level: maturityLevel + 1,
+      goal: currentLevel.roadmap.description,
+      kpis: currentLevel.roadmap.kpis || [],
+      swot: currentLevel.swot,
+      character: currentLevel.character
+    };
+  } catch (error) {
+    console.error('Error fetching business KPIs:', error);
+    return null;
+  }
+}
+
+module.exports = { retrieveKnowledge, getBusinessKPIs };

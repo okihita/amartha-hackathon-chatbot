@@ -2,37 +2,31 @@ const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@googl
 const UserService = require('../services/UserService');
 const QuizService = require('../services/QuizService');
 const { sendQuizQuestion } = require('./whatsapp');
-const { retrieveKnowledge } = require('./knowledge');
+const { retrieveKnowledge, getBusinessKPIs } = require('./knowledge');
+const { BUSINESS_CATEGORIES } = require('../config/constants');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const FALLBACK_MESSAGE = "Maaf Bu, sinyal AI sedang gangguan. Mohon tanya ulang ya.";
 
-// ✨ TOOL DEFINITION
-const BUSINESS_CATEGORIES = [
-  'Warung Sembako', 'Toko Kelontong', 'Usaha Makanan', 'Jasa Jahit', 'Pertanian',
-  'Salon & Kecantikan', 'Jasa Laundry', 'Peternakan', 'Kerajinan Tangan', 'Toko Pakaian',
-  'Warung Makan', 'Jasa Ojek/Transportasi', 'Bengkel', 'Toko Bangunan', 'Usaha Minuman',
-  'Jasa Fotocopy/Printing', 'Toko Pulsa/Elektronik', 'Budidaya Ikan', 'Jasa Pijat/Refleksi',
-  'Toko Kosmetik', 'Usaha Kue/Roti', 'Jasa Cuci Motor/Mobil', 'Toko Mainan', 'Usaha Catering', 'Lainnya'
-];
-
-const BUSINESS_CATEGORIES_NUMBERED = BUSINESS_CATEGORIES.map((c, i) => `${i + 1}. ${c}`).join('\n');
+// ✨ TOOL DEFINITION - Use category names for display
+const CATEGORY_NAMES = BUSINESS_CATEGORIES.map(c => c.name);
+const BUSINESS_CATEGORIES_NUMBERED = BUSINESS_CATEGORIES.map(c => `${c.num}. ${c.name}`).join('\n');
 
 const registerUserTool = {
   name: "registerUser",
-  description: "Registers a new user with their name, gender, business name, category, and location. Only call this when business_category matches one of the allowed categories.",
+  description: "Registers a new user with their name, gender, business name, category number (1-25), and location.",
   parameters: {
     type: "OBJECT",
     properties: {
       name: { type: "STRING", description: "The user's name without honorific (e.g., Siti, Budi, Ahmad)" },
       gender: { type: "STRING", description: "User's gender: 'female' or 'male'. Infer from name or context." },
       business_name: { type: "STRING", description: "Name of business (e.g., Warung Sembako Siti, Toko Bakso Pak Budi)" },
-      business_category: { type: "STRING", description: `Business category. MUST be EXACTLY one of these 25 options: ${BUSINESS_CATEGORIES.join(', ')}. If user's business doesn't fit, use 'Lainnya'.` },
+      business_category_num: { type: "INTEGER", description: `Business category number (1-25). Match user's business to the closest category.` },
       business_location: { type: "STRING", description: "City or Village (e.g., Bogor, Ciseeng)" },
     },
-    required: ["name", "gender", "business_name", "business_category", "business_location"],
+    required: ["name", "gender", "business_name", "business_category_num", "business_location"],
   },
 };
 
@@ -105,12 +99,27 @@ async function getGeminiResponse(userText, senderPhone) {
     const userProfile = await UserService.getUser(senderPhone);
     const lowerText = userText.toLowerCase().trim();
     
-    // 📋 MENU COMMAND
-    const menuTriggers = ['menu', 'bantuan', 'help', 'tolong', 'bantu', 'apa saja', 'bisa apa', 'halo', 'hi', 'hai'];
+    // 📋 MENU COMMAND - Different for new vs existing users
+    const menuTriggers = ['menu', 'bantuan', 'help', 'tolong', 'bantu', 'apa saja', 'bisa apa', 'halo', 'hi', 'hai', 'hello', 'test', 'ping', 'tes'];
     if (menuTriggers.some(t => lowerText === t || lowerText.includes(t))) {
+      if (!userProfile) {
+        // NEW USER - Welcome & registration prompt
+        return `*Selamat datang di Akademi-AI Amartha!*
+
+Saya asisten digital untuk program literasi keuangan UMKM.
+
+Untuk mendaftar, silakan berikan:
+• Nama Anda
+• Jenis usaha
+• Lokasi usaha
+
+Contoh: "Nama saya Siti, usaha warung sembako di Bogor"`;
+      }
+      // EXISTING USER - Full menu
+      const honorific = userProfile.profile?.gender === 'male' ? 'Pak' : 'Bu';
       return `*Menu Utama*
 
-Ketik angka atau kata:
+Halo ${honorific} ${userProfile.name}! Ketik:
 
 1. *KUIS* - Mulai kuis belajar
 2. *NILAI* - Lihat hasil belajar
@@ -202,7 +211,26 @@ Jangan lupa hadir ya ${honorific}.`;
              `Ketik "cek data" untuk detail lengkap.`;
     }
     
-    const ragContext = retrieveKnowledge(userText);
+    const ragContext = await retrieveKnowledge(userText);
+    
+    // Get business KPIs for existing users (use category_id for direct lookup)
+    let businessKPIsContext = '';
+    if (userProfile?.business?.category_id) {
+      const kpis = await getBusinessKPIs(
+        userProfile.business.category_id, 
+        userProfile.business.maturity_level || 1
+      );
+      if (kpis && kpis.kpis?.length > 0) {
+        businessKPIsContext = `
+      
+      TARGET NAIK LEVEL (dari Level ${kpis.current_level} ke Level ${kpis.next_level}):
+      Tujuan: ${kpis.goal || 'Meningkatkan kapasitas usaha'}
+      KPI yang harus dicapai:
+      ${kpis.kpis.slice(0, 5).map((k, i) => `${i + 1}. ${k}`).join('\n      ')}
+      
+      Gunakan KPI ini untuk memberikan saran spesifik ketika user bertanya tentang cara mengembangkan usaha.`;
+      }
+    }
     
     // 1. Construct Prompt
     let systemPrompt = "";
@@ -270,7 +298,7 @@ ${BUSINESS_CATEGORIES_NUMBERED}
       - Jika topik di luar scope, jawab: "Maaf ${honorific}, saya hanya bisa membantu literasi keuangan dan usaha. Ada yang bisa saya bantu terkait bisnis Anda?"
       
       KAMUS ISTILAH AMARTHA:
-      ${ragContext}
+      ${ragContext}${businessKPIsContext}
       
       INSTRUKSI:
       1. User SUDAH TERDAFTAR. JANGAN minta data nama/usaha/lokasi lagi.

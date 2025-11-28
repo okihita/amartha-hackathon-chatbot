@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import { User, Building2, CreditCard, BookOpen, Users as UsersIcon, ArrowLeft } from 'lucide-preact';
+import { User, Building2, CreditCard, BookOpen, Users as UsersIcon, ArrowLeft, Target } from 'lucide-preact';
 
 export default function UserProfile({ phone }) {
   const [data, setData] = useState(null);
@@ -8,16 +8,46 @@ export default function UserProfile({ phone }) {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const [newBiIds, setNewBiIds] = useState(new Set());
+  const [businessKPIs, setBusinessKPIs] = useState(null);
 
   const fetchProfile = async () => {
     try {
       const res = await fetch(`/api/users/${phone}/complete`);
       if (!res.ok) throw new Error('User not found');
-      setData(await res.json());
+      const userData = await res.json();
+      setData(userData);
+      
+      // Fetch KPIs for user's business category_id
+      if (userData.business?.category_id) {
+        fetchBusinessKPIs(userData.business.category_id, userData.business.maturity_level || 1);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBusinessKPIs = async (categoryId, level) => {
+    if (!categoryId) return;
+    try {
+      const res = await fetch('/api/knowledge/business-classifications');
+      const classifications = await res.json();
+      
+      // Direct lookup by category_id
+      const match = classifications.find(c => c.category_id === categoryId);
+      
+      if (match) {
+        const currentLevel = match.maturity_levels?.find(l => l.level === level);
+        if (currentLevel?.roadmap) {
+          setBusinessKPIs({
+            goal: currentLevel.roadmap.description,
+            kpis: currentLevel.roadmap.kpis || []
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch KPIs:', err);
     }
   };
 
@@ -144,12 +174,31 @@ export default function UserProfile({ phone }) {
                     />
                   ))}
                 </div>
-                <div style="font-size: 12px; color: #666;">
-                  {data.business.maturity_level < 5 
-                    ? `Next: Level ${data.business.maturity_level + 1} - Tingkatkan omzet & pencatatan`
-                    : 'Level maksimal tercapai'}
-                </div>
               </div>
+
+              {/* KPIs to Level Up */}
+              {businessKPIs && data.business.maturity_level < 5 && (
+                <div style="margin-top: 16px; padding: 12px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #2196f3;">
+                  <h4 style="margin: 0 0 8px; font-size: 14px; color: #1976d2; display: flex; align-items: center; gap: 6px;">
+                    <Target size={16} /> Target Naik ke Level {data.business.maturity_level + 1}
+                  </h4>
+                  {businessKPIs.goal && (
+                    <p style="margin: 0 0 8px; font-size: 13px; color: #555; font-style: italic;">{businessKPIs.goal}</p>
+                  )}
+                  {businessKPIs.kpis.length > 0 && (
+                    <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #333;">
+                      {businessKPIs.kpis.slice(0, 5).map((kpi, i) => (
+                        <li key={i} style="margin-bottom: 4px;">{kpi}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+              {data.business.maturity_level >= 5 && (
+                <div style="margin-top: 12px; font-size: 12px; color: #4caf50; font-weight: 600;">
+                  ✓ Level maksimal tercapai
+                </div>
+              )}
             </div>
           ) : (
             <p style="color: var(--color-neutral);">No business data</p>

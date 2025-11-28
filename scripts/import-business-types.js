@@ -27,6 +27,35 @@ const FOLDER_ID = process.env.BUSINESS_TYPES_FOLDER_ID || '14D6sdUsJevp30p1xNGQV
 // Google API Key for public access (optional - will try service account if not available)
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
 
+// Fixed category ID mapping (matches KATEGORI number from Google Docs)
+const CATEGORY_ID_MAP = {
+  1: '01_warung_sembako',
+  2: '02_toko_fashion',
+  3: '03_toko_elektronik',
+  4: '04_pet_shop',
+  5: '05_toko_bangunan',
+  6: '06_toko_mainan',
+  7: '07_warung_makan',
+  8: '08_coffee_shop',
+  9: '09_jajanan_camilan',
+  10: '10_minuman_kekinian',
+  11: '11_laundry',
+  12: '12_bengkel_motor',
+  13: '13_jasa_kecantikan',
+  14: '14_penjahit',
+  15: '15_kos_kosan',
+  16: '16_logistik',
+  17: '17_kriya_kerajinan',
+  18: '18_sewa_kendaraan',
+  19: '19_petani',
+  20: '20_nelayan',
+  21: '21_cuci_steam',
+  22: '22_apotek',
+  23: '23_event_organizer',
+  24: '24_bengkel_las',
+  25: '25_kontraktor'
+};
+
 async function getGoogleDriveClient() {
   // Try service account first (if available)
   const fs = require('fs');
@@ -288,8 +317,8 @@ function parseBusinessTypeDoc(sections, fileName) {
 
     if (!currentLevel) continue;
 
-    // Detect "Tujuan" section for goal
-    if (lower.includes('tujuan:')) {
+    // Detect "Tujuan" section for goal (but not if we're in roadmap - Tujuan is part of roadmap header)
+    if (lower.includes('tujuan:') && currentSection !== 'roadmap') {
       currentSection = 'goal';
       const colonIndex = trimmed.indexOf(':');
       if (colonIndex > -1 && colonIndex < trimmed.length - 1) {
@@ -297,6 +326,15 @@ function parseBusinessTypeDoc(sections, fileName) {
         if (goalText && currentLevel) {
           currentLevel.goal = goalText;
         }
+      }
+      continue;
+    }
+    
+    // If in roadmap and we hit "Tujuan:", capture it as roadmap description
+    if (currentSection === 'roadmap' && lower.includes('tujuan:')) {
+      const colonIndex = trimmed.indexOf(':');
+      if (colonIndex > -1) {
+        currentLevel.roadmap.description = trimmed.substring(colonIndex + 1).trim();
       }
       continue;
     }
@@ -387,6 +425,23 @@ function parseBusinessTypeDoc(sections, fileName) {
           currentLevel.goal = trimmed;
         }
       }
+    } else if (currentSection === 'roadmap') {
+      // Capture KPIs - lines starting with [ ] or containing "KPI:"
+      if (trimmed.startsWith('[ ]') || trimmed.startsWith('[]') || lower.includes('kpi:')) {
+        const kpiText = trimmed.replace(/^\[\s*\]\s*/, '').replace(/^KPI:\s*/i, '').trim();
+        if (kpiText) {
+          currentLevel.roadmap.kpis.push(kpiText);
+        }
+      } else if (trimmed.match(/^[A-Z]\.\s/)) {
+        // Section headers like "A. Keuangan" - skip but stay in roadmap
+      } else if (trimmed && 
+                 !lower.includes('roadmap') && 
+                 !lower.includes('cara naik')) {
+        // Other roadmap content goes to description
+        if (!currentLevel.roadmap.description) {
+          currentLevel.roadmap.description = trimmed;
+        }
+      }
     } else if (currentSection === 'character') {
       // Flatten bullet points - capture all bullets regardless of nesting level
       // Skip section headers like "Fisik:", "Keuangan & Metrik Kuantitatif:", "Stok:", "Pasar:"
@@ -419,23 +474,6 @@ function parseBusinessTypeDoc(sections, fileName) {
           !lower.includes('cara memanfaatkan') &&
           !lower.includes('cara menghadapi')) {
         currentLevel.swot_actions[currentSubSection].push(trimmed);
-      }
-    } else if (currentSection === 'roadmap') {
-      // Check if it's a KPI (starts with [ ] or contains "KPI:")
-      if (trimmed.startsWith('[ ]') || trimmed.startsWith('[]') || lower.includes('kpi:')) {
-        const kpiText = trimmed.replace(/^\[\s*\]\s*/, '').replace(/^KPI:\s*/i, '').trim();
-        if (kpiText) {
-          currentLevel.roadmap.kpis.push(kpiText);
-        }
-      } else if (trimmed && 
-                 !lower.includes('roadmap') && 
-                 !lower.includes('cara naik') &&
-                 !lower.match(/^[a-z]\./i)) { // Skip section markers like "A.", "B."
-        if (!currentLevel.roadmap.description) {
-          currentLevel.roadmap.description = trimmed;
-        } else {
-          currentLevel.roadmap.description += ' ' + trimmed;
-        }
       }
     }
   }
@@ -544,17 +582,25 @@ async function importBusinessTypes() {
         
         console.log(`   📊 Parsed: ${parsed.maturity_levels.length} maturity levels`);
         
-        // Store in Firestore
-        const docRef = db.collection('business_classifications').doc();
+        // Get category_id from category_number
+        const categoryId = CATEGORY_ID_MAP[parsed.category_number];
+        if (!categoryId) {
+          console.log(`   ⚠️  Unknown category number: ${parsed.category_number}\n`);
+          continue;
+        }
+        
+        // Store in Firestore with category_id as document ID
+        const docRef = db.collection('business_classifications').doc(categoryId);
         batch.set(docRef, {
           ...parsed,
+          category_id: categoryId,
           source_doc_id: file.id,
           created_at: file.createdTime,
           modified_at: file.modifiedTime,
           imported_at: new Date().toISOString(),
         });
 
-        console.log(`   ✅ Queued for import\n`);
+        console.log(`   ✅ Queued: ${categoryId}\n`);
         imported++;
       } catch (error) {
         console.log(`   ❌ Error: ${error.message}\n`);
