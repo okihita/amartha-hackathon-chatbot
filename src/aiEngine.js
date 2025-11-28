@@ -85,11 +85,15 @@ async function getGeminiResponse(userText, senderPhone) {
       if (!userProfile) {
         return "❌ Data tidak ditemukan. Anda belum terdaftar.";
       }
+      const majelisInfo = userProfile.majelis_name 
+        ? `${userProfile.majelis_name} (${userProfile.majelis_day})`
+        : 'Belum terdaftar di Majelis';
+      
       return `📊 *Data Profil Anda:*\n\n` +
              `👤 Nama: ${userProfile.name}\n` +
              `🏪 Usaha: ${userProfile.business_type}\n` +
              `📍 Lokasi: ${userProfile.location}\n` +
-             `📅 Jadwal Majelis: ${userProfile.majelis_day}\n` +
+             `📅 Majelis: ${majelisInfo}\n` +
              `📚 Modul: ${userProfile.current_module}\n` +
              `📊 Literasi: ${userProfile.literacy_score}\n` +
              `✅ Status: ${userProfile.is_verified ? 'Terverifikasi' : 'Belum Verifikasi'}`;
@@ -120,6 +124,10 @@ async function getGeminiResponse(userText, senderPhone) {
       `;
     } else {
       // 🔵 EXISTING USER FLOW
+      const majelisInfo = userProfile.majelis_name 
+        ? `${userProfile.majelis_name} (${userProfile.majelis_day})`
+        : 'Belum terdaftar di Majelis';
+      
       systemPrompt = `
       PERAN: Akademi-AI, asisten bisnis Ibu ${userProfile.name} untuk program literasi keuangan Amartha.
       CONTEXT: 
@@ -127,7 +135,7 @@ async function getGeminiResponse(userText, senderPhone) {
       - Usaha: ${userProfile.business_type}
       - Lokasi: ${userProfile.location}
       - Status: ${userProfile.is_verified ? "Terverifikasi" : "Belum Verifikasi (Limit Akses)"}
-      - Jadwal Majelis: ${userProfile.majelis_day}
+      - Majelis: ${majelisInfo}
       
       BATASAN TOPIK:
       - HANYA jawab tentang: literasi keuangan, manajemen usaha, Amartha, bisnis UMKM

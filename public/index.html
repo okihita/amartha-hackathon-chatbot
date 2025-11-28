@@ -92,8 +92,8 @@
             table.style.display = 'table';
             
             tbody.innerHTML = users.map(user => {
-                const majelisDay = user.majelis_day || 'Not assigned';
-                const isAssigned = majelisDay !== 'Not assigned' && !majelisDay.includes('BELUM VERIFIKASI');
+                const majelisName = user.majelis_name || null;
+                const isAssigned = majelisName !== null;
                 
                 return `
                 <tr>
@@ -103,7 +103,7 @@
                     <td>${user.location}</td>
                     <td>
                         <span style="font-size: 12px; color: ${isAssigned ? '#28a745' : '#999'};">
-                            ${isAssigned ? '📅 ' + majelisDay : '—'}
+                            ${isAssigned ? '📅 ' + majelisName : '—'}
                         </span>
                     </td>
                     <td>

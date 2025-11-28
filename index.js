@@ -208,12 +208,20 @@ app.delete('/api/majelis/:id', async (req, res) => {
 app.post('/api/majelis/:id/members', async (req, res) => {
   try {
     const { phone } = req.body;
-    const majelis = await addMemberToMajelis(req.params.id, phone);
-    if (majelis) {
-      res.json({ success: true, majelis });
-    } else {
-      res.status(404).json({ error: 'Majelis not found' });
+    const result = await addMemberToMajelis(req.params.id, phone);
+    
+    if (!result) {
+      return res.status(404).json({ error: 'Majelis not found' });
     }
+    
+    if (result.error) {
+      return res.status(400).json({ 
+        error: result.error,
+        currentMajelisId: result.currentMajelisId 
+      });
+    }
+    
+    res.json({ success: true, majelis: result });
   } catch (error) {
     console.error('Error adding member:', error);
     res.status(500).json({ error: 'Failed to add member' });

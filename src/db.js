@@ -207,6 +207,19 @@ async function addMemberToMajelis(majelisId, phoneNumber) {
     
     if (!doc.exists) return null;
     
+    // Check if user is already in another Majelis
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    const userRef = db.collection(USERS_COLLECTION).doc(cleanPhone);
+    const userDoc = await userRef.get();
+    
+    if (userDoc.exists && userDoc.data().majelis_id) {
+      const currentMajelisId = userDoc.data().majelis_id;
+      if (currentMajelisId !== majelisId) {
+        console.log(`⚠️ User ${phoneNumber} already in Majelis ${currentMajelisId}`);
+        return { error: 'User already belongs to another Majelis', currentMajelisId };
+      }
+    }
+    
     const members = doc.data().members || [];
     if (!members.includes(phoneNumber)) {
       members.push(phoneNumber);
@@ -215,9 +228,13 @@ async function addMemberToMajelis(majelisId, phoneNumber) {
         updated_at: new Date().toISOString()
       });
       
-      // Update user's majelis_day
+      // Update user's majelis info (name, day, id)
       const majelisData = doc.data();
-      await updateUserMajelisDay(phoneNumber, majelisData.schedule_day);
+      await updateUserMajelis(phoneNumber, {
+        majelis_id: majelisId,
+        majelis_name: majelisData.name,
+        majelis_day: majelisData.schedule_day
+      });
       
       console.log(`➕ Added ${phoneNumber} to Majelis ${majelisId}`);
     }
@@ -246,8 +263,12 @@ async function removeMemberFromMajelis(majelisId, phoneNumber) {
       updated_at: new Date().toISOString()
     });
     
-    // Reset user's majelis_day
-    await updateUserMajelisDay(phoneNumber, 'BELUM VERIFIKASI (Hubungi Petugas)');
+    // Reset user's majelis info
+    await updateUserMajelis(phoneNumber, {
+      majelis_id: null,
+      majelis_name: null,
+      majelis_day: 'BELUM VERIFIKASI (Hubungi Petugas)'
+    });
     
     console.log(`➖ Removed ${phoneNumber} from Majelis ${majelisId}`);
     
@@ -259,18 +280,18 @@ async function removeMemberFromMajelis(majelisId, phoneNumber) {
   }
 }
 
-// Helper: Update user's majelis_day
-async function updateUserMajelisDay(phoneNumber, majelisDay) {
+// Helper: Update user's majelis info
+async function updateUserMajelis(phoneNumber, majelisInfo) {
   const cleanPhone = phoneNumber.replace(/\D/g, '');
   try {
     const userRef = db.collection(USERS_COLLECTION).doc(cleanPhone);
     const userDoc = await userRef.get();
     
     if (userDoc.exists) {
-      await userRef.update({ majelis_day: majelisDay });
+      await userRef.update(majelisInfo);
     }
   } catch (error) {
-    console.error('Error updating user majelis_day:', error);
+    console.error('Error updating user majelis:', error);
   }
 }
 

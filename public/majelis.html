@@ -360,11 +360,23 @@
             }
             
             try {
-                await fetch(`/api/majelis/${currentMajelisId}/members`, {
+                const res = await fetch(`/api/majelis/${currentMajelisId}/members`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone })
                 });
+                
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    if (data.error && data.error.includes('already belongs')) {
+                        alert('User already belongs to another Majelis. Please remove them from their current Majelis first.');
+                    } else {
+                        alert(data.error || 'Failed to add member');
+                    }
+                    return;
+                }
+                
                 document.getElementById('newMemberPhone').value = '';
                 document.getElementById('userSuggestions').style.display = 'none';
                 await loadMembers(currentMajelisId);
