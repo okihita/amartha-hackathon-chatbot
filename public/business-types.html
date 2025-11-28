@@ -296,10 +296,12 @@
                     <div class="level-section">
                         <h3>${level.name || 'Level ' + level.level}</h3>
                         
-                        ${level.character ? `
+                        ${level.character && level.character.length > 0 ? `
                             <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #1976d2;">
-                                <strong style="font-size: 13px; color: #1565c0;">Character of This Level:</strong>
-                                <p style="font-size: 14px; color: #333; margin-top: 8px; line-height: 1.6;">${level.character}</p>
+                                <strong style="font-size: 13px; color: #1565c0;">Potret Diagnostik (Character of This Level):</strong>
+                                <ul style="margin-top: 10px; margin-left: 20px;">
+                                    ${level.character.map(c => `<li style="font-size: 14px; color: #333; margin-bottom: 6px; line-height: 1.6;">${c}</li>`).join('')}
+                                </ul>
                             </div>
                         ` : ''}
                         

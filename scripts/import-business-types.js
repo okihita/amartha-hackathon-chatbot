@@ -135,7 +135,37 @@ function parseBusinessTypeDoc(sections, fileName) {
     const section = sections[i];
     
     if (section.type === 'table') {
-      // Skip tables for now
+      // Process SWOT table if we're in a level
+      if (currentLevel && section.data.length >= 5) {
+        // SWOT table structure: Header row + 4 rows (S, W, O, T)
+        // Columns: [SWOT Component, Description, How to Handle]
+        const rows = section.data;
+        
+        // Skip header row, process data rows
+        for (let rowIdx = 1; rowIdx < rows.length && rowIdx <= 4; rowIdx++) {
+          const row = rows[rowIdx];
+          if (row.length >= 3) {
+            const component = row[0].toLowerCase().trim();
+            const description = row[1].trim();
+            const action = row[2].trim();
+            
+            // Map to SWOT component
+            if (component.startsWith('s') || component.includes('strength') || component.includes('kekuatan')) {
+              if (description) currentLevel.swot.strengths.push(description);
+              if (action) currentLevel.swot_actions.strength_actions.push(action);
+            } else if (component.startsWith('w') || component.includes('weakness') || component.includes('kelemahan')) {
+              if (description) currentLevel.swot.weaknesses.push(description);
+              if (action) currentLevel.swot_actions.weakness_actions.push(action);
+            } else if (component.startsWith('o') || component.includes('opportunit') || component.includes('peluang')) {
+              if (description) currentLevel.swot.opportunities.push(description);
+              if (action) currentLevel.swot_actions.opportunity_actions.push(action);
+            } else if (component.startsWith('t') || component.includes('threat') || component.includes('ancaman')) {
+              if (description) currentLevel.swot.threats.push(description);
+              if (action) currentLevel.swot_actions.threat_actions.push(action);
+            }
+          }
+        }
+      }
       continue;
     }
 
@@ -144,14 +174,25 @@ function parseBusinessTypeDoc(sections, fileName) {
     const trimmed = text.trim();
 
     // Extract Distinctive Factor and Karakter Utama (business character)
-    if (lower.includes('distinctive factor') || lower.includes('karakter utama')) {
+    // Skip the headers themselves, only capture content
+    if (lower.includes('distinctive factor:') || lower.includes('karakter utama:')) {
       inBusinessCharacter = true;
-      businessCharParts.push(trimmed);
+      // Extract content after the colon if present
+      const colonIndex = trimmed.indexOf(':');
+      if (colonIndex > -1 && colonIndex < trimmed.length - 1) {
+        const content = trimmed.substring(colonIndex + 1).trim();
+        if (content) {
+          businessCharParts.push(content);
+        }
+      }
       continue;
     }
     
     if (inBusinessCharacter && !lower.match(/^level [1-5]/i)) {
-      businessCharParts.push(trimmed);
+      // Skip if it's just the header text itself
+      if (!lower.match(/^(distinctive factor|karakter utama)\s*$/)) {
+        businessCharParts.push(trimmed);
+      }
     }
 
     // Detect maturity levels (LEVEL 1, LEVEL 2, etc.)
@@ -170,7 +211,7 @@ function parseBusinessTypeDoc(sections, fileName) {
       currentLevel = {
         level: parseInt(levelMatch[1]),
         name: trimmed,
-        character: '', // Character of this level
+        character: [], // Character of this level (array of bullet points)
         swot: {
           strengths: [],
           weaknesses: [],
@@ -188,12 +229,25 @@ function parseBusinessTypeDoc(sections, fileName) {
           kpis: [] // KPIs that start with [ ]
         }
       };
-      currentSection = 'character';
+      currentSection = null;
       currentSubSection = null;
       continue;
     }
 
     if (!currentLevel) continue;
+
+    // Detect "Potret Diagnostik" section for character
+    if (lower.includes('potret diagnostik')) {
+      currentSection = 'character';
+      currentSubSection = null;
+      continue;
+    }
+
+    // Detect SWOT section start - this ends the character section
+    if (lower.includes('swot analysis') || lower.includes('analisis swot')) {
+      currentSection = null;
+      continue;
+    }
 
     // Detect SWOT sections - be more flexible with patterns
     if (lower.includes('💪') || lower.match(/^s[\s:=]/i) || lower.match(/strength/i) || 
@@ -247,8 +301,23 @@ function parseBusinessTypeDoc(sections, fileName) {
     }
 
     // Add content to appropriate section
-    if (currentSection === 'character' && currentLevel.character === '') {
-      currentLevel.character = trimmed;
+    if (currentSection === 'character') {
+      // Flatten bullet points - capture all bullets regardless of nesting level
+      // Skip section headers like "Fisik:", "Keuangan & Metrik Kuantitatif:", "Stok:", "Pasar:"
+      if (trimmed && 
+          !lower.includes('potret diagnostik') &&
+          !trimmed.match(/^(fisik|keuangan|metrik|stok|pasar)[\s:&]/i) &&
+          !trimmed.match(/^(fisik|keuangan|metrik|stok|pasar)\s*$/i)) {
+        // Remove bullet markers and clean up text
+        let cleanedText = trimmed.replace(/^[•\-\*]\s*/, '').trim();
+        
+        // Replace commas that should be spaces (when followed by capital letter or number)
+        cleanedText = cleanedText.replace(/,(\s*)([A-Z0-9])/g, '. $2');
+        
+        if (cleanedText) {
+          currentLevel.character.push(cleanedText);
+        }
+      }
     } else if (currentSection === 'swot' && currentSubSection) {
       // Skip header lines and empty lines
       if (trimmed && 
@@ -292,7 +361,18 @@ function parseBusinessTypeDoc(sections, fileName) {
 
   // Finalize business character if not set
   if (!parsed.business_character && businessCharParts.length > 0) {
-    parsed.business_character = businessCharParts.join(' ').trim();
+    // Join parts with period separator to distinguish Distinctive Factor from Karakter Utama
+    parsed.business_character = businessCharParts
+      .map(part => part.trim())
+      .filter(part => part.length > 0)
+      .join('. ')
+      .replace(/\.\s*\./g, '.') // Remove double periods
+      .trim();
+    
+    // Ensure it ends with a period
+    if (!parsed.business_character.endsWith('.')) {
+      parsed.business_character += '.';
+    }
   }
 
   return parsed;
