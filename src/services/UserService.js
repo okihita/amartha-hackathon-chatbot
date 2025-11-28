@@ -198,6 +198,30 @@ class UserService {
     await UserRepository.update(phoneNumber, loanData);
     return { success: true, data: loanData };
   }
+
+  async updateLiteracyScore(phoneNumber, weekNumber, score) {
+    const user = await UserRepository.findByPhone(phoneNumber);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const updatedLiteracy = User.updateWeekScore(user.literacy || {}, weekNumber, score);
+    await UserRepository.update(phoneNumber, { literacy: updatedLiteracy });
+
+    return {
+      literacy: updatedLiteracy,
+      progress: User.getLiteracyProgress(updatedLiteracy)
+    };
+  }
+
+  async getLiteracyProgress(phoneNumber) {
+    const user = await UserRepository.findByPhone(phoneNumber);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return User.getLiteracyProgress(user.literacy || {});
+  }
 }
 
 module.exports = new UserService();
