@@ -2,72 +2,41 @@
 
 ## Post-Deployment Testing Checklist
 
-After every deployment to production, you MUST test the following:
-
-### 1. Dashboard Pages
-- [ ] **Users page** - Visit https://whatsapp-bot-435783355893.asia-southeast2.run.app/
-  - Should load without errors
-  - Should display user table
-  - Navigation should work
-  
-- [ ] **Majelis page** - Visit https://whatsapp-bot-435783355893.asia-southeast2.run.app/majelis
-  - Should load without errors (not download)
-  - Should display majelis grid
-  - Navigation should work
-
-### 2. API Endpoints
-Test with curl or browser:
+After every deployment to production, run the automated test suite:
 
 ```bash
-# Health check
-curl https://whatsapp-bot-435783355893.asia-southeast2.run.app/health
+# Run all tests against production
+./tests/integration.test.sh
 
-# Get users
-curl https://whatsapp-bot-435783355893.asia-southeast2.run.app/api/users
-
-# Get majelis
-curl https://whatsapp-bot-435783355893.asia-southeast2.run.app/api/majelis
+# Or with verbose output
+VERBOSE=true ./tests/integration.test.sh
 ```
 
-### 3. WhatsApp Bot
-- [ ] Send test message from WhatsApp
-- [ ] Check if bot responds
-- [ ] Test "debug" or "cek data" command
-- [ ] Test registration flow (if applicable)
+The test suite automatically checks:
+- ✅ Health endpoints
+- ✅ All dashboard pages (Users, Majelis, Business Types, Financial Literacy)
+- ✅ All API endpoints
+- ✅ Navigation consistency
+- ✅ CSS and styling
+- ✅ Feature functionality
 
-### 4. Logs Check
-```bash
-gcloud run logs read whatsapp-bot --region asia-southeast2 --limit 20
-```
-- [ ] No critical errors
-- [ ] Bot is processing messages
-- [ ] No spam warnings (unless expected)
+### Manual Checks
 
-## Testing Commands
+After automated tests pass, verify:
 
-### Quick Test Script
-```bash
-# Test all endpoints
-echo "Testing health..."
-curl -s https://whatsapp-bot-435783355893.asia-southeast2.run.app/health
+1. **WhatsApp Bot**
+   - [ ] Send test message from WhatsApp
+   - [ ] Check if bot responds
+   - [ ] Test "debug" or "cek data" command
+   - [ ] Test registration flow
 
-echo "\nTesting users API..."
-curl -s https://whatsapp-bot-435783355893.asia-southeast2.run.app/api/users | jq '.[0]'
-
-echo "\nTesting majelis API..."
-curl -s https://whatsapp-bot-435783355893.asia-southeast2.run.app/api/majelis | jq '.[0]'
-
-echo "\nDone!"
-```
-
-### Check Logs
-```bash
-# Recent logs
-gcloud run logs read whatsapp-bot --region asia-southeast2 --limit 20
-
-# Follow logs (real-time)
-gcloud run logs tail whatsapp-bot --region asia-southeast2
-```
+2. **Logs Check**
+   ```bash
+   gcloud run logs read whatsapp-bot --region asia-southeast2 --limit 20
+   ```
+   - [ ] No critical errors
+   - [ ] Bot is processing messages
+   - [ ] No spam warnings (unless expected)
 
 ## When to Test
 

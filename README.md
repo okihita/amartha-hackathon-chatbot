@@ -125,30 +125,23 @@ See `.env.example` for all required variables:
 
 ## 📚 Documentation
 
-- **[API Documentation](./docs/API.md)** - REST API endpoints
-- **[Setup Guide](./docs/SETUP.md)** - Detailed installation instructions
-- **[Architecture](./docs/ARCHITECTURE.md)** - System design and diagrams
-- **[Business Types Import](./docs/BUSINESS_TYPES_IMPORT.md)** - Google Drive import guide
-- **[Contributing](./docs/CONTRIBUTING.md)** - Development guidelines
+- **[Complete Guide](./docs/GUIDE.md)** - Setup, API, development, troubleshooting
+- **[Requirements](./kiro/specs/amartha-chatbot/requirements.md)** - Functional & non-functional requirements
+- **[Design](./kiro/specs/amartha-chatbot/design.md)** - Architecture & design patterns
+- **[Scripts Guide](./scripts/README.md)** - Import scripts documentation
 - **[Changelog](./CHANGELOG.md)** - Version history
 
 ## 🧪 Testing
 
-### Manual Testing
-See `test-chats.md` for test scenarios.
-
-### API Testing
 ```bash
-# Health check
-curl https://your-app-url.run.app/health
+# Run all integration tests
+./tests/integration.test.sh
 
-# Get users
-curl https://your-app-url.run.app/api/users
-```
+# Verbose mode
+VERBOSE=true ./tests/integration.test.sh
 
-### View Logs
-```bash
-gcloud run logs read whatsapp-bot --region asia-southeast2 --limit 50
+# Test different environment
+TEST_URL=http://localhost:8080 ./tests/integration.test.sh
 ```
 
 ## 📊 Project Structure
