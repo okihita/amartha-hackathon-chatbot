@@ -23,6 +23,12 @@ const MY_VERIFY_TOKEN = process.env.MY_VERIFY_TOKEN;
 app.use(bodyParser.json());
 app.use(cors()); // Enable CORS for Dashboard
 
+// --- HEALTH CHECK ---
+app.get('/health', (req, res) => res.status(200).send('🤖 Akademi-AI (Modular) is Online!'));
+
+// --- SERVE STATIC ASSETS (CSS, JS, images) ---
+app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
+
 // --- SERVE FRONTEND (SPA) ---
 // Serve the Vite-built frontend for all dashboard routes
 const dashboardRoutes = ['/', '/majelis', '/business-types', '/financial-literacy', '/user-profile/:phone'];
@@ -33,18 +39,6 @@ dashboardRoutes.forEach(route => {
     res.sendFile(path.join(__dirname, 'public/frontend/index.html'));
   });
 });
-
-// --- HEALTH CHECK ---
-app.get('/health', (req, res) => res.status(200).send('🤖 Akademi-AI (Modular) is Online!'));
-
-// --- SERVE STATIC DASHBOARD ---
-app.use(express.static(path.join(__dirname, 'public'), {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.html')) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    }
-  }
-}));
 
 // --- WEBHOOK VERIFICATION ---
 app.get('/webhook', (req, res) => {
