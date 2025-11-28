@@ -6,6 +6,7 @@ const db = new Firestore({
 });
 
 const USERS_COLLECTION = 'users';
+const MAJELIS_COLLECTION = 'majelis';
 
 // Helper to get User Context
 async function getUserContext(phoneNumber) {
@@ -105,4 +106,185 @@ async function deleteUser(phoneNumber) {
   }
 }
 
-module.exports = { getUserContext, registerNewUser, getAllUsers, updateUserStatus, deleteUser };
+// ===== MAJELIS MANAGEMENT =====
+
+// Get all Majelis
+async function getAllMajelis() {
+  try {
+    const snapshot = await db.collection(MAJELIS_COLLECTION).get();
+    const majelis = [];
+    snapshot.forEach(doc => {
+      majelis.push({ id: doc.id, ...doc.data() });
+    });
+    return majelis;
+  } catch (error) {
+    console.error('Error getting all majelis:', error);
+    return [];
+  }
+}
+
+// Get single Majelis
+async function getMajelis(majelisId) {
+  try {
+    const doc = await db.collection(MAJELIS_COLLECTION).doc(majelisId).get();
+    if (!doc.exists) return null;
+    return { id: doc.id, ...doc.data() };
+  } catch (error) {
+    console.error('Error getting majelis:', error);
+    return null;
+  }
+}
+
+// Create Majelis
+async function createMajelis(data) {
+  try {
+    const majelisData = {
+      name: data.name,
+      description: data.description || '',
+      schedule_day: data.schedule_day, // e.g., "Selasa"
+      schedule_time: data.schedule_time || '10:00',
+      location: data.location || '',
+      members: data.members || [], // Array of phone numbers
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    const docRef = await db.collection(MAJELIS_COLLECTION).add(majelisData);
+    console.log(`✨ Majelis created: ${data.name} (${docRef.id})`);
+    return { id: docRef.id, ...majelisData };
+  } catch (error) {
+    console.error('Error creating majelis:', error);
+    return null;
+  }
+}
+
+// Update Majelis
+async function updateMajelis(majelisId, data) {
+  try {
+    const majelisRef = db.collection(MAJELIS_COLLECTION).doc(majelisId);
+    const doc = await majelisRef.get();
+    
+    if (!doc.exists) return null;
+    
+    const updateData = {
+      ...data,
+      updated_at: new Date().toISOString(),
+    };
+    
+    await majelisRef.update(updateData);
+    console.log(`🔄 Majelis updated: ${majelisId}`);
+    
+    const updatedDoc = await majelisRef.get();
+    return { id: updatedDoc.id, ...updatedDoc.data() };
+  } catch (error) {
+    console.error('Error updating majelis:', error);
+    return null;
+  }
+}
+
+// Delete Majelis
+async function deleteMajelis(majelisId) {
+  try {
+    const majelisRef = db.collection(MAJELIS_COLLECTION).doc(majelisId);
+    const doc = await majelisRef.get();
+    
+    if (!doc.exists) return false;
+    
+    await majelisRef.delete();
+    console.log(`🗑️ Majelis deleted: ${majelisId}`);
+    return true;
+  } catch (error) {
+    console.error('Error deleting majelis:', error);
+    return false;
+  }
+}
+
+// Add member to Majelis
+async function addMemberToMajelis(majelisId, phoneNumber) {
+  try {
+    const majelisRef = db.collection(MAJELIS_COLLECTION).doc(majelisId);
+    const doc = await majelisRef.get();
+    
+    if (!doc.exists) return null;
+    
+    const members = doc.data().members || [];
+    if (!members.includes(phoneNumber)) {
+      members.push(phoneNumber);
+      await majelisRef.update({ 
+        members,
+        updated_at: new Date().toISOString()
+      });
+      
+      // Update user's majelis_day
+      const majelisData = doc.data();
+      await updateUserMajelisDay(phoneNumber, majelisData.schedule_day);
+      
+      console.log(`➕ Added ${phoneNumber} to Majelis ${majelisId}`);
+    }
+    
+    const updatedDoc = await majelisRef.get();
+    return { id: updatedDoc.id, ...updatedDoc.data() };
+  } catch (error) {
+    console.error('Error adding member to majelis:', error);
+    return null;
+  }
+}
+
+// Remove member from Majelis
+async function removeMemberFromMajelis(majelisId, phoneNumber) {
+  try {
+    const majelisRef = db.collection(MAJELIS_COLLECTION).doc(majelisId);
+    const doc = await majelisRef.get();
+    
+    if (!doc.exists) return null;
+    
+    const members = doc.data().members || [];
+    const updatedMembers = members.filter(m => m !== phoneNumber);
+    
+    await majelisRef.update({ 
+      members: updatedMembers,
+      updated_at: new Date().toISOString()
+    });
+    
+    // Reset user's majelis_day
+    await updateUserMajelisDay(phoneNumber, 'BELUM VERIFIKASI (Hubungi Petugas)');
+    
+    console.log(`➖ Removed ${phoneNumber} from Majelis ${majelisId}`);
+    
+    const updatedDoc = await majelisRef.get();
+    return { id: updatedDoc.id, ...updatedDoc.data() };
+  } catch (error) {
+    console.error('Error removing member from majelis:', error);
+    return null;
+  }
+}
+
+// Helper: Update user's majelis_day
+async function updateUserMajelisDay(phoneNumber, majelisDay) {
+  const cleanPhone = phoneNumber.replace(/\D/g, '');
+  try {
+    const userRef = db.collection(USERS_COLLECTION).doc(cleanPhone);
+    const userDoc = await userRef.get();
+    
+    if (userDoc.exists) {
+      await userRef.update({ majelis_day: majelisDay });
+    }
+  } catch (error) {
+    console.error('Error updating user majelis_day:', error);
+  }
+}
+
+module.exports = { 
+  getUserContext, 
+  registerNewUser, 
+  getAllUsers, 
+  updateUserStatus, 
+  deleteUser,
+  getAllMajelis,
+  getMajelis,
+  createMajelis,
+  updateMajelis,
+  deleteMajelis,
+  addMemberToMajelis,
+  removeMemberFromMajelis
+};
