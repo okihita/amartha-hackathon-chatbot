@@ -59,6 +59,7 @@
                         <th>Phone</th>
                         <th>Business</th>
                         <th>Location</th>
+                        <th>Majelis</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -90,12 +91,21 @@
             loading.style.display = 'none';
             table.style.display = 'table';
             
-            tbody.innerHTML = users.map(user => `
+            tbody.innerHTML = users.map(user => {
+                const majelisDay = user.majelis_day || 'Not assigned';
+                const isAssigned = majelisDay !== 'Not assigned' && !majelisDay.includes('BELUM VERIFIKASI');
+                
+                return `
                 <tr>
                     <td><strong>${user.name}</strong></td>
                     <td>${user.phone}</td>
                     <td>${user.business_type}</td>
                     <td>${user.location}</td>
+                    <td>
+                        <span style="font-size: 12px; color: ${isAssigned ? '#28a745' : '#999'};">
+                            ${isAssigned ? '📅 ' + majelisDay : '—'}
+                        </span>
+                    </td>
                     <td>
                         <span class="status ${user.is_verified ? 'verified' : 'pending'}">
                             ${user.is_verified ? 'Verified' : 'Pending'}
@@ -117,7 +127,8 @@
                         </div>
                     </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         }
 
         async function handleVerify(phone, status) {
