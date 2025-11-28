@@ -174,15 +174,26 @@ function parseBusinessTypeDoc(sections, fileName) {
     const trimmed = text.trim();
 
     // Extract Distinctive Factor and Karakter Utama (business character)
-    // Skip the headers themselves, only capture content
-    if (lower.includes('distinctive factor:') || lower.includes('karakter utama:')) {
+    // Track which section we're in to add proper separator
+    if (lower.includes('distinctive factor:')) {
       inBusinessCharacter = true;
-      // Extract content after the colon if present
       const colonIndex = trimmed.indexOf(':');
       if (colonIndex > -1 && colonIndex < trimmed.length - 1) {
         const content = trimmed.substring(colonIndex + 1).trim();
         if (content) {
-          businessCharParts.push(content);
+          businessCharParts.push({ type: 'distinctive', text: content });
+        }
+      }
+      continue;
+    }
+    
+    if (lower.includes('karakter utama:')) {
+      inBusinessCharacter = true;
+      const colonIndex = trimmed.indexOf(':');
+      if (colonIndex > -1 && colonIndex < trimmed.length - 1) {
+        const content = trimmed.substring(colonIndex + 1).trim();
+        if (content) {
+          businessCharParts.push({ type: 'karakter', text: content });
         }
       }
       continue;
@@ -191,7 +202,10 @@ function parseBusinessTypeDoc(sections, fileName) {
     if (inBusinessCharacter && !lower.match(/^level [1-5]/i)) {
       // Skip if it's just the header text itself
       if (!lower.match(/^(distinctive factor|karakter utama)\s*$/)) {
-        businessCharParts.push(trimmed);
+        // Add to the last part if exists
+        if (businessCharParts.length > 0) {
+          businessCharParts[businessCharParts.length - 1].text += ' ' + trimmed;
+        }
       }
     }
 
@@ -205,12 +219,28 @@ function parseBusinessTypeDoc(sections, fileName) {
       
       inBusinessCharacter = false;
       if (businessCharParts.length > 0 && !parsed.business_character) {
-        parsed.business_character = businessCharParts.join(' ').trim();
+        // Find distinctive factor and karakter utama
+        const distinctive = businessCharParts.find(p => p.type === 'distinctive');
+        const karakter = businessCharParts.find(p => p.type === 'karakter');
+        
+        if (distinctive && karakter) {
+          // Format: Distinctive Factor. Karakter Utama
+          let distinctiveText = distinctive.text.trim();
+          if (!distinctiveText.endsWith('.')) {
+            distinctiveText += '.';
+          }
+          parsed.business_character = distinctiveText + ' ' + karakter.text.trim();
+        } else if (distinctive) {
+          parsed.business_character = distinctive.text.trim();
+        } else if (karakter) {
+          parsed.business_character = karakter.text.trim();
+        }
       }
       
       currentLevel = {
         level: parseInt(levelMatch[1]),
         name: trimmed,
+        goal: '', // Tujuan - goal to reach next level
         character: [], // Character of this level (array of bullet points)
         swot: {
           strengths: [],
@@ -236,6 +266,25 @@ function parseBusinessTypeDoc(sections, fileName) {
 
     if (!currentLevel) continue;
 
+    // Detect "Tujuan" section for goal
+    if (lower.includes('tujuan:')) {
+      currentSection = 'goal';
+      const colonIndex = trimmed.indexOf(':');
+      if (colonIndex > -1 && colonIndex < trimmed.length - 1) {
+        const goalText = trimmed.substring(colonIndex + 1).trim();
+        if (goalText && currentLevel) {
+          currentLevel.goal = goalText;
+        }
+      }
+      continue;
+    }
+    
+    // Stop capturing goal when we hit section markers (A., B., C., etc.)
+    if (currentSection === 'goal' && trimmed.match(/^[A-Z]\./)) {
+      currentSection = null;
+      continue;
+    }
+    
     // Detect "Potret Diagnostik" section for character
     if (lower.includes('potret diagnostik')) {
       currentSection = 'character';
@@ -301,7 +350,22 @@ function parseBusinessTypeDoc(sections, fileName) {
     }
 
     // Add content to appropriate section
-    if (currentSection === 'character') {
+    if (currentSection === 'goal') {
+      // Continue capturing goal text if it spans multiple lines
+      // Stop at section markers (A., B., C.) or bullet points
+      if (trimmed && 
+          !lower.includes('potret diagnostik') && 
+          !lower.includes('swot') &&
+          !trimmed.match(/^[A-Z]\./) &&
+          !trimmed.startsWith('[ ]') &&
+          !lower.includes('kpi:')) {
+        if (currentLevel.goal) {
+          currentLevel.goal += ' ' + trimmed;
+        } else {
+          currentLevel.goal = trimmed;
+        }
+      }
+    } else if (currentSection === 'character') {
       // Flatten bullet points - capture all bullets regardless of nesting level
       // Skip section headers like "Fisik:", "Keuangan & Metrik Kuantitatif:", "Stok:", "Pasar:"
       if (trimmed && 
@@ -361,16 +425,25 @@ function parseBusinessTypeDoc(sections, fileName) {
 
   // Finalize business character if not set
   if (!parsed.business_character && businessCharParts.length > 0) {
-    // Join parts with period separator to distinguish Distinctive Factor from Karakter Utama
-    parsed.business_character = businessCharParts
-      .map(part => part.trim())
-      .filter(part => part.length > 0)
-      .join('. ')
-      .replace(/\.\s*\./g, '.') // Remove double periods
-      .trim();
+    // Find distinctive factor and karakter utama
+    const distinctive = businessCharParts.find(p => p.type === 'distinctive');
+    const karakter = businessCharParts.find(p => p.type === 'karakter');
+    
+    if (distinctive && karakter) {
+      // Format: Distinctive Factor. Karakter Utama
+      let distinctiveText = distinctive.text.trim();
+      if (!distinctiveText.endsWith('.')) {
+        distinctiveText += '.';
+      }
+      parsed.business_character = distinctiveText + ' ' + karakter.text.trim();
+    } else if (distinctive) {
+      parsed.business_character = distinctive.text.trim();
+    } else if (karakter) {
+      parsed.business_character = karakter.text.trim();
+    }
     
     // Ensure it ends with a period
-    if (!parsed.business_character.endsWith('.')) {
+    if (parsed.business_character && !parsed.business_character.endsWith('.')) {
       parsed.business_character += '.';
     }
   }

@@ -26,12 +26,17 @@
         .stat-value { font-size: 32px; font-weight: 700; margin-bottom: 5px; }
         .stat-label { font-size: 14px; opacity: 0.9; }
         .business-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .business-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; transition: all 0.2s; cursor: pointer; }
+        .business-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; transition: all 0.2s; cursor: pointer; display: flex; flex-direction: column; }
         .business-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }
-        .business-card h3 { font-size: 18px; color: #333; margin-bottom: 10px; }
-        .business-card .category { display: inline-block; padding: 4px 12px; background: #e3f2fd; color: #1976d2; border-radius: 12px; font-size: 12px; font-weight: 600; margin-bottom: 10px; }
-        .business-card .description { font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.5; }
-        .business-card .levels { font-size: 13px; color: #999; }
+        .business-card .card-header { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 15px; }
+        .business-card .card-icon { font-size: 48px; flex-shrink: 0; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: #f5f5f5; border-radius: 8px; }
+        .business-card .card-title-section { flex: 1; min-height: 60px; display: flex; flex-direction: column; justify-content: center; }
+        .business-card h3 { font-size: 16px; color: #333; margin: 0; line-height: 1.3; min-height: 42px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .business-card .category { display: inline-block; padding: 4px 12px; background: #e3f2fd; color: #1976d2; border-radius: 12px; font-size: 12px; font-weight: 600; margin-bottom: 8px; width: fit-content; }
+        .business-card .description { font-size: 13px; color: #666; margin-bottom: 12px; line-height: 1.5; flex: 1; }
+        .business-card .goals { font-size: 12px; color: #555; background: #f9f9f9; padding: 10px; border-radius: 4px; border-left: 3px solid #007bff; }
+        .business-card .goal-item { margin-bottom: 6px; padding-left: 12px; position: relative; }
+        .business-card .goal-item:before { content: "→"; position: absolute; left: 0; color: #007bff; font-weight: bold; }
         .business-card .keywords { margin-top: 10px; }
         .keyword-tag { display: inline-block; padding: 3px 8px; background: #f5f5f5; border-radius: 4px; font-size: 11px; color: #666; margin-right: 5px; margin-top: 5px; }
         .loading { text-align: center; padding: 40px; color: #666; }
@@ -124,6 +129,46 @@
     <script>
         let allBusinessTypes = [];
 
+        // Map business types to representative icons
+        function getBusinessIcon(businessType) {
+            const type = businessType.toLowerCase();
+            
+            // Food & Beverage
+            if (type.includes('warung sembako') || type.includes('kelontong')) return '🏪';
+            if (type.includes('warung makan')) return '🍽️';
+            if (type.includes('coffee')) return '☕';
+            if (type.includes('jajanan') || type.includes('camilan')) return '🍪';
+            if (type.includes('minuman')) return '🧋';
+            
+            // Fashion & Retail
+            if (type.includes('fashion') || type.includes('hijab')) return '👗';
+            if (type.includes('elektronik') || type.includes('gadget')) return '📱';
+            if (type.includes('pet shop')) return '🐾';
+            if (type.includes('bahan bangunan')) return '🧱';
+            if (type.includes('mainan') || type.includes('hobi')) return '🎮';
+            
+            // Services
+            if (type.includes('laundry')) return '👕';
+            if (type.includes('bengkel motor')) return '🏍️';
+            if (type.includes('kecantikan') || type.includes('salon')) return '💇';
+            if (type.includes('penjahit') || type.includes('permak')) return '✂️';
+            if (type.includes('kos-kosan') || type.includes('penginapan')) return '🏠';
+            if (type.includes('logistik') || type.includes('ekspedisi')) return '📦';
+            if (type.includes('sewa kendaraan')) return '🚗';
+            if (type.includes('cuci steam') || type.includes('detailing')) return '🚿';
+            if (type.includes('apotek') || type.includes('obat')) return '💊';
+            if (type.includes('event') || type.includes('wedding')) return '🎉';
+            if (type.includes('bengkel las') || type.includes('bubut')) return '🔧';
+            if (type.includes('kontraktor') || type.includes('renovasi')) return '🏗️';
+            
+            // Agriculture
+            if (type.includes('kriya') || type.includes('kerajinan')) return '🎨';
+            if (type.includes('petani') || type.includes('holtikultura')) return '🌱';
+            if (type.includes('nelayan') || type.includes('ikan')) return '🐟';
+            
+            return '🏢'; // Default
+        }
+
         async function fetchBusinessTypes() {
             try {
                 const res = await fetch('/api/business-types');
@@ -184,17 +229,30 @@
             });
             
             grid.innerHTML = sorted.map(bt => {
-                const levelCount = bt.maturity_levels?.length || 0;
                 const categoryNum = bt.category_number ? `Kategori ${bt.category_number}` : 'Mikro';
-                const description = bt.business_character || bt.description || 'No description available';
-                const shortDesc = description.length > 120 ? description.substring(0, 120) + '...' : description;
+                const icon = getBusinessIcon(bt.business_type);
+                
+                // Get goals from each level (up to 5 levels)
+                const goals = (bt.maturity_levels || [])
+                    .filter(level => level.goal)
+                    .map(level => `<div class="goal-item">Level ${level.level}: ${level.goal}</div>`)
+                    .join('');
                 
                 return `
                     <div class="business-card" onclick="viewBusinessDetail('${bt.id}')">
-                        <div class="category">${categoryNum}</div>
-                        <h3>${bt.business_type}</h3>
-                        <div class="description">${shortDesc}</div>
-                        <div class="levels">📊 ${levelCount} Maturity Levels</div>
+                        <div class="card-header">
+                            <div class="card-icon">${icon}</div>
+                            <div class="card-title-section">
+                                <div class="category">${categoryNum}</div>
+                                <h3>${bt.business_type}</h3>
+                            </div>
+                        </div>
+                        ${goals ? `
+                            <div class="goals">
+                                <strong style="font-size: 11px; text-transform: uppercase; color: #007bff; display: block; margin-bottom: 8px;">Level Up Goals:</strong>
+                                ${goals}
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }).join('');
@@ -286,7 +344,7 @@
                         <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border-left: 4px solid #007bff;">
                             <strong style="font-size: 13px; color: #333;">Key Performance Indicators (KPIs):</strong>
                             <ul style="margin-top: 10px;">
-                                ${level.roadmap.kpis.map(kpi => `<li style="margin-bottom: 8px;">☑️ ${kpi}</li>`).join('')}
+                                ${level.roadmap.kpis.map(kpi => `<li style="margin-bottom: 8px;">${kpi}</li>`).join('')}
                             </ul>
                         </div>
                     ` : ''}
@@ -317,11 +375,8 @@
             document.getElementById('modalContent').innerHTML = `
                 <h2>${business.business_type}</h2>
                 <div style="margin-bottom: 20px;">
-                    <span style="display: inline-block; padding: 6px 12px; background: #e3f2fd; color: #1976d2; border-radius: 12px; font-size: 13px; font-weight: 600; margin-right: 10px;">
+                    <span style="display: inline-block; padding: 6px 12px; background: #e3f2fd; color: #1976d2; border-radius: 12px; font-size: 13px; font-weight: 600;">
                         ${categoryLabel}
-                    </span>
-                    <span style="display: inline-block; padding: 6px 12px; background: #f0f0f0; color: #666; border-radius: 12px; font-size: 13px;">
-                        ${business.maturity_levels?.length || 0} Maturity Levels
                     </span>
                 </div>
                 ${business.business_character ? `
