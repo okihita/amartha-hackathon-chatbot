@@ -1,6 +1,7 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const UserService = require('../services/UserService');
 const axios = require('axios');
+const { GRAPH_API_VERSION } = require('./whatsapp');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const WA_ACCESS_TOKEN = process.env.WHATSAPP_TOKEN;
@@ -64,16 +65,14 @@ async function analyzeImage(imageId, caption, senderPhone) {
       
       // Store image URL for building/inventory, null for financial records
       const shouldStoreImage = ['building', 'inventory'].includes(structuredData.category);
-      const imageUrl = shouldStoreImage ? `image_${imageId}` : null; // Placeholder - implement actual storage
+      const imageUrl = shouldStoreImage ? `https://graph.facebook.com/${GRAPH_API_VERSION}/${imageId}` : null;
       
       await UserService.createBusinessIntelligence(senderPhone, biData, imageUrl, caption);
-      console.log(`💾 Business intelligence saved for ${senderPhone}: ${structuredData.category}`);
     }
     
     // Step 3: Generate user-friendly response
     const userResponse = await generateUserResponse(structuredData, userProfile);
     
-    console.log(`✅ Image analyzed for ${senderPhone}: ${structuredData.category}`);
     return userResponse;
     
   } catch (error) {
@@ -279,7 +278,7 @@ Silakan kirim foto bisnis Ibu untuk analisis yang lebih bermanfaat!`;
 async function downloadWhatsAppImage(imageId) {
   try {
     // Step 1: Get image URL from WhatsApp API
-    const mediaUrl = `https://graph.facebook.com/v18.0/${imageId}`;
+    const mediaUrl = `https://graph.facebook.com/${GRAPH_API_VERSION}/${imageId}`;
     const urlResponse = await axios.get(mediaUrl, {
       headers: {
         'Authorization': `Bearer ${WA_ACCESS_TOKEN}`

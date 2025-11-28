@@ -72,7 +72,6 @@ async function getGeminiResponse(userText, senderPhone) {
         return "Maaf, pesan terlalu panjang. Mohon kirim pesan yang lebih singkat.";
       }
       if (validation.reason === "spam") {
-        console.log(`⚠️ Spam detected from ${senderPhone}: ${userText.substring(0, 50)}`);
         return "Maaf, pesan tidak valid. Silakan kirim pertanyaan yang jelas.";
       }
     }
@@ -198,12 +197,10 @@ async function getGeminiResponse(userText, senderPhone) {
     // ✨ HANDLE TOOL CALLS
     const functionCall = response.functionCalls() ? response.functionCalls()[0] : null;
     
-    console.log('🔍 Function Call:', functionCall ? JSON.stringify(functionCall) : 'None');
     
     if (functionCall) {
       const { name, args } = functionCall;
       if (name === "registerUser") {
-        console.log('📝 Registering user with args:', JSON.stringify(args));
         // Execute DB Update
         const newUser = await UserService.createUser(senderPhone, args);
         

@@ -96,7 +96,6 @@ class MajelisService {
       await MajelisRepository.create(mockMajelis);
       count++;
     }
-    console.log(`✅ Created ${count} mock majelis`);
     return count;
   }
 

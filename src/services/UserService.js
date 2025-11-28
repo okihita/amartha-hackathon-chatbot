@@ -98,7 +98,6 @@ class UserService {
     for (const user of MOCK_USERS) {
       const existing = await UserRepository.findByPhone(user.phone);
       if (!existing) {
-        const mockUser = User.createMock(user);
         await UserRepository.create(user.phone, { 
           name: user.name,
           business_name: user.business_name,
@@ -107,7 +106,6 @@ class UserService {
         count++;
       }
     }
-    console.log(`✅ Created ${count} mock users`);
     return count;
   }
 

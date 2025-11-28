@@ -2,6 +2,7 @@ const axios = require('axios');
 
 const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
+const GRAPH_API_VERSION = 'v24.0';
 
 async function sendMessage(to, text) {
   try {
@@ -11,7 +12,7 @@ async function sendMessage(to, text) {
     const formattedText = text.replace(/\*\*(.*?)\*\*/g, '*$1*').replace(/^[\*\-]\s/gm, '• ');
 
     await axios.post(
-      `https://graph.facebook.com/v24.0/${PHONE_NUMBER_ID}/messages`,
+      `https://graph.facebook.com/${GRAPH_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
       {
         messaging_product: 'whatsapp',
         to: to,
@@ -25,4 +26,4 @@ async function sendMessage(to, text) {
   }
 }
 
-module.exports = { sendMessage };
+module.exports = { sendMessage, GRAPH_API_VERSION };

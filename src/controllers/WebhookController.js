@@ -15,15 +15,12 @@ class WebhookController {
     const phone = message.from;
     const handlers = {
       text: async () => {
-        console.log(`📝 ${phone}: ${message.text.body}`);
         await sendMessage(phone, await getGeminiResponse(message.text.body, phone));
       },
       image: async () => {
-        console.log(`📷 ${phone}`);
         await sendMessage(phone, await analyzeImage(message.image.id, message.image.caption || '', phone));
       },
       audio: async () => {
-        console.log(`📎 ${phone} (audio)`);
         await sendMessage(phone, "Maaf Bu, saat ini saya belum bisa memproses pesan suara. Silakan kirim pesan teks. 😊");
       }
     };

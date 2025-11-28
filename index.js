@@ -3,6 +3,19 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const cors = require('cors');
 
+// Validate required environment variables
+const requiredEnvVars = ['MY_VERIFY_TOKEN', 'WHATSAPP_TOKEN', 'PHONE_NUMBER_ID', 'GEMINI_API_KEY', 'GCP_PROJECT_ID'];
+const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+if (missingVars.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+  process.exit(1);
+}
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const webhookRoutes = require('./src/routes/webhookRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const majelisRoutes = require('./src/routes/majelisRoutes');
