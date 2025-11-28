@@ -26,9 +26,9 @@ app.use(cors()); // Enable CORS for Dashboard
 // --- SERVE STATIC DASHBOARD ---
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- SERVE HTML PAGES WITHOUT EXTENSION ---
+// --- SERVE MAJELIS PAGE ---
 app.get('/majelis', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/majelis'));
+  res.sendFile(path.join(__dirname, 'public/majelis.html'));
 });
 
 // --- HEALTH CHECK ---
