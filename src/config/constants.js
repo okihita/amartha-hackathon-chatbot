@@ -2,7 +2,19 @@ const COLLECTIONS = {
   USERS: 'users',
   MAJELIS: 'majelis',
   FINANCIAL_LITERACY: 'financial_literacy',
-  BUSINESS_TYPES: 'business_types'
+  BUSINESS_CLASSIFICATIONS: 'business_classifications'
 };
 
-module.exports = { COLLECTIONS };
+const USER_COLLECTIONS = {
+  PROFILE: 'profile',
+  BUSINESS: 'business',
+  LOAN: 'loan',
+  LITERACY: 'literacy',
+  BUSINESS_INTELLIGENCE: 'business_intelligence'
+};
+
+const MAJELIS_COLLECTIONS = {
+  ATTENDANCE: 'attendance'
+};
+
+module.exports = { COLLECTIONS, USER_COLLECTIONS, MAJELIS_COLLECTIONS };

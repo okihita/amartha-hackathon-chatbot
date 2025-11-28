@@ -43,20 +43,31 @@ async function analyzeImage(imageId, caption, senderPhone) {
     // Step 1: Extract structured business intelligence data
     const structuredData = await extractBusinessIntelligence(imagePart, userProfile, caption);
     
-    // Step 2: Save to database if relevant (including image data)
+    // Step 2: Save to database if relevant
     if (structuredData.is_relevant && structuredData.category !== 'irrelevant') {
-      // Store base64 image for non-transaction images (building, inventory)
+      // Determine type from category
+      const typeMap = {
+        'building': 'building',
+        'inventory': 'inventory',
+        'financial_record': 'ledger'
+      };
+      
+      const biData = {
+        type: typeMap[structuredData.category] || 'general',
+        category: structuredData.category,
+        extracted: structuredData.extracted_data,
+        credit_metrics: structuredData.credit_metrics,
+        insights: structuredData.insights,
+        recommendations: structuredData.recommendations,
+        confidence: structuredData.confidence
+      };
+      
+      // Store image URL for building/inventory, null for financial records
       const shouldStoreImage = ['building', 'inventory'].includes(structuredData.category);
-      const imageData = shouldStoreImage ? imageBuffer.toString('base64') : null;
+      const imageUrl = shouldStoreImage ? `image_${imageId}` : null; // Placeholder - implement actual storage
       
-      await UserService.saveBusinessIntelligence(senderPhone, structuredData, imageData, imageId);
+      await UserService.createBusinessIntelligence(senderPhone, biData, imageUrl, caption);
       console.log(`💾 Business intelligence saved for ${senderPhone}: ${structuredData.category}`);
-      
-      // Step 2.5: If user is verified and this is a business asset photo, populate business profile
-      if (userProfile.is_verified && shouldStoreImage) {
-        await UserService.updateBusinessProfile(senderPhone, structuredData);
-        console.log(`📊 Business profile updated for verified user ${senderPhone}`);
-      }
     }
     
     // Step 3: Generate user-friendly response
@@ -74,7 +85,7 @@ async function analyzeImage(imageId, caption, senderPhone) {
 async function extractBusinessIntelligence(imagePart, userProfile, caption) {
   const prompt = `
   PERAN: AI Analyst untuk Credit Scoring UMKM Amartha
-  USER: ${userProfile.name}, Usaha: ${userProfile.business_type}, Lokasi: ${userProfile.location}
+  USER: ${userProfile.name}, Usaha: ${userProfile.business?.name || 'Belum diisi'}, Lokasi: ${userProfile.business?.location || 'Belum diisi'}
   Caption: "${caption || 'tidak ada'}"
   
   TUGAS: Ekstrak data terstruktur dari gambar untuk analisis kredit dan prediksi cashflow.
@@ -151,7 +162,7 @@ async function extractBusinessIntelligence(imagePart, userProfile, caption) {
   INSTRUKSI:
   - Jika gambar TIDAK RELEVAN (selfie, foto pribadi, meme), set is_relevant: false
   - Berikan estimasi konservatif untuk nilai finansial
-  - Gunakan konteks bisnis user (${userProfile.business_type}) untuk analisis
+  - Gunakan konteks bisnis user (${userProfile.business?.name || 'UMKM'}) untuk analisis
   - Berikan credit metrics yang realistis berdasarkan visual evidence
   - Insights dan recommendations dalam bahasa Indonesia yang praktis
   `;
@@ -166,8 +177,8 @@ async function extractBusinessIntelligence(imagePart, userProfile, caption) {
     
     // Add metadata
     data.analyzed_at = new Date().toISOString();
-    data.user_business_type = userProfile.business_type;
-    data.user_location = userProfile.location;
+    data.user_business_name = userProfile.business?.name || null;
+    data.user_business_location = userProfile.business?.location || null;
     
     return data;
   } catch (error) {
@@ -218,7 +229,7 @@ Silakan kirim foto bisnis Ibu untuk analisis yang lebih bermanfaat!`;
   
   let response = `✅ *${categoryLabel} - Teranalisis!*\n`;
   response += `${storageStatus}\n\n`;
-  response += `👤 ${userProfile.name} (${userProfile.business_type})\n\n`;
+  response += `👤 ${userProfile.name} (${userProfile.business?.name || 'UMKM'})\n\n`;
   
   // Add insights
   if (structuredData.insights && structuredData.insights.length > 0) {

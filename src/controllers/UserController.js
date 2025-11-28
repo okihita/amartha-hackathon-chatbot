@@ -27,20 +27,6 @@ class UserController {
     const deleted = await UserService.deleteUser(req.params.phone);
     res.status(deleted ? 200 : 404).json(deleted ? { success: true } : { error: 'Not found' });
   });
-
-  recalculateCredit = handle(async (req, res) => {
-    const result = await UserService.calculateCreditScore(req.params.phone);
-    if (!result) {
-      return res.status(404).json({ error: 'No business intelligence data' });
-    }
-    const biData = await UserService.getBusinessIntelligence(req.params.phone);
-    res.json({ 
-      success: true,
-      credit_score: result.creditScore,
-      credit_metrics: result.metrics,
-      data_points: biData.length
-    });
-  });
 }
 
 module.exports = new UserController();

@@ -58,11 +58,12 @@ async function retrieveKnowledge(userText) {
   // Check Firestore financial literacy modules
   try {
     const { Firestore } = require('@google-cloud/firestore');
+    const { COLLECTIONS } = require('../config/constants');
     const db = new Firestore({
       projectId: process.env.GCP_PROJECT_ID,
     });
     
-    const snapshot = await db.collection('financial_literacy').get();
+    const snapshot = await db.collection(COLLECTIONS.FINANCIAL_LITERACY).get();
     
     snapshot.forEach(doc => {
       const module = doc.data();

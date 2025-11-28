@@ -21,6 +21,17 @@ class Majelis {
       updated_at: new Date().toISOString()
     };
   }
+
+  static createAttendance(data) {
+    const now = new Date().toISOString();
+    return {
+      date: data.date || now,
+      attendees: data.attendees || [],
+      notes: data.notes || '',
+      created_at: now,
+      updated_at: now
+    };
+  }
 }
 
 module.exports = Majelis;

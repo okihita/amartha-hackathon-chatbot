@@ -1,12 +1,12 @@
 const MOCK_USERS = [
-  { name: 'Siti Nurhaliza', phone: '6281234567801', business_type: 'Warung Kelontong', location: 'Jakarta Selatan' },
-  { name: 'Dewi Lestari', phone: '6281234567802', business_type: 'Toko Pakaian', location: 'Bandung' },
-  { name: 'Rina Susanti', phone: '6281234567803', business_type: 'Warung Makan', location: 'Surabaya' },
-  { name: 'Maya Sari', phone: '6281234567804', business_type: 'Salon Kecantikan', location: 'Yogyakarta' },
-  { name: 'Ani Wijaya', phone: '6281234567805', business_type: 'Toko Kue', location: 'Semarang' },
-  { name: 'Fitri Handayani', phone: '6281234567806', business_type: 'Laundry', location: 'Malang' },
-  { name: 'Ratna Dewi', phone: '6281234567807', business_type: 'Toko Bunga', location: 'Solo' },
-  { name: 'Sri Wahyuni', phone: '6281234567808', business_type: 'Warung Kopi', location: 'Medan' }
+  { name: 'Siti Nurhaliza', phone: '6281234567801', business_name: 'Warung Kelontong', business_location: 'Jakarta Selatan' },
+  { name: 'Dewi Lestari', phone: '6281234567802', business_name: 'Toko Pakaian', business_location: 'Bandung' },
+  { name: 'Rina Susanti', phone: '6281234567803', business_name: 'Warung Makan', business_location: 'Surabaya' },
+  { name: 'Maya Sari', phone: '6281234567804', business_name: 'Salon Kecantikan', business_location: 'Yogyakarta' },
+  { name: 'Ani Wijaya', phone: '6281234567805', business_name: 'Toko Kue', business_location: 'Semarang' },
+  { name: 'Fitri Handayani', phone: '6281234567806', business_name: 'Laundry', business_location: 'Malang' },
+  { name: 'Ratna Dewi', phone: '6281234567807', business_name: 'Toko Bunga', business_location: 'Solo' },
+  { name: 'Sri Wahyuni', phone: '6281234567808', business_name: 'Warung Kopi', business_location: 'Medan' }
 ];
 
 const MOCK_MAJELIS = [

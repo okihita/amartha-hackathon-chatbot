@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const RAGRepository = require('../repositories/RAGRepository');
 
-router.get('/knowledge/business-types', async (req, res) => {
+router.get('/knowledge/business-classifications', async (req, res) => {
   try {
-    const businessTypes = await RAGRepository.getBusinessTypes();
-    res.json(businessTypes);
+    const businessClassifications = await RAGRepository.getBusinessTypes();
+    res.json(businessClassifications);
   } catch (error) {
-    console.error('Error fetching business types:', error);
-    res.status(500).json({ error: 'Failed to fetch business types' });
+    console.error('Error fetching business classifications:', error);
+    res.status(500).json({ error: 'Failed to fetch business classifications' });
   }
 });
 

@@ -10,15 +10,15 @@ const FALLBACK_MESSAGE = "Maaf Ibu, sinyal AI sedang gangguan. Mohon tanya ulang
 // ✨ TOOL DEFINITION
 const registerUserTool = {
   name: "registerUser",
-  description: "Registers a new user with their name, business type, and location.",
+  description: "Registers a new user with their name, business name, and location.",
   parameters: {
     type: "OBJECT",
     properties: {
       name: { type: "STRING", description: "The user's name (e.g., Ibu Siti)" },
-      business_type: { type: "STRING", description: "Type of business (e.g., Warung Sembako, Jual Bakso)" },
-      location: { type: "STRING", description: "City or Village (e.g., Bogor, Ciseeng)" },
+      business_name: { type: "STRING", description: "Name of business (e.g., Warung Sembako Siti, Toko Bakso Pak Budi)" },
+      business_location: { type: "STRING", description: "City or Village (e.g., Bogor, Ciseeng)" },
     },
-    required: ["name", "business_type", "location"],
+    required: ["name", "business_name", "business_location"],
   },
 };
 
@@ -89,48 +89,20 @@ async function getGeminiResponse(userText, senderPhone) {
         ? `${userProfile.majelis_name} (${userProfile.majelis_day})`
         : 'Belum terdaftar di Majelis';
       
-      const loanInfo = userProfile.loan_limit > 0
-        ? `\n💰 Limit Pinjaman: Rp ${userProfile.loan_limit.toLocaleString('id-ID')}\n` +
-          `💳 Sisa Limit: Rp ${userProfile.loan_remaining.toLocaleString('id-ID')}\n` +
-          `📅 Cicilan Berikutnya: ${userProfile.next_payment_date ? new Date(userProfile.next_payment_date).toLocaleDateString('id-ID') : 'Tidak ada'}\n` +
-          `💵 Jumlah Cicilan: Rp ${userProfile.next_payment_amount.toLocaleString('id-ID')}`
+      const loanInfo = userProfile.loan?.limit > 0
+        ? `\n💰 Limit Pinjaman: Rp ${userProfile.loan.limit.toLocaleString('id-ID')}\n` +
+          `💳 Sisa Limit: Rp ${userProfile.loan.remaining.toLocaleString('id-ID')}\n` +
+          `📅 Cicilan Berikutnya: ${userProfile.loan.next_payment_date ? new Date(userProfile.loan.next_payment_date).toLocaleDateString('id-ID') : 'Tidak ada'}\n` +
+          `💵 Jumlah Cicilan: Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
         : '';
-      
-      // Business profile / credit metrics info
-      let businessInfo = '';
-      if (userProfile.credit_score && userProfile.credit_metrics) {
-        const cm = userProfile.credit_metrics;
-        const creditScore = userProfile.credit_score;
-        
-        // Risk level emoji
-        let riskEmoji = '🔴';
-        if (cm.risk_level === 'rendah') riskEmoji = '🟢';
-        else if (cm.risk_level === 'sedang') riskEmoji = '🟡';
-        
-        businessInfo = `\n\n📊 *Profil Bisnis & Kredit:*\n` +
-          `⭐ Skor Kredit: ${creditScore}/100\n` +
-          `${riskEmoji} Risiko: ${cm.risk_level || 'N/A'}\n` +
-          `💼 Kesehatan Bisnis: ${cm.business_health_score || 0}/100\n` +
-          `🏢 Skor Aset: ${cm.asset_score || 0}/100\n` +
-          `💸 Skor Cashflow: ${cm.cashflow_score || 0}/100\n` +
-          `📈 Potensi Pertumbuhan: ${cm.growth_potential || 0}/100\n` +
-          `💰 Total Aset: Rp ${(cm.total_asset_value || 0).toLocaleString('id-ID')}\n` +
-          `📦 Nilai Inventori: Rp ${(cm.total_inventory_value || 0).toLocaleString('id-ID')}\n` +
-          `💵 Est. Cashflow Bulanan: Rp ${(cm.estimated_monthly_cashflow || 0).toLocaleString('id-ID')}\n` +
-          `🎯 Rekomendasi Pinjaman: Rp ${(cm.recommended_loan_amount || 0).toLocaleString('id-ID')}\n` +
-          `📸 Foto Dianalisis: ${cm.data_points || 0} gambar`;
-      }
       
       return `📊 *Data Profil Anda:*\n\n` +
              `👤 Nama: ${userProfile.name}\n` +
-             `🏪 Usaha: ${userProfile.business_type}\n` +
-             `📍 Lokasi: ${userProfile.location}\n` +
+             `🏪 Usaha: ${userProfile.business?.name || 'Belum diisi'}\n` +
+             `📍 Lokasi: ${userProfile.business?.location || 'Belum diisi'}\n` +
              `📅 Majelis: ${majelisInfo}\n` +
-             `📚 Modul: ${userProfile.current_module}\n` +
-             `📊 Literasi: ${userProfile.literacy_score}\n` +
-             `✅ Status: ${userProfile.is_verified ? 'Terverifikasi' : 'Belum Verifikasi'}` +
-             loanInfo +
-             businessInfo;
+             `✅ Status: ${userProfile.status === 'active' ? 'Terverifikasi' : 'Belum Verifikasi'}` +
+             loanInfo;
     }
     
     // 💰 POPULATE LOAN COMMAND (for testing)
@@ -138,13 +110,13 @@ async function getGeminiResponse(userText, senderPhone) {
       if (!userProfile) {
         return "❌ Anda belum terdaftar.";
       }
-      const result = await UserService.populateLoanData(senderPhone);
+      const result = await UserService.createMockLoanData(senderPhone);
       if (result.error) {
         return `❌ Gagal: ${result.error}`;
       }
       return `✅ *Data pinjaman berhasil dibuat!*\n\n` +
-             `💰 Limit: Rp ${result.data.loan_limit.toLocaleString('id-ID')}\n` +
-             `💳 Sisa Limit: Rp ${result.data.loan_remaining.toLocaleString('id-ID')}\n` +
+             `💰 Limit: Rp ${result.data.limit.toLocaleString('id-ID')}\n` +
+             `💳 Sisa Limit: Rp ${result.data.remaining.toLocaleString('id-ID')}\n` +
              `📅 Cicilan Berikutnya: ${new Date(result.data.next_payment_date).toLocaleDateString('id-ID')}\n` +
              `💵 Jumlah: Rp ${result.data.next_payment_amount.toLocaleString('id-ID')}\n\n` +
              `Ketik "cek data" untuk melihat detail lengkap.`;
@@ -179,21 +151,21 @@ async function getGeminiResponse(userText, senderPhone) {
         ? `${userProfile.majelis_name} (${userProfile.majelis_day})`
         : 'Belum terdaftar di Majelis';
       
-      const hasLoan = userProfile.loan_limit > 0;
+      const hasLoan = userProfile.loan?.limit > 0;
       const loanContext = hasLoan 
-        ? `\n- Limit Pinjaman: Rp ${userProfile.loan_limit.toLocaleString('id-ID')}\n` +
-          `- Sisa Limit: Rp ${userProfile.loan_remaining.toLocaleString('id-ID')}\n` +
-          `- Cicilan Berikutnya: ${userProfile.next_payment_date ? new Date(userProfile.next_payment_date).toLocaleDateString('id-ID') : 'Tidak ada'}\n` +
-          `- Jumlah Cicilan: Rp ${userProfile.next_payment_amount.toLocaleString('id-ID')}`
+        ? `\n- Limit Pinjaman: Rp ${userProfile.loan.limit.toLocaleString('id-ID')}\n` +
+          `- Sisa Limit: Rp ${userProfile.loan.remaining.toLocaleString('id-ID')}\n` +
+          `- Cicilan Berikutnya: ${userProfile.loan.next_payment_date ? new Date(userProfile.loan.next_payment_date).toLocaleDateString('id-ID') : 'Tidak ada'}\n` +
+          `- Jumlah Cicilan: Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
         : '\n- Belum memiliki pinjaman aktif';
       
       systemPrompt = `
       PERAN: Akademi-AI, asisten bisnis Ibu ${userProfile.name} untuk program literasi keuangan Amartha.
       CONTEXT: 
       - Nama: ${userProfile.name}
-      - Usaha: ${userProfile.business_type}
-      - Lokasi: ${userProfile.location}
-      - Status: ${userProfile.is_verified ? "Terverifikasi" : "Belum Verifikasi (Limit Akses)"}
+      - Usaha: ${userProfile.business?.name || 'Belum diisi'}
+      - Lokasi: ${userProfile.business?.location || 'Belum diisi'}
+      - Status: ${userProfile.status === 'active' ? "Terverifikasi" : "Belum Verifikasi (Limit Akses)"}
       - Majelis: ${majelisInfo}${loanContext}
       
       BATASAN TOPIK:
@@ -233,7 +205,7 @@ async function getGeminiResponse(userText, senderPhone) {
       if (name === "registerUser") {
         console.log('📝 Registering user with args:', JSON.stringify(args));
         // Execute DB Update
-        const newUser = await UserService.registerUser(senderPhone, args);
+        const newUser = await UserService.createUser(senderPhone, args);
         
         if (!newUser) {
           return "Maaf, terjadi kesalahan saat mendaftar. Silakan coba lagi.";

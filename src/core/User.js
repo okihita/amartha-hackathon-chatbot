@@ -1,68 +1,74 @@
 class User {
   static create(data) {
+    const now = new Date().toISOString();
     return {
+      phone: data.phone,
       name: data.name,
-      business_type: data.business_type,
-      location: data.location,
       majelis_id: null,
-      current_module: "Welcome Phase",
-      is_verified: false,
-      pending_verification: null,
-      verified_transactions: [],
-      loan_limit: 0,
-      loan_used: 0,
-      loan_remaining: 0,
+      status: 'pending',
+      is_mock: false,
+      created_at: now,
+      updated_at: now
+    };
+  }
+
+  static createProfile(data) {
+    const now = new Date().toISOString();
+    return {
+      dob: data.dob || null,
+      gender: data.gender || null,
+      address: data.address || null,
+      created_at: now,
+      updated_at: now
+    };
+  }
+
+  static createBusiness(data) {
+    const now = new Date().toISOString();
+    return {
+      name: data.business_name || null,
+      location: data.business_location || data.location || null,
+      category: data.category || data.business_type || null,
+      maturity_level: data.maturity_level || 1,
+      created_at: now,
+      updated_at: now
+    };
+  }
+
+  static createLoan() {
+    const now = new Date().toISOString();
+    return {
+      limit: 0,
+      used: 0,
+      remaining: 0,
       next_payment_date: null,
       next_payment_amount: 0,
-      loan_history: [],
-      literacy: {},
-      created_at: new Date().toISOString()
+      history: [],
+      created_at: now,
+      updated_at: now
+    };
+  }
+
+  static createLiteracy() {
+    const now = new Date().toISOString();
+    return {
+      current_module: "Welcome Phase",
+      week_01: { score: 0, last_updated: now },
+      created_at: now,
+      updated_at: now
     };
   }
 
   static createMock(userData) {
+    const now = new Date().toISOString();
     return {
-      ...userData,
+      phone: userData.phone,
+      name: userData.name,
+      majelis_id: null,
       status: 'pending',
       is_mock: true,
-      registered_at: new Date().toISOString(),
-      majelis_id: null,
-      literacy: {}
-    };
-  }
-
-  static createWeekScore(weekNumber) {
-    return {
-      [`week_${String(weekNumber).padStart(2, '0')}`]: {
-        score: 0,
-        last_updated: new Date().toISOString()
-      }
-    };
-  }
-
-  static updateWeekScore(literacy, weekNumber, score) {
-    const weekKey = `week_${String(weekNumber).padStart(2, '0')}`;
-    return {
-      ...literacy,
-      [weekKey]: {
-        score: Math.min(100, Math.max(0, score)),
-        last_updated: new Date().toISOString()
-      }
-    };
-  }
-
-  static getLiteracyProgress(literacy) {
-    const weeks = Object.keys(literacy).filter(k => k.startsWith('week_'));
-    if (weeks.length === 0) return { completed: 0, average: 0, total: 0 };
-
-    const scores = weeks.map(w => literacy[w].score);
-    const completed = scores.filter(s => s >= 70).length;
-    const average = scores.reduce((a, b) => a + b, 0) / scores.length;
-
-    return {
-      completed,
-      average: Math.round(average),
-      total: weeks.length
+      created_at: now,
+      updated_at: now
     };
   }
 }

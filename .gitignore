@@ -4,12 +4,7 @@ node_modules/
 *.log
 npm-debug.log*
 .vscode/
+.idea/
 .gcloudignore
 service-account-key.json
-/.idea/dictionaries/project.xml
-/.idea/.gitignore
-/.idea/aws.xml
-/.idea/misc.xml
-/.idea/modules.xml
-/.idea/vcs.xml
-/.idea/wa-chatbot-gcp-ai.iml
+server.pid

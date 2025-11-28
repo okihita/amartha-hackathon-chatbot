@@ -52,7 +52,7 @@ class MajelisService {
       throw new Error('User not found');
     }
 
-    if (!user.is_verified) {
+    if (user.status !== 'active') {
       throw new Error('User must be verified before joining majelis');
     }
 
@@ -98,6 +98,44 @@ class MajelisService {
     }
     console.log(`✅ Created ${count} mock majelis`);
     return count;
+  }
+
+  // Attendance methods
+  async recordAttendance(majelisId, data) {
+    const majelis = await MajelisRepository.findById(majelisId);
+    if (!majelis) {
+      throw new Error('Majelis not found');
+    }
+    return MajelisRepository.createAttendance(majelisId, data);
+  }
+
+  async getAttendance(majelisId, attendanceId) {
+    return MajelisRepository.getAttendance(majelisId, attendanceId);
+  }
+
+  async getAllAttendance(majelisId) {
+    const majelis = await MajelisRepository.findById(majelisId);
+    if (!majelis) {
+      throw new Error('Majelis not found');
+    }
+    return MajelisRepository.getAllAttendance(majelisId);
+  }
+
+  async updateAttendance(majelisId, attendanceId, data) {
+    const attendance = await MajelisRepository.getAttendance(majelisId, attendanceId);
+    if (!attendance) {
+      throw new Error('Attendance record not found');
+    }
+    return MajelisRepository.updateAttendance(majelisId, attendanceId, data);
+  }
+
+  async deleteAttendance(majelisId, attendanceId) {
+    const attendance = await MajelisRepository.getAttendance(majelisId, attendanceId);
+    if (!attendance) {
+      return false;
+    }
+    await MajelisRepository.deleteAttendance(majelisId, attendanceId);
+    return true;
   }
 }
 
