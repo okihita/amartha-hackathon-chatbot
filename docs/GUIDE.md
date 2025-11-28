@@ -42,6 +42,7 @@ npm start
 ### Content
 - `GET /api/knowledge/business-types` - Business classifications
 - `GET /api/knowledge/financial-literacy` - Course modules (15 weeks)
+- `POST /api/knowledge/financial-literacy/reimport` - Reimport quizzes from Google Drive (preserves week IDs)
 
 ## Environment Variables
 
