@@ -65,6 +65,8 @@
         .image-modal.active { display: flex; }
         .image-modal img { max-width: 90%; max-height: 90%; object-fit: contain; }
         .image-modal-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; }
+        .quick-action-card { display: block; padding: 20px; color: white; text-decoration: none; border-radius: 8px; text-align: center; transition: transform 0.2s, box-shadow 0.2s; }
+        .quick-action-card:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -79,6 +81,24 @@
                 </div>
             </div>
             <div class="admin-badge">Admin: <strong>Petugas Lapangan</strong></div>
+        </div>
+        
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin: 0;">Quick Actions</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <a href="/business-types" class="quick-action-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div style="font-size: 32px; margin-bottom: 10px;">🏪</div>
+                    <div style="font-weight: 600; font-size: 16px;">Business Types</div>
+                    <div style="font-size: 12px; opacity: 0.9; margin-top: 5px;">View RAG Classifications</div>
+                </a>
+                <a href="/majelis" class="quick-action-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <div style="font-size: 32px; margin-bottom: 10px;">📅</div>
+                    <div style="font-weight: 600; font-size: 16px;">Majelis Groups</div>
+                    <div style="font-size: 12px; opacity: 0.9; margin-top: 5px;">Manage Groups</div>
+                </a>
+            </div>
         </div>
         
         <div class="card">
