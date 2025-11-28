@@ -5,7 +5,6 @@ export default function FinancialLiteracy() {
   const [selectedWeek, setSelectedWeek] = useState(null);
   const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [reimporting, setReimporting] = useState(false);
 
   useEffect(() => { fetchCourse(); }, []);
 
@@ -44,23 +43,8 @@ export default function FinancialLiteracy() {
   };
 
   const handleReimport = async () => {
-    if (!confirm('This will reimport all quiz content from Google Drive.\n\nWeek identifiers will be preserved to protect user progress.\n\nContinue?')) return;
-    setReimporting(true);
-    try {
-      const res = await fetch('/api/knowledge/financial-literacy/reimport', { method: 'POST' });
-      const result = await res.json();
-      if (result.success) {
-        localStorage.removeItem('financialLiteracy');
-        alert(`Reimport complete!\n\nImported: ${result.imported} weeks`);
-        await fetchCourse(true);
-      } else {
-        alert('Reimport failed: ' + (result.error || 'Unknown error'));
-      }
-    } catch (e) {
-      alert('Reimport failed: ' + e.message);
-    } finally {
-      setReimporting(false);
-    }
+    const msg = 'Reimport requires service account credentials.\n\nRun locally instead:\n  node scripts/import-financial-literacy.js\n\nThen refresh this page.';
+    alert(msg);
   };
 
   const replacePlaceholder = (text) => {
@@ -92,11 +76,10 @@ export default function FinancialLiteracy() {
           </h2>
           <button
             onClick={handleReimport}
-            disabled={reimporting}
-            title="Reimport from Google Drive"
-            style={{ padding: '6px 10px', background: reimporting ? '#6c757d' : '#fff', border: '1px solid #dee2e6', borderRadius: '4px', cursor: reimporting ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
+            title="Reimport from Google Drive (run locally)"
+            style={{ padding: '6px 10px', background: '#fff', border: '1px solid #dee2e6', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
           >
-            <RefreshCw size={14} class={reimporting ? 'spin' : ''} /> {reimporting ? 'Importing...' : 'Reimport'}
+            <RefreshCw size={14} /> Reimport
           </button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>

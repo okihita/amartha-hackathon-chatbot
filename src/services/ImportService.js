@@ -4,7 +4,7 @@
  */
 
 const { google } = require('googleapis');
-const { db } = require('../config/database');
+const db = require('../config/database');
 
 const FOLDER_ID = process.env.FINANCIAL_LITERACY_FOLDER_ID || '1_qBhLNCfdxkLVTro_jJACF6sm_rG9ZBt';
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
