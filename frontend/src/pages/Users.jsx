@@ -208,14 +208,22 @@ export default function Users() {
               const userMajelis = user.majelis_id ? majelis.find(m => m.id === user.majelis_id) : null;
               return (
                 <tr key={user.phone}>
-                  <td><strong><a href={`/user-profile/${user.phone}`} class="user-link">{user.name}</a></strong></td>
+                  <td>
+                    <strong><a href={`/user-profile/${user.phone}`} class="user-link">{user.name}</a></strong>
+                    {user.is_demo && <span style="margin-left: 6px; padding: 2px 6px; background: #ff9800; color: white; border-radius: 4px; font-size: 10px; font-weight: bold;">DEMO</span>}
+                    {user.is_mock && !user.is_demo && <span style="margin-left: 6px; padding: 2px 6px; background: #9e9e9e; color: white; border-radius: 4px; font-size: 10px; font-weight: bold;">MOCK</span>}
+                  </td>
                   <td>{user.phone}</td>
                   <td>{user.business?.category || user.business_type || '-'}</td>
                   <td>{user.business?.location || user.location || '-'}</td>
                   <td>
-                    <span class={`status ${userMajelis ? 'verified' : 'unassigned'}`}>
-                      {userMajelis ? <><UsersIcon size={14} style="display: inline; vertical-align: middle; margin-right: 4px;" />{userMajelis.name}</> : '—'}
-                    </span>
+                    {userMajelis ? (
+                      <a href={`/majelis/${userMajelis.id}`} style="color: #2196f3; text-decoration: none; display: flex; align-items: center; gap: 4px;">
+                        <UsersIcon size={14} />{userMajelis.name}
+                      </a>
+                    ) : (
+                      <span style="color: #999;">—</span>
+                    )}
                   </td>
                   <td>
                     <span class={`status ${user.status === 'active' ? 'verified' : 'pending'}`}>

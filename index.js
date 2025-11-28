@@ -73,7 +73,7 @@ app.get('/api/events/:phone', (req, res) => {
 app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 
 // Frontend SPA routes
-const dashboardRoutes = ['/', '/majelis', '/business-types', '/financial-literacy', '/how-it-works', '/user-profile/:phone'];
+const dashboardRoutes = ['/', '/majelis', '/majelis/:id', '/business-types', '/financial-literacy', '/how-it-works', '/demo', '/user-profile/:phone'];
 dashboardRoutes.forEach(route => {
   app.get(route, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

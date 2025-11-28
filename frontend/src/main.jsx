@@ -5,10 +5,12 @@ import './styles.css';
 // Pages
 import Users from './pages/Users';
 import Majelis from './pages/Majelis';
+import MajelisDetail from './pages/MajelisDetail';
 import BusinessTypes from './pages/BusinessTypes';
 import FinancialLiteracy from './pages/FinancialLiteracy';
 import UserProfile from './pages/UserProfile';
 import HowItWorks from './pages/HowItWorks';
+import Demo from './pages/Demo';
 
 // Layout
 import Header from './components/Header';
@@ -20,9 +22,11 @@ function App() {
       <Router>
         <Users path="/" />
         <Majelis path="/majelis" />
+        <MajelisDetail path="/majelis/:id" />
         <BusinessTypes path="/business-types" />
         <FinancialLiteracy path="/financial-literacy" />
         <HowItWorks path="/how-it-works" />
+        <Demo path="/demo" />
         <UserProfile path="/user-profile/:phone" />
       </Router>
     </div>
