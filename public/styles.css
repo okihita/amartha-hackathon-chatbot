@@ -2,6 +2,44 @@
    AMARTHA DASHBOARD - UNIFIED STYLES
    =================================== */
 
+/* CSS Custom Properties for Theming */
+:root {
+    /* Status Colors */
+    --color-success: #28a745;
+    --color-success-bg: #d4edda;
+    --color-success-text: #155724;
+    
+    --color-warning: #ffc107;
+    --color-warning-bg: #fff3cd;
+    --color-warning-text: #856404;
+    
+    --color-danger: #dc3545;
+    --color-danger-bg: #f8d7da;
+    --color-danger-text: #721c24;
+    
+    --color-neutral: #6c757d;
+    --color-neutral-bg: #f0f0f0;
+    --color-neutral-text: #333;
+    
+    /* Primary Colors */
+    --color-primary: #007bff;
+    --color-primary-dark: #0056b3;
+    
+    /* Layout */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 20px;
+    --spacing-xl: 24px;
+    
+    /* Touch Targets */
+    --touch-target-min: 44px;
+    
+    /* Transitions */
+    --transition-fast: 0.2s;
+    --transition-normal: 0.3s;
+}
+
 /* Reset & Base */
 * { 
     margin: 0; 
@@ -178,7 +216,16 @@ body {
 
 button:disabled,
 .btn:disabled { 
-    opacity: 0.5;
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none !important;
+    pointer-events: none;
+}
+
+/* Ensure disabled buttons maintain layout */
+button[disabled],
+.btn[disabled] {
+    opacity: 0.3;
     cursor: not-allowed;
     transform: none !important;
 }
@@ -294,19 +341,37 @@ table {
 
 th { 
     background: #f9f9f9;
-    padding: 12px;
+    padding: var(--spacing-md, 12px);
     text-align: left;
     font-size: 12px;
     text-transform: uppercase;
     color: #666;
     border-bottom: 2px solid #e0e0e0;
     font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 td { 
-    padding: 12px;
+    padding: var(--spacing-md, 12px);
     border-bottom: 1px solid #e0e0e0;
     font-size: 14px;
+}
+
+/* Zebra striping for better readability */
+tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tbody tr:nth-child(odd) {
+    background-color: white;
+}
+
+/* Row hover state */
+tbody tr:hover {
+    background-color: #f0f7ff;
+    transition: background-color var(--transition-fast, 0.2s);
 }
 
 /* ===================================
@@ -323,14 +388,31 @@ td {
 
 .status.verified,
 .status-verified { 
-    background: #d4edda;
-    color: #155724;
+    background: var(--color-success-bg, #d4edda);
+    color: var(--color-success-text, #155724);
 }
 
 .status.pending,
 .status-pending { 
-    background: #fff3cd;
-    color: #856404;
+    background: var(--color-warning-bg, #fff3cd);
+    color: var(--color-warning-text, #856404);
+}
+
+.status.rejected,
+.status-rejected {
+    background: var(--color-danger-bg, #f8d7da);
+    color: var(--color-danger-text, #721c24);
+}
+
+.status.unassigned,
+.status-unassigned {
+    background: var(--color-neutral-bg, #f0f0f0);
+    color: var(--color-neutral-text, #333);
+}
+
+/* Status with icons */
+.status-icon {
+    margin-right: 4px;
 }
 
 /* ===================================
@@ -415,8 +497,16 @@ td {
    =================================== */
 .actions { 
     display: flex;
-    gap: 8px;
+    gap: var(--spacing-sm, 8px);
     flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Ensure action buttons maintain consistent spacing */
+.actions button,
+.actions .btn {
+    min-width: 80px;
+    flex-shrink: 0;
 }
 
 /* ===================================
@@ -445,6 +535,10 @@ td {
         text-align: center;
         padding: 8px 12px;
         font-size: 13px;
+        min-height: var(--touch-target-min, 44px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .card {
@@ -463,6 +557,130 @@ td {
     
     .modal-content {
         padding: 24px;
+    }
+    
+    /* Ensure touch targets are adequate on mobile */
+    button,
+    .btn,
+    a {
+        min-height: var(--touch-target-min, 44px);
+        min-width: var(--touch-target-min, 44px);
+    }
+    
+    /* Stack majelis and business cards vertically */
+    .majelis-grid,
+    .business-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Responsive table - hide less important columns */
+    table td:nth-child(3),
+    table th:nth-child(3) {
+        display: none; /* Hide business type on mobile */
+    }
+    
+    table td:nth-child(4),
+    table th:nth-child(4) {
+        display: none; /* Hide location on mobile */
+    }
+    
+    /* Make action buttons stack on very small screens */
+    .actions {
+        flex-direction: column;
+    }
+    
+    .actions button,
+    .actions .btn {
+        width: 100%;
+    }
+}
+
+/* Additional mobile breakpoint for very small screens */
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 18px;
+    }
+    
+    .nav a {
+        font-size: 11px;
+        padding: 6px 8px;
+    }
+    
+    /* Further simplify table on very small screens */
+    table {
+        font-size: 12px;
+    }
+    
+    th, td {
+        padding: 8px;
+    }
+}
+
+/* ===================================
+   ACCESSIBILITY
+   =================================== */
+
+/* Focus indicators for keyboard navigation */
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 2px solid var(--color-primary, #007bff);
+    outline-offset: 2px;
+}
+
+/* Skip to main content link for screen readers */
+.skip-to-main {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary, #007bff);
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 100;
+}
+
+.skip-to-main:focus {
+    top: 0;
+}
+
+/* Screen reader only text */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .status,
+    .status-badge {
+        border: 2px solid currentColor;
+    }
+    
+    button,
+    .btn {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 
@@ -705,57 +923,84 @@ td {
 /* Majelis Page */
 .majelis-grid { 
     display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-    gap: 20px; 
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+    gap: var(--spacing-lg, 20px); 
 }
 
 .majelis-card { 
-    background: #f9f9f9; 
-    padding: 15px; 
-    border-radius: 8px; 
+    background: white; 
+    padding: var(--spacing-lg, 20px); 
+    border-radius: 12px; 
     border: 1px solid #e0e0e0; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all var(--transition-fast, 0.2s);
+    display: flex;
+    flex-direction: column;
+}
+
+.majelis-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
 }
 
 .majelis-card h3 { 
-    font-size: 16px; 
-    margin-bottom: 10px; 
-    color: #333; 
+    font-size: 18px; 
+    margin-bottom: var(--spacing-md, 12px); 
+    color: #1e3c72; 
     font-weight: 600; 
 }
 
 .majelis-card p { 
     font-size: 14px; 
     color: #666; 
-    margin-bottom: 5px; 
+    margin-bottom: var(--spacing-sm, 8px); 
 }
 
 .majelis-card .info-row { 
     display: flex; 
-    gap: 15px; 
+    gap: var(--spacing-md, 12px); 
     flex-wrap: wrap; 
-    margin-bottom: 10px; 
+    margin-bottom: var(--spacing-md, 12px); 
     font-size: 13px; 
     color: #666; 
 }
 
+.majelis-card .info-row span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .majelis-card .member-count { 
-    font-size: 12px; 
-    color: #28a745; 
+    font-size: 14px; 
+    color: var(--color-success, #28a745); 
     font-weight: 600; 
-    margin: 10px 0 5px 0; 
+    margin: var(--spacing-md, 12px) 0 var(--spacing-sm, 8px) 0; 
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .majelis-card .member-list { 
-    margin: 5px 0 10px 0; 
-    max-height: 150px; 
+    margin: var(--spacing-sm, 8px) 0 var(--spacing-md, 12px) 0; 
+    max-height: 200px; 
     overflow-y: auto; 
+    background: #f9f9f9;
+    padding: var(--spacing-sm, 8px);
+    border-radius: 6px;
+    flex-grow: 1;
 }
 
 .majelis-card .member-item-inline { 
-    font-size: 12px; 
+    font-size: 13px; 
     color: #555; 
-    padding: 4px 0; 
+    padding: var(--spacing-sm, 8px); 
     border-bottom: 1px solid #eee; 
+    transition: background-color var(--transition-fast, 0.2s);
+}
+
+.majelis-card .member-item-inline:hover {
+    background-color: white;
 }
 
 .majelis-card .member-item-inline:last-child { 
@@ -763,7 +1008,7 @@ td {
 }
 
 .majelis-card .member-name { 
-    font-weight: 500; 
+    font-weight: 600; 
     color: #333; 
 }
 
@@ -773,18 +1018,22 @@ td {
 }
 
 .majelis-card .no-members { 
-    font-size: 12px; 
+    font-size: 13px; 
     color: #999; 
     font-style: italic; 
+    text-align: center;
+    padding: var(--spacing-lg, 20px);
+    background: #f9f9f9;
+    border-radius: 6px;
 }
 
 .majelis-card .actions { 
-    margin-top: 15px; 
+    margin-top: auto;
+    padding-top: var(--spacing-md, 12px); 
     display: flex; 
-    gap: 8px; 
+    gap: var(--spacing-sm, 8px); 
     flex-wrap: wrap; 
     border-top: 1px solid #e0e0e0; 
-    padding-top: 10px; 
 }
 
 .member-list { 
@@ -830,4 +1079,75 @@ td {
     font-size: 12px; 
     color: #666; 
     margin-top: 2px; 
+}
+
+/* ===================================
+   ADDITIONAL UTILITY CLASSES
+   =================================== */
+
+/* Card header with actions */
+.card-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.card-header-actions h2 {
+    margin: 0;
+}
+
+/* Modal subtitle */
+.modal-subtitle {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* Search input group */
+.search-input-group {
+    display: flex;
+    gap: 10px;
+    position: relative;
+}
+
+.search-input-wrapper {
+    flex: 1;
+    position: relative;
+}
+
+.user-suggestions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 2px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Small button variant */
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* Majelis description */
+.majelis-description {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+/* Empty state in grid */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #999;
+    padding: 40px 20px;
 }

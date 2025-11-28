@@ -11,7 +11,7 @@
         <div id="header-placeholder"></div>
         
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="card-header-actions">
                 <h2>Majelis Groups</h2>
                 <button class="btn btn-primary" onclick="openCreateModal()">+ Create Majelis</button>
             </div>
@@ -67,14 +67,14 @@
     <div id="membersModal" class="modal">
         <div class="modal-content">
             <h2>Add/Remove Members</h2>
-            <p id="membersModalTitle" style="color: #666; margin-bottom: 20px;"></p>
+            <p id="membersModalTitle" class="modal-subtitle"></p>
             
             <div class="form-group">
                 <label>Add Member (Search by name or phone)</label>
-                <div style="display: flex; gap: 10px; position: relative;">
-                    <div style="flex: 1; position: relative;">
+                <div class="search-input-group">
+                    <div class="search-input-wrapper">
                         <input type="text" id="newMemberPhone" placeholder="Type to search..." autocomplete="off" oninput="filterUsers(this.value)">
-                        <div id="userSuggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; margin-top: 2px;"></div>
+                        <div id="userSuggestions" class="user-suggestions"></div>
                     </div>
                     <button class="btn btn-success" onclick="addMember()">Add</button>
                 </div>
@@ -123,7 +123,7 @@
             grid.style.display = 'grid';
             
             if (majelis.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No majelis yet. Create one!</p>';
+                grid.innerHTML = '<div class="empty-state"><p>No majelis yet. Create one!</p></div>';
                 return;
             }
             
@@ -140,7 +140,7 @@
                         `;
                     }
                     return `<div class="member-item-inline"><span class="member-name">${phone}</span></div>`;
-                }).join('') || '<div class="no-members">No members yet</div>';
+                }).join('') || '<div class="no-members">📭 No members yet. Click "Add Member" to get started.</div>';
                 
                 return `
                 <div class="majelis-card">
@@ -149,7 +149,7 @@
                         <span>📅 ${m.schedule_day} ${m.schedule_time}</span>
                         <span>📍 ${m.location || 'No location'}</span>
                     </div>
-                    ${m.description ? `<p style="font-size: 12px; color: #888; margin-bottom: 10px;">${m.description}</p>` : ''}
+                    ${m.description ? `<p class="majelis-description">${m.description}</p>` : ''}
                     <div class="member-count">👥 ${memberCount} member${memberCount !== 1 ? 's' : ''}</div>
                     <div class="member-list">${membersList}</div>
                     <div class="actions">
@@ -254,7 +254,7 @@
                 
                 const memberList = document.getElementById('memberList');
                 if (!majelis.members || majelis.members.length === 0) {
-                    memberList.innerHTML = '<p style="text-align: center; color: #999;">No members yet</p>';
+                    memberList.innerHTML = '<p class="empty-state">No members yet</p>';
                     return;
                 }
                 
@@ -264,7 +264,7 @@
                     return `
                         <div class="member-item">
                             <span>${name} (${phone})</span>
-                            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="removeMember('${phone}')">Remove</button>
+                            <button class="btn btn-danger btn-sm" onclick="removeMember('${phone}')">Remove</button>
                         </div>
                     `;
                 }).join('');

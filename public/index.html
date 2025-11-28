@@ -4,91 +4,172 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Users - Amartha Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
     <script src="/layout.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 24px; color: #333; margin-bottom: 10px; }
-        .nav { display: flex; gap: 15px; margin-top: 10px; }
-        .nav a { padding: 8px 16px; background: #f0f0f0; border-radius: 4px; text-decoration: none; color: #333; font-weight: 500; transition: all 0.2s; }
-        .nav a:hover { background: #e0e0e0; }
-        .nav a.active { background: #007bff; color: white; }
-        .admin-badge { background: #f0f0f0; padding: 8px 16px; border-radius: 4px; font-size: 14px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .card h2 { font-size: 18px; margin-bottom: 20px; color: #333; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f9f9f9; padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; border-bottom: 2px solid #e0e0e0; }
-        td { padding: 12px; border-bottom: 1px solid #e0e0e0; }
-        .status { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .status.verified { background: #d4edda; color: #155724; }
-        .status.pending { background: #fff3cd; color: #856404; }
-        .actions { display: flex; gap: 8px; }
-        button { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        .btn-approve { background: #28a745; color: white; }
-        .btn-approve:hover { background: #218838; }
-        .btn-reject { background: #dc3545; color: white; }
-        .btn-reject:hover { background: #c82333; }
-        .btn-delete { background: #6c757d; color: white; }
-        .btn-delete:hover { background: #5a6268; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .loading { text-align: center; padding: 40px; color: #666; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-        .modal.active { display: flex; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
-        .modal-content h2 { margin-bottom: 20px; }
-        .profile-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-        .profile-section:last-child { border-bottom: none; }
-        .profile-section h3 { font-size: 16px; margin-bottom: 10px; color: #333; }
-        .profile-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
-        .profile-label { color: #666; font-weight: 500; }
-        .profile-value { color: #333; }
-        .transaction-item { padding: 10px; background: #f9f9f9; border-radius: 4px; margin-bottom: 8px; font-size: 13px; }
-        .transaction-item .type { font-weight: 600; color: #333; }
-        .transaction-item .amount { color: #28a745; font-weight: 600; }
-        .transaction-item .amount.negative { color: #dc3545; }
-        .transaction-item .date { color: #999; font-size: 11px; }
-        .btn-close { background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; }
-        .score-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 14px; }
-        .score-high { background: #d4edda; color: #155724; }
-        .score-medium { background: #fff3cd; color: #856404; }
-        .score-low { background: #f8d7da; color: #721c24; }
-        .business-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 10px; }
-        .business-image-card { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: #f9f9f9; }
-        .business-image-card img { width: 100%; height: 150px; object-fit: cover; cursor: pointer; transition: transform 0.2s; }
-        .business-image-card img:hover { transform: scale(1.05); }
-        .business-image-info { padding: 10px; font-size: 12px; }
-        .business-image-category { font-weight: 600; color: #333; margin-bottom: 4px; }
-        .business-image-date { color: #999; font-size: 11px; }
-        .image-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
-        .image-modal.active { display: flex; }
-        .image-modal img { max-width: 90%; max-height: 90%; object-fit: contain; }
-        .image-modal-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; }
-        .quick-action-card { display: block; padding: 20px; color: white; text-decoration: none; border-radius: 8px; text-align: center; transition: transform 0.2s, box-shadow 0.2s; }
-        .quick-action-card:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+        /* Page-specific styles */
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .quick-action-card {
+            display: block;
+            padding: 20px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .quick-action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        
+        .profile-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .profile-section:last-child {
+            border-bottom: none;
+        }
+        
+        .profile-section h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+        
+        .profile-label {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .profile-value {
+            color: #333;
+        }
+        
+        .transaction-item {
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .transaction-item .type {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .transaction-item .amount {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .transaction-item .amount.negative {
+            color: #dc3545;
+        }
+        
+        .transaction-item .date {
+            color: #999;
+            font-size: 11px;
+        }
+        
+        .business-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .business-image-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f9f9f9;
+        }
+        
+        .business-image-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .business-image-card img:hover {
+            transform: scale(1.05);
+        }
+        
+        .business-image-info {
+            padding: 10px;
+            font-size: 12px;
+        }
+        
+        .business-image-category {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .business-image-date {
+            color: #999;
+            font-size: 11px;
+        }
+        
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .image-modal.active {
+            display: flex;
+        }
+        
+        .image-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        
+        .image-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div>
-                <h1>🏦 Amartha Admin Dashboard</h1>
-                <div class="nav">
-                    <a href="/" class="active">👥 Users</a>
-                    <a href="/majelis">📅 Majelis</a>
-                    <a href="/business-types">🏪 Business Types</a>
-                    <a href="/financial-literacy">📚 Financial Literacy</a>
-                </div>
-            </div>
-            <div class="admin-badge">Admin: <strong>Petugas Lapangan</strong></div>
-        </div>
+        <div id="header-placeholder"></div>
         
-        <div class="card" style="margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="margin: 0;">Quick Actions</h2>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <div class="card">
+            <h2>Quick Actions</h2>
+            <div class="quick-actions-grid">
                 <a href="/business-types" class="quick-action-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <div style="font-size: 32px; margin-bottom: 10px;">🏪</div>
                     <div style="font-weight: 600; font-size: 16px;">Business Types</div>
@@ -109,17 +190,17 @@
         
         <div class="card">
             <h2>User Verifications</h2>
-            <div id="loading" class="loading">Loading...</div>
-            <table id="userTable" style="display: none;">
+            <div id="loading" class="loading" role="status" aria-live="polite">Loading...</div>
+            <table id="userTable" style="display: none;" role="table" aria-label="User verifications table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>Business</th>
-                        <th>Location</th>
-                        <th>Majelis</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Phone</th>
+                        <th scope="col">Business</th>
+                        <th scope="col">Location</th>
+                        <th scope="col">Majelis</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="userTableBody"></tbody>
@@ -192,6 +273,7 @@
                         <div class="business-image-card">
                             <img src="data:image/jpeg;base64,${img.image_data}" 
                                  alt="${img.category}" 
+                                 loading="lazy"
                                  onclick="viewImage('${img.image_data}')" />
                             <div class="business-image-info">
                                 <div class="business-image-category">${categoryLabels[img.category] || img.category}</div>
@@ -425,7 +507,7 @@
                     <td>${user.business_type}</td>
                     <td>${user.location}</td>
                     <td>
-                        <span style="font-size: 12px; color: ${isAssigned ? '#28a745' : '#999'};">
+                        <span class="status ${isAssigned ? 'verified' : 'unassigned'}">
                             ${isAssigned ? '📅 ' + majelisName : '—'}
                         </span>
                     </td>
@@ -436,16 +518,16 @@
                     </td>
                     <td>
                         <div class="actions">
-                            <button class="btn-approve" onclick="window.open('/user-profile.html?phone=${user.phone}', '_blank')" style="background: #007bff;">
+                            <button class="btn btn-primary" onclick="window.open('/user-profile.html?phone=${user.phone}', '_blank')" aria-label="View ${user.name}'s profile">
                                 👁️ View
                             </button>
-                            <button class="btn-approve" onclick="handleVerify('${user.phone}', true)" ${processing || user.is_verified ? 'disabled' : ''} style="${user.is_verified ? 'opacity: 0.3;' : ''}">
+                            <button class="btn btn-success" onclick="handleVerify('${user.phone}', true)" ${processing || user.is_verified ? 'disabled' : ''} aria-label="Approve ${user.name}">
                                 ✓ Approve
                             </button>
-                            <button class="btn-reject" onclick="handleVerify('${user.phone}', false)" ${processing || user.is_verified ? 'disabled' : ''} style="${user.is_verified ? 'opacity: 0.3;' : ''}">
+                            <button class="btn btn-danger" onclick="handleVerify('${user.phone}', false)" ${processing || user.is_verified ? 'disabled' : ''} aria-label="Reject ${user.name}">
                                 ✗ Reject
                             </button>
-                            <button class="btn-delete" onclick="handleDelete('${user.phone}', '${user.name}')" ${processing ? 'disabled' : ''}>
+                            <button class="btn btn-secondary" onclick="handleDelete('${user.phone}', '${user.name}')" ${processing ? 'disabled' : ''} aria-label="Delete ${user.name}">
                                 🗑️ Delete
                             </button>
                         </div>
@@ -496,8 +578,16 @@
             }
         }
 
+        // Pagination helper - only paginate if more than 100 items
+        function shouldPaginate(items) {
+            return items && items.length > 100;
+        }
+
         // Load users on page load
         fetchUsers();
+        
+        // Initialize header
+        document.getElementById('header-placeholder').innerHTML = renderHeader('users');
     </script>
 </body>
 </html>
