@@ -2,6 +2,7 @@ const { getGeminiResponse } = require('../chatbot/aiEngine');
 const { sendMessage, sendQuizQuestion } = require('../chatbot/whatsapp');
 const { analyzeImage } = require('../chatbot/imageAnalyzer');
 const QuizService = require('../services/QuizService');
+const DemoService = require('../services/DemoService');
 
 // Store pending images waiting for caption
 const pendingImages = new Map();
@@ -19,14 +20,28 @@ class WebhookController {
     const phone = message.from;
     const handlers = {
       text: async () => {
+        const text = message.text.body.trim();
+        
+        // Handle demo commands first
+        if (DemoService.isValidCommand(text)) {
+          if (text.toLowerCase() === '/demo:reset') {
+            await sendMessage(phone, await DemoService.resetDemo(phone));
+          } else if (text.toLowerCase() === '/demo:help' || text.toLowerCase() === '/demo') {
+            await sendMessage(phone, DemoService.getHelpMessage());
+          } else {
+            const result = await DemoService.injectDemo(phone, text);
+            await sendMessage(phone, result.message);
+          }
+          return;
+        }
+        
         // Check if user has pending image waiting for caption
         if (pendingImages.has(phone)) {
           const imageId = pendingImages.get(phone);
           pendingImages.delete(phone);
-          const caption = message.text.body;
-          await sendMessage(phone, await analyzeImage(imageId, caption, phone));
+          await sendMessage(phone, await analyzeImage(imageId, text, phone));
         } else {
-          const response = await getGeminiResponse(message.text.body, phone);
+          const response = await getGeminiResponse(text, phone);
           if (response) await sendMessage(phone, response);
         }
       },
@@ -97,8 +112,8 @@ class WebhookController {
       // Check if quiz completed
       if (result.completed) {
         const completionMsg = result.passed
-          ? `🎉 Selamat! Anda lulus minggu ini dengan nilai ${result.score}!\n\nKetik "quiz" untuk lanjut ke minggu berikutnya.`
-          : `📚 Nilai Anda: ${result.score}\n\nAnda perlu nilai minimal 70 untuk lulus. Ketik "quiz" untuk mengulang.`;
+          ? `🎉 Selamat! Anda lulus minggu ini dengan nilai ${result.score}%!\n\nKetik "quiz" untuk lanjut ke minggu berikutnya.`
+          : `📚 Nilai Anda: ${result.score}%\n\nAnda perlu nilai 100% (4/4 benar) untuk lulus. Ketik "quiz" untuk mengulang.`;
         
         await sendMessage(phone, completionMsg);
       } else if (result.next_question) {

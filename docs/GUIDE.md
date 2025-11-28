@@ -52,6 +52,35 @@ npm start
 - `FINANCIAL_LITERACY_FOLDER_ID` - Google Drive folder
 - `BUSINESS_TYPES_FOLDER_ID` - Google Drive folder
 
+## Demo Commands (For Hackathon Judges)
+
+Inject predefined personas for demo purposes:
+
+**Personas:**
+| Command | Business | Description |
+|---------|----------|-------------|
+| `/demo:warung` | Warung Sembako | Maturity 3, 40% quiz |
+| `/demo:toko` | Toko Kelontong | Maturity 2, 20% quiz |
+| `/demo:makanan` | Usaha Makanan | Maturity 4, 60% quiz |
+| `/demo:jahit` | Jasa Jahit | Maturity 2, 13% quiz |
+| `/demo:pertanian` | Pertanian | Maturity 3, 53% quiz |
+| `/demo:salon` | Salon Kecantikan | Maturity 3 |
+| `/demo:laundry` | Jasa Laundry | Maturity 2 |
+| `/demo:random` | Random | Random persona |
+
+**Scenarios:**
+| Command | Description |
+|---------|-------------|
+| `/demo:sukses` | Success story, 80% quiz, good payments |
+| `/demo:baru` | New member, no loan, 0% quiz |
+| `/demo:krisis` | Crisis, missed payments, struggling |
+| `/demo:lulus` | Graduate, 100% quiz, fully paid |
+| `/demo:fraud` | Suspicious activity flags |
+
+**Combinations:** `/demo:warung+krisis`, `/demo:random+lulus`
+
+**Reset:** `/demo:reset` - Clear all demo data
+
 ## Chatbot Commands (Bahasa Indonesia)
 
 | Feature | Trigger Words |
