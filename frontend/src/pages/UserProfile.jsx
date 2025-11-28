@@ -113,12 +113,35 @@ const calculateCreditScore = (userData) => {
     riskLevel: isRejected ? 'Rejected' : totalScore >= 32 ? 'Low' : totalScore >= 24 ? 'Medium' : totalScore >= 16 ? 'High' : 'Very High',
     loanEligibility: isRejected ? 0 : Math.round(totalScore * 250000),
     interestRate: isRejected ? null : totalScore >= 32 ? 12 : totalScore >= 24 ? 15 : totalScore >= 16 ? 18 : 24,
+    // Generate insights for each section
+    insights: {
+      A: a1+a2+a3+a4 >= 14 ? 'Strong financial foundation with healthy repayment capacity' : a1+a2+a3+a4 >= 10 ? 'Moderate financial health — monitor debt levels' : 'Financial stress indicators present — requires attention',
+      B: b1+b2 >= 7 ? 'Business assets align well with claimed revenue' : b1+b2 >= 4 ? 'Some gaps between assets and revenue claims' : 'Significant validation concerns — verify business data',
+      C: c1+c2 >= 7 ? 'High engagement in literacy program and group activities' : c1+c2 >= 4 ? 'Moderate program participation' : 'Low engagement — encourage participation',
+      overall: isRejected ? 'Application fails mandatory compliance checks' : totalScore >= 32 ? 'Borrower demonstrates strong creditworthiness across all dimensions' : totalScore >= 24 ? 'Acceptable risk profile with room for improvement in specific areas' : 'Elevated risk — consider smaller loan amount or additional guarantees',
+    },
   };
+};
+
+// Generate business-friendly insight text
+const getFactorInsight = (factor, score, max) => {
+  const pct = (score / max) * 100;
+  const insights = {
+    'SLIK OJK Status': pct >= 80 ? 'Clean credit history — no delinquencies' : pct >= 50 ? 'Minor past issues, now resolved' : 'Credit history concerns detected',
+    'Repayment Capacity': pct >= 80 ? 'Comfortable margin for loan payments' : pct >= 50 ? 'Adequate but tight repayment buffer' : 'High payment burden relative to income',
+    'Cashflow Volatility': pct >= 80 ? 'Stable, predictable income stream' : pct >= 50 ? 'Some income fluctuation — typical for UMKM' : 'Highly variable income — higher risk',
+    'Debt Burden Ratio': pct >= 80 ? 'Low existing debt obligations' : pct >= 50 ? 'Moderate debt load' : 'Heavy debt burden',
+    'Capacity Match': pct >= 80 ? 'Business assets support revenue claims' : pct >= 50 ? 'Partial asset-revenue alignment' : 'Revenue claims exceed visible capacity',
+    'Inventory Level': pct >= 80 ? 'Well-stocked, active business' : pct >= 50 ? 'Adequate inventory levels' : 'Low stock — potential cash flow issues',
+    'Financial Literacy': pct >= 80 ? 'Highly engaged in learning program' : pct >= 50 ? 'Progressing through curriculum' : 'Early stage — encourage completion',
+    'Majelis Cohesion': pct >= 80 ? 'Strong group participation & peer support' : pct >= 50 ? 'Regular group attendance' : 'Limited group engagement',
+  };
+  return insights[factor] || '';
 };
 
 const CreditScoreDashboard = ({ userData }) => {
   const credit = calculateCreditScore(userData);
-  const { rawScore, maxScore, isRejected, autoReject, factors, sections, riskLevel, loanEligibility, interestRate } = credit;
+  const { rawScore, maxScore, isRejected, autoReject, factors, sections, riskLevel, loanEligibility, interestRate, insights } = credit;
 
   const getScoreColor = (s) => isRejected ? '#EF4444' : s >= 32 ? '#10B981' : s >= 24 ? '#F59E0B' : '#EF4444';
   const getRiskColor = (r) => r === 'Low' ? '#10B981' : r === 'Medium' ? '#F59E0B' : '#EF4444';
@@ -217,6 +240,12 @@ const CreditScoreDashboard = ({ userData }) => {
               )}
             </div>
           </div>
+
+          {/* Key Insight - McKinsey "So What" */}
+          <div class="so-what-box" style="margin-top: 20px;">
+            <div class="so-what-title">💡 Key Insight</div>
+            <div class="so-what-text">{insights.overall}</div>
+          </div>
         </div>
       </div>
 
@@ -254,26 +283,37 @@ const CreditScoreDashboard = ({ userData }) => {
                   </div>
                 </div>
               </div>
+              {/* Category Insight */}
+              <div style="padding: 12px 24px; background: linear-gradient(90deg, rgba(99, 41, 122, 0.03) 0%, transparent 100%); border-left: 3px solid #63297A;">
+                <div style="font-size: 12px; color: #4B5563; display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 14px;">💡</span> {insights[cat]}
+                </div>
+              </div>
               <div style="padding: 0 24px;">
                 {catFactors.map((f, i) => {
                   const Icon = f.icon;
                   const pct = (f.score / f.max) * 100;
                   const color = pct >= 70 ? '#10B981' : pct >= 40 ? '#F59E0B' : '#EF4444';
                   const status = pct >= 70 ? 'Optimal' : pct >= 40 ? 'Moderate' : 'At Risk';
+                  const factorInsight = getFactorInsight(f.name, f.score, f.max);
                   return (
-                    <div key={i} style={`display: grid; grid-template-columns: 32px 1fr 100px 80px 90px; align-items: center; gap: 16px; padding: 14px 0; ${i < catFactors.length - 1 ? 'border-bottom: 1px solid #F3F4F6;' : ''}`}>
-                      <div style={`width: 32px; height: 32px; border-radius: 8px; background: ${color}15; display: flex; align-items: center; justify-content: center;`}>
-                        <Icon size={16} style={`color: ${color};`} />
+                    <div key={i} style={`padding: 14px 0; ${i < catFactors.length - 1 ? 'border-bottom: 1px solid #F3F4F6;' : ''}`}>
+                      <div style="display: grid; grid-template-columns: 32px 1fr 100px 80px 90px; align-items: center; gap: 16px;">
+                        <div style={`width: 32px; height: 32px; border-radius: 8px; background: ${color}15; display: flex; align-items: center; justify-content: center;`}>
+                          <Icon size={16} style={`color: ${color};`} />
+                        </div>
+                        <div>
+                          <div style="font-size: 13px; font-weight: 500; color: #1F2937;">{f.name}</div>
+                          <div style="font-size: 11px; color: #6B7280;">{f.detail || `Weight: ${f.weight}%`}</div>
+                        </div>
+                        <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
+                          <div class="progress-bar-fill" style={`height: 100%; width: ${pct}%; background: ${color}; border-radius: 3px;`} />
+                        </div>
+                        <div style="text-align: right; font-size: 14px; font-weight: 700; color: #1F2937;">{f.score}<span style="font-size: 11px; color: #9CA3AF; font-weight: 400;">/{f.max}</span></div>
+                        <div style={`text-align: center; font-size: 10px; padding: 4px 8px; border-radius: 4px; background: ${color}15; color: ${color}; font-weight: 600; text-transform: uppercase;`}>{status}</div>
                       </div>
-                      <div>
-                        <div style="font-size: 13px; font-weight: 500; color: #1F2937;">{f.name}</div>
-                        <div style="font-size: 11px; color: #6B7280;">{f.detail || `Weight: ${f.weight}%`}</div>
-                      </div>
-                      <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
-                        <div style={`height: 100%; width: ${pct}%; background: ${color}; border-radius: 3px;`} />
-                      </div>
-                      <div style="text-align: right; font-size: 14px; font-weight: 700; color: #1F2937;">{f.score}<span style="font-size: 11px; color: #9CA3AF; font-weight: 400;">/{f.max}</span></div>
-                      <div style={`text-align: center; font-size: 10px; padding: 4px 8px; border-radius: 4px; background: ${color}15; color: ${color}; font-weight: 600; text-transform: uppercase;`}>{status}</div>
+                      {/* Factor insight annotation */}
+                      <div style="margin-left: 48px; margin-top: 6px; font-size: 11px; color: #6B7280; font-style: italic;">{factorInsight}</div>
                     </div>
                   );
                 })}
@@ -637,6 +677,20 @@ export default function UserProfile({ phone }) {
               </div>
             </div>
 
+            {/* BI Insight Annotation */}
+            <div class="key-takeaway" style="margin: 0 24px 16px;">
+              <div class="key-takeaway-title">📊 Business Health Indicator</div>
+              <div class="key-takeaway-text">
+                {latestBuilding && latestInventory ? (
+                  latestInventory.data?.stock_level === 'High' ? 
+                    'Strong business indicators: Well-maintained premises with healthy inventory levels suggest active operations and good cash management.' :
+                  latestInventory.data?.stock_level === 'Medium' ?
+                    'Moderate business health: Adequate inventory with room for growth. Consider seasonal patterns when evaluating.' :
+                    'Attention needed: Low inventory may indicate cash flow constraints or declining sales. Verify with recent transaction data.'
+                ) : 'Awaiting business verification data. Encourage borrower to submit photos of premises and inventory.'}
+              </div>
+            </div>
+
             {/* BI Items */}
             <div style="padding: 20px 24px;">
               <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin-bottom: 12px;">Analysis Records ({filteredBI?.length || 0})</div>
@@ -727,6 +781,22 @@ export default function UserProfile({ phone }) {
                 <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #10B981;" /> Completed</span>
                 <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #F59E0B;" /> In Progress</span>
                 <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #E5E7EB;" /> Not Started</span>
+              </div>
+
+              {/* Literacy Insight */}
+              <div class="insight-box" style="margin-top: 16px;">
+                <div class="insight-box-title">📚 Learning Progress Insight</div>
+                <div class="insight-box-text">
+                  {progress.percentage >= 80 ? (
+                    <><strong>Excellent engagement!</strong> Borrowers who complete 80%+ of the literacy program show 40% lower default rates. This member demonstrates strong commitment to financial education.</>
+                  ) : progress.percentage >= 50 ? (
+                    <><strong>Good progress.</strong> Halfway through the curriculum. Encourage completion of remaining modules to unlock better loan terms and build stronger financial habits.</>
+                  ) : progress.percentage >= 20 ? (
+                    <><strong>Early stage learner.</strong> Just getting started with financial literacy. Regular engagement reminders can help improve completion rates and credit scores.</>
+                  ) : (
+                    <><strong>Not yet started.</strong> Financial literacy completion is a key factor in credit scoring. Encourage the borrower to begin the 15-week program via WhatsApp.</>
+                  )}
+                </div>
               </div>
             </div>
           </div>

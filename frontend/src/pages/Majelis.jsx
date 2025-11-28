@@ -177,6 +177,28 @@ export default function Majelis() {
   return (
     <>
       <div class="card">
+        {/* Stats Summary */}
+        {majelis.length > 0 && (
+          <div class="stats-grid" style="margin-bottom: 20px;">
+            <div class="stat-card">
+              <div class="stat-value">{majelis.length}</div>
+              <div class="stat-label">Total Groups</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" style="color: #63297A;">{majelis.reduce((sum, m) => sum + (m.members?.length || 0), 0)}</div>
+              <div class="stat-label">Total Members</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" style="color: #10B981;">{(majelis.reduce((sum, m) => sum + (m.members?.length || 0), 0) / Math.max(majelis.length, 1)).toFixed(1)}</div>
+              <div class="stat-label">Avg per Group</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" style="color: #2563EB;">{majelis.filter(m => (m.members?.length || 0) >= 5).length}</div>
+              <div class="stat-label">Active (5+ members)</div>
+            </div>
+          </div>
+        )}
+
         <div class="card-header-actions">
           <h2 style="display: flex; align-items: center; gap: 8px;">
             <UsersIcon size={24} /> Majelis Groups

@@ -210,6 +210,20 @@ export default function MajelisDetail({ id }) {
             </div>
           </div>
 
+          {/* Group Risk Insight */}
+          <div class="so-what-box" style="margin-bottom: 20px;">
+            <div class="so-what-title">💡 Group Assessment</div>
+            <div class="so-what-text">
+              {riskProfile.riskLevel === 'Low' ? (
+                <>This majelis demonstrates <strong>strong group cohesion</strong> with high attendance and payment compliance. The peer accountability model is working effectively — members support each other's financial success.</>
+              ) : riskProfile.riskLevel === 'Medium' ? (
+                <>Moderate group performance with <strong>room for improvement</strong>. Focus on increasing attendance rates and addressing any members with payment delays. Consider additional field agent engagement.</>
+              ) : (
+                <><strong>Attention required.</strong> This group shows elevated risk indicators. Recommend closer monitoring, individual member assessments, and potential restructuring of meeting schedules.</>
+              )}
+            </div>
+          </div>
+
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div class="card" style="padding: 20px;">
               <h3 style="margin: 0 0 16px; font-size: 15px; display: flex; align-items: center; gap: 8px;"><Shield size={18} /> Risk Factors</h3>

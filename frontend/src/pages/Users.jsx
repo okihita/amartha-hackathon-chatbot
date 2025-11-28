@@ -151,6 +151,28 @@ export default function Users() {
 
   return (
     <>
+      {/* Stats Summary */}
+      {!loading && users.length > 0 && (
+        <div class="stats-grid" style="margin-bottom: 20px;">
+          <div class="stat-card">
+            <div class="stat-value">{users.length}</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="color: #10B981;">{users.filter(u => u.status === 'active').length}</div>
+            <div class="stat-label">Verified</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="color: #F59E0B;">{users.filter(u => u.status !== 'active').length}</div>
+            <div class="stat-label">Pending</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="color: #63297A;">{users.filter(u => u.majelis_id).length}</div>
+            <div class="stat-label">In Majelis</div>
+          </div>
+        </div>
+      )}
+
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;">
