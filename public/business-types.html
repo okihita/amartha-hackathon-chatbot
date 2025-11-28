@@ -149,12 +149,12 @@
         function updateStats(businessTypes) {
             document.getElementById('stats').style.display = 'grid';
             
-            const totalLevels = businessTypes.reduce((sum, bt) => sum + (bt.levels?.length || 0), 0);
-            const mikroCount = businessTypes.filter(bt => bt.legal_category === 'Mikro').length;
+            const totalLevels = businessTypes.reduce((sum, bt) => sum + (bt.maturity_levels?.length || 0), 0);
+            const avgLevels = businessTypes.length > 0 ? Math.round(totalLevels / businessTypes.length) : 0;
             
-            // Find most recent update
+            // Find most recent import
             const dates = businessTypes
-                .map(bt => bt.updated_at)
+                .map(bt => bt.imported_at || bt.modified_at)
                 .filter(d => d)
                 .sort()
                 .reverse();
@@ -162,8 +162,11 @@
             
             document.getElementById('totalCount').textContent = businessTypes.length;
             document.getElementById('levelCount').textContent = totalLevels;
-            document.getElementById('mikroCount').textContent = mikroCount;
+            document.getElementById('mikroCount').textContent = avgLevels;
             document.getElementById('lastUpdated').textContent = lastUpdate;
+            
+            // Update label
+            document.querySelector('#mikroCount').nextElementSibling.textContent = 'Avg Levels per Type';
         }
 
         function renderBusinessTypes(businessTypes) {
@@ -173,19 +176,25 @@
             loading.style.display = 'none';
             grid.style.display = 'grid';
             
-            grid.innerHTML = businessTypes.map(bt => {
-                const levelCount = bt.levels?.length || 0;
-                const keywords = bt.keywords?.slice(0, 5) || [];
+            // Sort by category number
+            const sorted = businessTypes.sort((a, b) => {
+                const numA = a.category_number || 999;
+                const numB = b.category_number || 999;
+                return numA - numB;
+            });
+            
+            grid.innerHTML = sorted.map(bt => {
+                const levelCount = bt.maturity_levels?.length || 0;
+                const categoryNum = bt.category_number ? `Kategori ${bt.category_number}` : 'Mikro';
+                const description = bt.business_character || bt.description || 'No description available';
+                const shortDesc = description.length > 120 ? description.substring(0, 120) + '...' : description;
                 
                 return `
                     <div class="business-card" onclick="viewBusinessDetail('${bt.id}')">
-                        <div class="category">${bt.legal_category || 'Mikro'}</div>
+                        <div class="category">${categoryNum}</div>
                         <h3>${bt.business_type}</h3>
-                        <div class="description">${bt.description || 'No description available'}</div>
+                        <div class="description">${shortDesc}</div>
                         <div class="levels">📊 ${levelCount} Maturity Levels</div>
-                        <div class="keywords">
-                            ${keywords.map(kw => `<span class="keyword-tag">${kw}</span>`).join('')}
-                        </div>
                     </div>
                 `;
             }).join('');
@@ -198,88 +207,128 @@
                 return;
             }
             
-            const levelsHtml = (business.levels || []).map(level => {
-                const swotHtml = level.swot ? `
+            const levelsHtml = (business.maturity_levels || []).map(level => {
+                const hasSwot = level.swot && (
+                    level.swot.strengths?.length > 0 ||
+                    level.swot.weaknesses?.length > 0 ||
+                    level.swot.opportunities?.length > 0 ||
+                    level.swot.threats?.length > 0
+                );
+                
+                const swotHtml = hasSwot ? `
                     <h4>SWOT Analysis</h4>
                     <div class="swot-grid">
                         <div class="swot-box strengths">
-                            <h5>💪 Strengths</h5>
+                            <h5>💪 Strengths (Kekuatan)</h5>
                             <ul>
-                                ${level.swot.strengths?.map(s => `<li>${s}</li>`).join('') || '<li>No data</li>'}
+                                ${level.swot.strengths?.length > 0 ? level.swot.strengths.map(s => `<li>${s}</li>`).join('') : '<li>No data</li>'}
                             </ul>
+                            ${level.swot_actions?.strength_actions?.length > 0 ? `
+                                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #c3e6cb;">
+                                    <strong style="font-size: 12px;">Cara Memanfaatkan:</strong>
+                                    <ul style="margin-top: 5px;">
+                                        ${level.swot_actions.strength_actions.map(a => `<li>${a}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
                         </div>
                         <div class="swot-box weaknesses">
-                            <h5>⚠️ Weaknesses</h5>
+                            <h5>⚠️ Weaknesses (Kelemahan)</h5>
                             <ul>
-                                ${level.swot.weaknesses?.map(w => `<li>${w}</li>`).join('') || '<li>No data</li>'}
+                                ${level.swot.weaknesses?.length > 0 ? level.swot.weaknesses.map(w => `<li>${w}</li>`).join('') : '<li>No data</li>'}
                             </ul>
+                            ${level.swot_actions?.weakness_actions?.length > 0 ? `
+                                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #f5c6cb;">
+                                    <strong style="font-size: 12px;">Cara Mengatasi:</strong>
+                                    <ul style="margin-top: 5px;">
+                                        ${level.swot_actions.weakness_actions.map(a => `<li>${a}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
                         </div>
                         <div class="swot-box opportunities">
-                            <h5>🎯 Opportunities</h5>
+                            <h5>🎯 Opportunities (Peluang)</h5>
                             <ul>
-                                ${level.swot.opportunities?.map(o => `<li>${o}</li>`).join('') || '<li>No data</li>'}
+                                ${level.swot.opportunities?.length > 0 ? level.swot.opportunities.map(o => `<li>${o}</li>`).join('') : '<li>No data</li>'}
                             </ul>
+                            ${level.swot_actions?.opportunity_actions?.length > 0 ? `
+                                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #bee5eb;">
+                                    <strong style="font-size: 12px;">Cara Memanfaatkan:</strong>
+                                    <ul style="margin-top: 5px;">
+                                        ${level.swot_actions.opportunity_actions.map(a => `<li>${a}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
                         </div>
                         <div class="swot-box threats">
-                            <h5>⚡ Threats</h5>
+                            <h5>⚡ Threats (Ancaman)</h5>
                             <ul>
-                                ${level.swot.threats?.map(t => `<li>${t}</li>`).join('') || '<li>No data</li>'}
+                                ${level.swot.threats?.length > 0 ? level.swot.threats.map(t => `<li>${t}</li>`).join('') : '<li>No data</li>'}
                             </ul>
+                            ${level.swot_actions?.threat_actions?.length > 0 ? `
+                                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffeeba;">
+                                    <strong style="font-size: 12px;">Cara Menghadapi:</strong>
+                                    <ul style="margin-top: 5px;">
+                                        ${level.swot_actions.threat_actions.map(a => `<li>${a}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 ` : '';
                 
+                const roadmapHtml = level.roadmap && (level.roadmap.description || level.roadmap.kpis?.length > 0) ? `
+                    <h4>🗺️ Roadmap to Next Level</h4>
+                    ${level.roadmap.description ? `
+                        <p style="font-size: 14px; color: #666; margin-bottom: 10px; line-height: 1.6;">${level.roadmap.description}</p>
+                    ` : ''}
+                    ${level.roadmap.kpis?.length > 0 ? `
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border-left: 4px solid #007bff;">
+                            <strong style="font-size: 13px; color: #333;">Key Performance Indicators (KPIs):</strong>
+                            <ul style="margin-top: 10px;">
+                                ${level.roadmap.kpis.map(kpi => `<li style="margin-bottom: 8px;">☑️ ${kpi}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                ` : '';
+                
                 return `
                     <div class="level-section">
-                        <h3>Level ${level.level}: ${level.name}</h3>
+                        <h3>${level.name || 'Level ' + level.level}</h3>
                         
-                        ${level.criteria?.length > 0 ? `
-                            <h4>📋 Criteria</h4>
-                            <ul>
-                                ${level.criteria.map(c => `<li>${c}</li>`).join('')}
-                            </ul>
-                        ` : ''}
-                        
-                        ${level.characteristics?.length > 0 ? `
-                            <h4>🔍 Characteristics</h4>
-                            <ul>
-                                ${level.characteristics.map(c => `<li>${c}</li>`).join('')}
-                            </ul>
-                        ` : ''}
-                        
-                        ${level.next_steps?.length > 0 ? `
-                            <h4>➡️ Next Steps</h4>
-                            <ul>
-                                ${level.next_steps.map(s => `<li>${s}</li>`).join('')}
-                            </ul>
+                        ${level.character ? `
+                            <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #1976d2;">
+                                <strong style="font-size: 13px; color: #1565c0;">Character of This Level:</strong>
+                                <p style="font-size: 14px; color: #333; margin-top: 8px; line-height: 1.6;">${level.character}</p>
+                            </div>
                         ` : ''}
                         
                         ${swotHtml}
                         
-                        ${level.recommended_actions?.length > 0 ? `
-                            <h4>💡 Recommended Actions</h4>
-                            <ul>
-                                ${level.recommended_actions.map(a => `<li>${a}</li>`).join('')}
-                            </ul>
-                        ` : ''}
-                        
-                        ${level.estimated_duration ? `
-                            <h4>⏱️ Estimated Duration</h4>
-                            <p style="font-size: 14px; color: #666;">${level.estimated_duration}</p>
-                        ` : ''}
+                        ${roadmapHtml}
                     </div>
                 `;
             }).join('');
             
+            const categoryLabel = business.category_number ? `Kategori ${business.category_number}` : 'Mikro';
+            
             document.getElementById('modalContent').innerHTML = `
                 <h2>${business.business_type}</h2>
-                <p style="color: #666; margin-bottom: 20px;">${business.description || ''}</p>
                 <div style="margin-bottom: 20px;">
-                    <span style="display: inline-block; padding: 6px 12px; background: #e3f2fd; color: #1976d2; border-radius: 12px; font-size: 13px; font-weight: 600;">
-                        ${business.legal_category || 'Mikro'}
+                    <span style="display: inline-block; padding: 6px 12px; background: #e3f2fd; color: #1976d2; border-radius: 12px; font-size: 13px; font-weight: 600; margin-right: 10px;">
+                        ${categoryLabel}
+                    </span>
+                    <span style="display: inline-block; padding: 6px 12px; background: #f0f0f0; color: #666; border-radius: 12px; font-size: 13px;">
+                        ${business.maturity_levels?.length || 0} Maturity Levels
                     </span>
                 </div>
-                ${levelsHtml}
+                ${business.business_character ? `
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
+                        <strong style="font-size: 14px; color: #856404;">Business Character:</strong>
+                        <p style="color: #856404; margin-top: 8px; line-height: 1.6; font-size: 14px;">${business.business_character}</p>
+                    </div>
+                ` : ''}
+                ${levelsHtml || '<p style="color: #999; text-align: center; padding: 40px;">No maturity level data available</p>'}
             `;
             
             document.getElementById('businessModal').classList.add('active');

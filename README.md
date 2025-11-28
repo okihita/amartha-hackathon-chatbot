@@ -27,6 +27,7 @@ This chatbot serves as a digital assistant for Amartha's field agents and UMKM m
 - **Majelis Management**: Create and manage groups
 - **Member Assignment**: Add/remove members with validation
 - **Business Intelligence**: View analyzed business data
+- **Business Types Library**: 25 UMKM categories with maturity levels
 
 ### AI Capabilities
 - **Gemini 2.5 Flash**: Conversational AI with tool calling
@@ -97,6 +98,18 @@ The script will:
 - Deploy to Cloud Run
 - Configure environment variables
 
+### Import Business Types from Google Drive
+
+After deployment, import business classifications:
+
+```bash
+# Set folder ID (already configured in script)
+node scripts/import-business-types.js
+```
+
+This imports 25 business type categories with maturity levels from Google Drive.
+See [Business Types Import Guide](./docs/BUSINESS_TYPES_IMPORT.md) for details.
+
 ## 🔧 Configuration
 
 ### Environment Variables
@@ -115,6 +128,7 @@ See `.env.example` for all required variables:
 - **[API Documentation](./docs/API.md)** - REST API endpoints
 - **[Setup Guide](./docs/SETUP.md)** - Detailed installation instructions
 - **[Architecture](./docs/ARCHITECTURE.md)** - System design and diagrams
+- **[Business Types Import](./docs/BUSINESS_TYPES_IMPORT.md)** - Google Drive import guide
 - **[Contributing](./docs/CONTRIBUTING.md)** - Development guidelines
 - **[Changelog](./CHANGELOG.md)** - Version history
 
@@ -151,7 +165,10 @@ gcloud run logs read whatsapp-bot --region asia-southeast2 --limit 50
 ├── public/
 │   ├── index.html          # User management dashboard
 │   ├── majelis.html        # Majelis management page
+│   ├── business-types.html # Business classifications library
 │   └── layout.js           # Shared UI components
+├── scripts/
+│   └── import-business-types.js  # Google Drive import script
 ├── docs/                   # Documentation
 ├── .kiro/steering/         # Development standards
 ├── Dockerfile              # Container configuration
@@ -163,6 +180,7 @@ gcloud run logs read whatsapp-bot --region asia-southeast2 --limit 50
 - **Production**: https://whatsapp-bot-435783355893.asia-southeast2.run.app
 - **Dashboard**: https://whatsapp-bot-435783355893.asia-southeast2.run.app/
 - **Majelis**: https://whatsapp-bot-435783355893.asia-southeast2.run.app/majelis
+- **Business Types**: https://whatsapp-bot-435783355893.asia-southeast2.run.app/business-types
 
 ## 🤝 Contributing
 

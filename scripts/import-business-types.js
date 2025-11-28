@@ -1,0 +1,420 @@
+#!/usr/bin/env node
+
+/**
+ * Import business types from Google Drive folder
+ * Parses complex Google Docs with maturity levels, SWOT, and leveling guides
+ * 
+ * Expected folder structure:
+ * - 1 doc: UMKM definition
+ * - 1 doc: Summary of 25 business types
+ * - 25 docs: Individual business type specifications
+ */
+
+const { google } = require('googleapis');
+const { Firestore } = require('@google-cloud/firestore');
+
+const db = new Firestore({
+  projectId: process.env.GCP_PROJECT_ID || 'stellar-zoo-478021-v8',
+});
+
+// Google Drive folder ID
+const FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID || '14D6sdUsJevp30p1xNGQVKh_1im_QAKVH';
+
+async function getGoogleDriveClient() {
+  const auth = new google.auth.GoogleAuth({
+    keyFile: './service-account-key.json',
+    scopes: [
+      'https://www.googleapis.com/auth/drive.readonly',
+      'https://www.googleapis.com/auth/documents.readonly'
+    ],
+  });
+
+  const authClient = await auth.getClient();
+  return authClient;
+}
+
+async function listDocsInFolder(drive, folderId) {
+  console.log(`📂 Listing documents in folder: ${folderId}\n`);
+  
+  const response = await drive.files.list({
+    q: `'${folderId}' in parents and mimeType='application/vnd.google-apps.document' and trashed=false`,
+    fields: 'files(id, name, createdTime, modifiedTime)',
+    orderBy: 'name',
+  });
+
+  return response.data.files || [];
+}
+
+async function getDocumentContent(docs, docId) {
+  const response = await docs.documents.get({
+    documentId: docId,
+  });
+
+  const doc = response.data;
+  const sections = [];
+  let currentSection = { text: '', style: 'normal' };
+
+  // Extract structured content with formatting
+  if (doc.body && doc.body.content) {
+    for (const element of doc.body.content) {
+      if (element.paragraph) {
+        let paragraphText = '';
+        let paragraphStyle = element.paragraph.paragraphStyle?.namedStyleType || 'NORMAL_TEXT';
+        
+        for (const textElement of element.paragraph.elements || []) {
+          if (textElement.textRun) {
+            paragraphText += textElement.textRun.content;
+          }
+        }
+
+        if (paragraphText.trim()) {
+          sections.push({
+            text: paragraphText.trim(),
+            style: paragraphStyle,
+            isBold: element.paragraph.elements?.[0]?.textRun?.textStyle?.bold || false,
+            isHeading: paragraphStyle.includes('HEADING')
+          });
+        }
+      } else if (element.table) {
+        // Extract table data
+        const tableData = [];
+        for (const row of element.table.tableRows || []) {
+          const rowData = [];
+          for (const cell of row.tableCells || []) {
+            let cellText = '';
+            for (const cellElement of cell.content || []) {
+              if (cellElement.paragraph) {
+                for (const textElement of cellElement.paragraph.elements || []) {
+                  if (textElement.textRun) {
+                    cellText += textElement.textRun.content;
+                  }
+                }
+              }
+            }
+            rowData.push(cellText.trim());
+          }
+          if (rowData.some(cell => cell)) {
+            tableData.push(rowData);
+          }
+        }
+        if (tableData.length > 0) {
+          sections.push({
+            type: 'table',
+            data: tableData
+          });
+        }
+      }
+    }
+  }
+
+  return sections;
+}
+
+function parseBusinessTypeDoc(sections, fileName) {
+  // Parse structured business type document
+  const parsed = {
+    business_type: fileName.replace(/^KATEGORI \d+ - /, '').trim(),
+    category_number: null,
+    business_character: '', // Distinctive Factor + Karakter Utama
+    maturity_levels: []
+  };
+
+  // Extract category number
+  const categoryMatch = fileName.match(/KATEGORI (\d+)/);
+  if (categoryMatch) {
+    parsed.category_number = parseInt(categoryMatch[1]);
+  }
+
+  let currentLevel = null;
+  let currentSection = null;
+  let currentSubSection = null;
+  let inBusinessCharacter = false;
+  let businessCharParts = [];
+
+  for (let i = 0; i < sections.length; i++) {
+    const section = sections[i];
+    
+    if (section.type === 'table') {
+      // Skip tables for now
+      continue;
+    }
+
+    const text = section.text;
+    const lower = text.toLowerCase();
+    const trimmed = text.trim();
+
+    // Extract Distinctive Factor and Karakter Utama (business character)
+    if (lower.includes('distinctive factor') || lower.includes('karakter utama')) {
+      inBusinessCharacter = true;
+      businessCharParts.push(trimmed);
+      continue;
+    }
+    
+    if (inBusinessCharacter && !lower.match(/^level [1-5]/i)) {
+      businessCharParts.push(trimmed);
+    }
+
+    // Detect maturity levels (LEVEL 1, LEVEL 2, etc.)
+    const levelMatch = trimmed.match(/^LEVEL ([1-5]):/i);
+    if (levelMatch) {
+      // Save previous level
+      if (currentLevel) {
+        parsed.maturity_levels.push(currentLevel);
+      }
+      
+      inBusinessCharacter = false;
+      if (businessCharParts.length > 0 && !parsed.business_character) {
+        parsed.business_character = businessCharParts.join(' ').trim();
+      }
+      
+      currentLevel = {
+        level: parseInt(levelMatch[1]),
+        name: trimmed,
+        character: '', // Character of this level
+        swot: {
+          strengths: [],
+          weaknesses: [],
+          opportunities: [],
+          threats: []
+        },
+        swot_actions: {
+          strength_actions: [],
+          weakness_actions: [],
+          opportunity_actions: [],
+          threat_actions: []
+        },
+        roadmap: {
+          description: '',
+          kpis: [] // KPIs that start with [ ]
+        }
+      };
+      currentSection = 'character';
+      currentSubSection = null;
+      continue;
+    }
+
+    if (!currentLevel) continue;
+
+    // Detect SWOT sections - be more flexible with patterns
+    if (lower.includes('💪') || lower.match(/^s[\s:=]/i) || lower.match(/strength/i) || 
+        (lower.match(/kekuatan/i) && !lower.includes('cara') && !lower.includes('mengatasi'))) {
+      currentSection = 'swot';
+      currentSubSection = 'strengths';
+      continue;
+    }
+    if (lower.includes('⚠️') || lower.match(/^w[\s:=]/i) || lower.match(/weakness/i) || 
+        (lower.match(/kelemahan/i) && !lower.includes('cara') && !lower.includes('mengatasi'))) {
+      currentSection = 'swot';
+      currentSubSection = 'weaknesses';
+      continue;
+    }
+    if (lower.includes('🎯') || lower.match(/^o[\s:=]/i) || lower.match(/opportunit/i) || 
+        (lower.match(/peluang/i) && !lower.includes('cara') && !lower.includes('mengatasi') && !lower.includes('memanfaatkan'))) {
+      currentSection = 'swot';
+      currentSubSection = 'opportunities';
+      continue;
+    }
+    if (lower.includes('⚡') || lower.match(/^t[\s:=]/i) || lower.match(/threat/i) || 
+        (lower.match(/ancaman/i) && !lower.includes('cara') && !lower.includes('mengatasi') && !lower.includes('menghadapi'))) {
+      currentSection = 'swot';
+      currentSubSection = 'threats';
+      continue;
+    }
+
+    // Detect "Cara Mengatasi" (How to handle SWOT)
+    if (lower.includes('cara mengatasi') || lower.includes('cara memanfaatkan') || lower.includes('cara menghadapi')) {
+      if (lower.includes('kekuatan')) {
+        currentSection = 'swot_actions';
+        currentSubSection = 'strength_actions';
+      } else if (lower.includes('kelemahan')) {
+        currentSection = 'swot_actions';
+        currentSubSection = 'weakness_actions';
+      } else if (lower.includes('peluang')) {
+        currentSection = 'swot_actions';
+        currentSubSection = 'opportunity_actions';
+      } else if (lower.includes('ancaman')) {
+        currentSection = 'swot_actions';
+        currentSubSection = 'threat_actions';
+      }
+      continue;
+    }
+
+    // Detect Roadmap section
+    if (lower.includes('roadmap') || lower.includes('cara naik') || lower.includes('langkah') || lower.includes('path to')) {
+      currentSection = 'roadmap';
+      currentSubSection = null;
+      continue;
+    }
+
+    // Add content to appropriate section
+    if (currentSection === 'character' && currentLevel.character === '') {
+      currentLevel.character = trimmed;
+    } else if (currentSection === 'swot' && currentSubSection) {
+      // Skip header lines and empty lines
+      if (trimmed && 
+          !trimmed.match(/^[SWOT][\s:=]/i) && 
+          !trimmed.match(/^(strength|weakness|opportunit|threat)/i) &&
+          !trimmed.match(/^(kekuatan|kelemahan|peluang|ancaman)[\s:]/i) &&
+          !trimmed.match(/^💪|^⚠️|^🎯|^⚡/)) {
+        currentLevel.swot[currentSubSection].push(trimmed);
+      }
+    } else if (currentSection === 'swot_actions' && currentSubSection) {
+      if (trimmed && 
+          !lower.includes('cara mengatasi') && 
+          !lower.includes('cara memanfaatkan') &&
+          !lower.includes('cara menghadapi')) {
+        currentLevel.swot_actions[currentSubSection].push(trimmed);
+      }
+    } else if (currentSection === 'roadmap') {
+      // Check if it's a KPI (starts with [ ] or contains "KPI:")
+      if (trimmed.startsWith('[ ]') || trimmed.startsWith('[]') || lower.includes('kpi:')) {
+        const kpiText = trimmed.replace(/^\[\s*\]\s*/, '').replace(/^KPI:\s*/i, '').trim();
+        if (kpiText) {
+          currentLevel.roadmap.kpis.push(kpiText);
+        }
+      } else if (trimmed && 
+                 !lower.includes('roadmap') && 
+                 !lower.includes('cara naik') &&
+                 !lower.match(/^[a-z]\./i)) { // Skip section markers like "A.", "B."
+        if (!currentLevel.roadmap.description) {
+          currentLevel.roadmap.description = trimmed;
+        } else {
+          currentLevel.roadmap.description += ' ' + trimmed;
+        }
+      }
+    }
+  }
+
+  // Add last level
+  if (currentLevel) {
+    parsed.maturity_levels.push(currentLevel);
+  }
+
+  // Finalize business character if not set
+  if (!parsed.business_character && businessCharParts.length > 0) {
+    parsed.business_character = businessCharParts.join(' ').trim();
+  }
+
+  return parsed;
+}
+
+function isMetaDocument(fileName) {
+  const lower = fileName.toLowerCase();
+  return lower.includes('definisi umkm') || 
+         lower.includes('rangkuman') || 
+         lower.includes('summary') ||
+         lower.includes('matriks');
+}
+
+async function importBusinessTypes() {
+  console.log('🚀 Starting business types import from Google Drive\n');
+  console.log(`📂 Folder ID: ${FOLDER_ID}\n`);
+  
+  try {
+    const authClient = await getGoogleDriveClient();
+    const drive = google.drive({ version: 'v3', auth: authClient });
+    const docs = google.docs({ version: 'v1', auth: authClient });
+
+    // List all documents in folder
+    const files = await listDocsInFolder(drive, FOLDER_ID);
+
+    if (files.length === 0) {
+      console.log('⚠️  No documents found in folder');
+      return;
+    }
+
+    console.log(`📊 Found ${files.length} document(s)\n`);
+
+    let imported = 0;
+    let metaDocs = 0;
+    const batch = db.batch();
+
+    for (const file of files) {
+      console.log(`📄 Processing: ${file.name}`);
+      
+      try {
+        const sections = await getDocumentContent(docs, file.id);
+        
+        if (!sections || sections.length === 0) {
+          console.log(`   ⚠️  Skipped (empty document)\n`);
+          continue;
+        }
+
+        // Check if this is a meta document (definition or summary)
+        if (isMetaDocument(file.name)) {
+          console.log(`   📋 Meta document - storing as reference\n`);
+          
+          // Convert sections to plain text to avoid nested entity issues
+          const plainText = sections
+            .filter(s => s.text)
+            .map(s => s.text)
+            .join('\n\n');
+          
+          const docRef = db.collection('business_meta').doc();
+          batch.set(docRef, {
+            title: file.name,
+            content: plainText,
+            section_count: sections.length,
+            source_doc_id: file.id,
+            created_at: file.createdTime,
+            modified_at: file.modifiedTime,
+            imported_at: new Date().toISOString(),
+          });
+          metaDocs++;
+          continue;
+        }
+
+        // Parse business type document
+        const parsed = parseBusinessTypeDoc(sections, file.name);
+        
+        console.log(`   📊 Parsed: ${parsed.maturity_levels.length} maturity levels`);
+        
+        // Store in Firestore
+        const docRef = db.collection('business_classifications').doc();
+        batch.set(docRef, {
+          ...parsed,
+          source_doc_id: file.id,
+          created_at: file.createdTime,
+          modified_at: file.modifiedTime,
+          imported_at: new Date().toISOString(),
+        });
+
+        console.log(`   ✅ Queued for import\n`);
+        imported++;
+      } catch (error) {
+        console.log(`   ❌ Error: ${error.message}\n`);
+      }
+    }
+
+    if (imported > 0 || metaDocs > 0) {
+      await batch.commit();
+      console.log(`\n✅ Successfully imported:`);
+      console.log(`   📚 ${imported} business type(s)`);
+      console.log(`   📋 ${metaDocs} meta document(s)`);
+    } else {
+      console.log('\n⚠️  No documents were imported');
+    }
+
+    console.log('🎉 Import complete!\n');
+    
+  } catch (error) {
+    console.error('❌ Error during import:', error.message);
+    
+    if (error.message.includes('permission')) {
+      console.log('\n💡 Make sure:');
+      console.log('   1. The service account has access to the Google Drive folder');
+      console.log('   2. The folder is shared with the service account email');
+      console.log('   3. The service account has "Viewer" permission');
+    }
+    
+    process.exit(1);
+  }
+}
+
+// Run the import
+importBusinessTypes()
+  .then(() => process.exit(0))
+  .catch(error => {
+    console.error('Fatal error:', error);
+    process.exit(1);
+  });
