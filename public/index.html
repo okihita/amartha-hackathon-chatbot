@@ -34,6 +34,22 @@
         .btn-delete:hover { background: #5a6268; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         .loading { text-align: center; padding: 40px; color: #666; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-content h2 { margin-bottom: 20px; }
+        .profile-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        .profile-section:last-child { border-bottom: none; }
+        .profile-section h3 { font-size: 16px; margin-bottom: 10px; color: #333; }
+        .profile-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+        .profile-label { color: #666; font-weight: 500; }
+        .profile-value { color: #333; }
+        .transaction-item { padding: 10px; background: #f9f9f9; border-radius: 4px; margin-bottom: 8px; font-size: 13px; }
+        .transaction-item .type { font-weight: 600; color: #333; }
+        .transaction-item .amount { color: #28a745; font-weight: 600; }
+        .transaction-item .amount.negative { color: #dc3545; }
+        .transaction-item .date { color: #999; font-size: 11px; }
+        .btn-close { background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -69,18 +85,131 @@
         </div>
     </div>
 
+    <!-- User Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <h2>User Profile</h2>
+            <div id="profileContent"></div>
+            <button class="btn-close" onclick="closeProfileModal()">Close</button>
+        </div>
+    </div>
+
     <script>
         let processing = null;
+        let allUsers = [];
 
         async function fetchUsers() {
             try {
                 const res = await fetch('/api/users');
-                const users = await res.json();
-                renderUsers(users);
+                allUsers = await res.json();
+                renderUsers(allUsers);
             } catch (error) {
                 console.error('Failed to fetch users', error);
                 document.getElementById('loading').textContent = 'Error loading users';
             }
+        }
+        
+        function viewProfile(phone) {
+            const user = allUsers.find(u => u.phone === phone);
+            if (!user) {
+                alert('User not found');
+                return;
+            }
+            
+            const majelisInfo = user.majelis_name || 'Not assigned';
+            const hasLoan = user.loan_limit > 0;
+            
+            let loanSection = '';
+            if (hasLoan) {
+                const loanHistory = user.loan_history || [];
+                const historyHtml = loanHistory.length > 0 
+                    ? loanHistory.map(tx => `
+                        <div class="transaction-item">
+                            <div class="type">${tx.type === 'disbursement' ? '💰 Pencairan' : '💵 Pembayaran'}: ${tx.description}</div>
+                            <div class="amount ${tx.type === 'payment' ? 'negative' : ''}">
+                                ${tx.type === 'disbursement' ? '+' : '-'} Rp ${tx.amount.toLocaleString('id-ID')}
+                            </div>
+                            <div class="date">${new Date(tx.date).toLocaleDateString('id-ID')}</div>
+                        </div>
+                    `).join('')
+                    : '<p style="color: #999; font-size: 13px;">No transaction history</p>';
+                
+                loanSection = `
+                    <div class="profile-section">
+                        <h3>💰 Loan Information</h3>
+                        <div class="profile-row">
+                            <span class="profile-label">Loan Limit</span>
+                            <span class="profile-value">Rp ${user.loan_limit.toLocaleString('id-ID')}</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Used</span>
+                            <span class="profile-value">Rp ${user.loan_used.toLocaleString('id-ID')}</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Remaining Limit</span>
+                            <span class="profile-value" style="color: #28a745; font-weight: 600;">Rp ${user.loan_remaining.toLocaleString('id-ID')}</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Next Payment</span>
+                            <span class="profile-value">${user.next_payment_date ? new Date(user.next_payment_date).toLocaleDateString('id-ID') : 'N/A'}</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Payment Amount</span>
+                            <span class="profile-value">Rp ${user.next_payment_amount.toLocaleString('id-ID')}</span>
+                        </div>
+                    </div>
+                    <div class="profile-section">
+                        <h3>📜 Transaction History</h3>
+                        ${historyHtml}
+                    </div>
+                `;
+            } else {
+                loanSection = `
+                    <div class="profile-section">
+                        <h3>💰 Loan Information</h3>
+                        <p style="color: #999; font-size: 13px;">No active loan</p>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('profileContent').innerHTML = `
+                <div class="profile-section">
+                    <h3>👤 Personal Information</h3>
+                    <div class="profile-row">
+                        <span class="profile-label">Name</span>
+                        <span class="profile-value">${user.name}</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Phone</span>
+                        <span class="profile-value">${user.phone}</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Business</span>
+                        <span class="profile-value">${user.business_type}</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Location</span>
+                        <span class="profile-value">${user.location}</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Majelis</span>
+                        <span class="profile-value">${majelisInfo}</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Status</span>
+                        <span class="profile-value" style="color: ${user.is_verified ? '#28a745' : '#ffc107'}; font-weight: 600;">
+                            ${user.is_verified ? 'Verified' : 'Pending'}
+                        </span>
+                    </div>
+                </div>
+                ${loanSection}
+            `;
+            
+            document.getElementById('profileModal').classList.add('active');
+        }
+        
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
         }
 
         function renderUsers(users) {
@@ -113,14 +242,15 @@
                     </td>
                     <td>
                         <div class="actions">
-                            ${!user.is_verified ? `
-                                <button class="btn-approve" onclick="handleVerify('${user.phone}', true)" ${processing ? 'disabled' : ''}>
-                                    ✓ Approve
-                                </button>
-                                <button class="btn-reject" onclick="handleVerify('${user.phone}', false)" ${processing ? 'disabled' : ''}>
-                                    ✗ Reject
-                                </button>
-                            ` : ''}
+                            <button class="btn-approve" onclick="viewProfile('${user.phone}')" style="background: #007bff;">
+                                👁️ View
+                            </button>
+                            <button class="btn-approve" onclick="handleVerify('${user.phone}', true)" ${processing || user.is_verified ? 'disabled' : ''} style="${user.is_verified ? 'opacity: 0.3;' : ''}">
+                                ✓ Approve
+                            </button>
+                            <button class="btn-reject" onclick="handleVerify('${user.phone}', false)" ${processing || user.is_verified ? 'disabled' : ''} style="${user.is_verified ? 'opacity: 0.3;' : ''}">
+                                ✗ Reject
+                            </button>
                             <button class="btn-delete" onclick="handleDelete('${user.phone}', '${user.name}')" ${processing ? 'disabled' : ''}>
                                 🗑️ Delete
                             </button>

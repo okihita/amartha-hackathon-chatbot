@@ -106,7 +106,33 @@
 - Screen reader friendly labels
 - Focus indicators visible
 
-### 10. Testing Checklist
+### 10. Layout Stability
+
+**Prevent Layout Shifts:**
+- ❌ **DON'T**: Hide/show buttons based on state (causes layout jump)
+- ✅ **DO**: Keep buttons visible, disable them instead
+- ✅ **DO**: Use opacity to indicate disabled state
+- ✅ **DO**: Maintain consistent button spacing
+
+**Example:**
+```javascript
+// ❌ Bad: Layout shifts when verified
+${!user.is_verified ? '<button>Approve</button>' : ''}
+
+// ✅ Good: Button stays, just disabled
+<button disabled="${user.is_verified}" style="opacity: ${user.is_verified ? 0.3 : 1}">
+  Approve
+</button>
+```
+
+**Rules:**
+- Buttons should occupy space even when disabled
+- Use `opacity: 0.3` for disabled visual state
+- Use `disabled` attribute to prevent clicks
+- Never conditionally render action buttons
+- Maintain consistent grid/flex layouts
+
+### 11. Testing Checklist
 
 Before deploying UI changes:
 - [ ] Can I understand the data in 3 seconds?
@@ -115,6 +141,8 @@ Before deploying UI changes:
 - [ ] Are actions clearly labeled?
 - [ ] Does it work on mobile?
 - [ ] Is the color contrast sufficient?
+- [ ] Does the layout shift when clicking buttons?
+- [ ] Are disabled states visually clear?
 
 ## Examples
 
