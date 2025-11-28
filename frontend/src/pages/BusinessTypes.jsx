@@ -47,7 +47,7 @@ export default function BusinessTypes() {
         }
       }
       
-      const res = await fetch('/api/business-types');
+      const res = await fetch('/api/knowledge/business-types');
       const data = await res.json();
       const sorted = data.sort((a, b) => (a.category_number || 999) - (b.category_number || 999));
       

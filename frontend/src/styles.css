@@ -1942,3 +1942,52 @@ textarea:focus {
 .modal-content p {
     margin: 0.5rem 0;
 }
+
+/* Literacy Progress Styles */
+.literacy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.literacy-week {
+  background: #f8f9fa;
+  padding: 8px;
+  border-radius: 6px;
+  border-left: 3px solid #ddd;
+}
+
+.literacy-week-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.literacy-week-number {
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+}
+
+.literacy-score {
+  font-weight: 700;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.score-pass {
+  background: var(--c-success-bg);
+  color: var(--c-success-text);
+}
+
+.score-pending {
+  background: var(--c-neutral-bg);
+  color: #666;
+}
+
+.literacy-week-date {
+  font-size: 10px;
+  color: #999;
+}

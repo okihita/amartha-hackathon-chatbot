@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const RAGRepository = require('../repositories/RAGRepository');
 
-router.get('/business-types', async (req, res) => {
+router.get('/knowledge/business-types', async (req, res) => {
   try {
     const businessTypes = await RAGRepository.getBusinessTypes();
     res.json(businessTypes);
@@ -12,7 +12,7 @@ router.get('/business-types', async (req, res) => {
   }
 });
 
-router.get('/financial-literacy', async (req, res) => {
+router.get('/knowledge/financial-literacy', async (req, res) => {
   try {
     const modules = await RAGRepository.getFinancialLiteracy();
     res.json(modules);

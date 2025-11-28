@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'preact/hooks';
-import { User, TrendingUp, Briefcase, Search } from 'lucide-preact';
+import { User, TrendingUp, Briefcase, Search, BookOpen } from 'lucide-preact';
 import { route } from 'preact-router';
 
 export default function UserProfile({ phone }) {
   const [user, setUser] = useState(null);
   const [images, setImages] = useState([]);
   const [biData, setBiData] = useState([]);
+  const [literacyWeeks, setLiteracyWeeks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,10 +15,11 @@ export default function UserProfile({ phone }) {
 
   const loadProfile = async () => {
     try {
-      const [usersRes, imagesRes, biRes] = await Promise.all([
+      const [usersRes, imagesRes, biRes, literacyRes] = await Promise.all([
         fetch('/api/users'),
         fetch(`/api/users/${phone}/images`),
-        fetch(`/api/users/${phone}/business-intelligence`)
+        fetch(`/api/users/${phone}/business-intelligence`),
+        fetch('/api/knowledge/financial-literacy')
       ]);
 
       const users = await usersRes.json();
@@ -32,6 +34,7 @@ export default function UserProfile({ phone }) {
       setUser(foundUser);
       setImages(await imagesRes.json());
       setBiData(await biRes.json());
+      setLiteracyWeeks(await literacyRes.json());
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -106,6 +109,41 @@ export default function UserProfile({ phone }) {
               </span>
             </span>
           </div>
+        </div>
+
+        <div class="card">
+          <h2 style="display: flex; align-items: center; gap: 8px;">
+            <BookOpen size={20} /> Financial Literacy Progress
+          </h2>
+          {literacyWeeks.length > 0 ? (
+            <div class="literacy-grid">
+              {literacyWeeks.map((module) => {
+                const weekNumber = module.week_number;
+                const weekKey = `week_${String(weekNumber).padStart(2, '0')}`;
+                const userProgress = user.literacy?.[weekKey];
+                const score = userProgress?.score || 0;
+                const completedDate = userProgress?.last_updated 
+                  ? new Date(userProgress.last_updated).toLocaleDateString('id-ID')
+                  : 'N/A';
+
+                return (
+                  <div key={weekKey} class="literacy-week">
+                    <div class="literacy-week-header">
+                      <span class="literacy-week-number">Week {weekNumber}</span>
+                      <span class={`literacy-score ${score >= 70 ? 'score-pass' : 'score-pending'}`}>
+                        {score}%
+                      </span>
+                    </div>
+                    <div class="literacy-week-date">
+                      Completed: {completedDate}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p class="empty-data-message">No literacy courses available</p>
+          )}
         </div>
 
         <div class="card">

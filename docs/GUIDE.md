@@ -34,8 +34,8 @@ npm start
 - `DELETE /api/majelis/:id/members/:phone` - Remove member
 
 ### Content
-- `GET /api/business-types` - Business classifications
-- `GET /api/financial-literacy` - Course modules
+- `GET /api/knowledge/business-types` - Business classifications
+- `GET /api/knowledge/financial-literacy` - Course modules (15 weeks)
 
 ## Environment Variables
 

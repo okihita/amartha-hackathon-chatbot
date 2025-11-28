@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const { COLLECTIONS } = require('../config/constants');
 const User = require('../core/User');
+const phone = require('../utils/phone');
 
 class UserRepository {
   constructor() {
@@ -8,16 +9,16 @@ class UserRepository {
   }
 
   async findByPhone(phoneNumber) {
-    const cleanPhone = phoneNumber.replace(/\D/g, '');
-    const doc = await this.collection.doc(cleanPhone).get();
-    return doc.exists ? { phone: cleanPhone, ...doc.data() } : null;
+    const clean = phone.clean(phoneNumber);
+    const doc = await this.collection.doc(clean).get();
+    return doc.exists ? { phone: clean, ...doc.data() } : null;
   }
 
   async create(phoneNumber, data) {
-    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    const clean = phone.clean(phoneNumber);
     const userData = User.create(data);
-    await this.collection.doc(cleanPhone).set(userData);
-    return { phone: cleanPhone, ...userData };
+    await this.collection.doc(clean).set(userData);
+    return { phone: clean, ...userData };
   }
 
   async findAll() {
@@ -26,14 +27,14 @@ class UserRepository {
   }
 
   async update(phoneNumber, data) {
-    const cleanPhone = phoneNumber.replace(/\D/g, '');
-    await this.collection.doc(cleanPhone).update(data);
-    return this.findByPhone(cleanPhone);
+    const clean = phone.clean(phoneNumber);
+    await this.collection.doc(clean).update(data);
+    return this.findByPhone(clean);
   }
 
   async delete(phoneNumber) {
-    const cleanPhone = phoneNumber.replace(/\D/g, '');
-    await this.collection.doc(cleanPhone).delete();
+    const clean = phone.clean(phoneNumber);
+    await this.collection.doc(clean).delete();
     return true;
   }
 

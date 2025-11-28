@@ -47,7 +47,7 @@ export default function FinancialLiteracy() {
         }
       }
       
-      const res = await fetch('/api/financial-literacy');
+      const res = await fetch('/api/knowledge/financial-literacy');
       const data = await res.json();
       const filtered = data
         .filter(w => w.week_number && w.bank_soal && w.bank_soal.length > 0)

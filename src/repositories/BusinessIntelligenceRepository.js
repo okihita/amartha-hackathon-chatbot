@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const { COLLECTIONS } = require('../config/constants');
+const phone = require('../utils/phone');
 
 class BusinessIntelligenceRepository {
   constructor() {
@@ -7,26 +8,22 @@ class BusinessIntelligenceRepository {
   }
 
   async save(phoneNumber, data, imageData = null, imageId = null) {
-    const cleanPhone = phoneNumber.replace(/\D/g, '');
-    const userRef = this.collection.doc(cleanPhone);
-    const biCollection = userRef.collection('business_intelligence');
+    const clean = phone.clean(phoneNumber);
+    const biCollection = this.collection.doc(clean).collection('business_intelligence');
     
-    const biDoc = {
+    await biCollection.add({
       ...data,
       has_image: !!imageData,
       image_id: imageId,
       image_data: imageData,
       timestamp: new Date().toISOString()
-    };
-    
-    await biCollection.add(biDoc);
-    return biDoc;
+    });
   }
 
   async findByUser(phoneNumber) {
-    const cleanPhone = phoneNumber.replace(/\D/g, '');
-    const userRef = this.collection.doc(cleanPhone);
-    const snapshot = await userRef.collection('business_intelligence')
+    const clean = phone.clean(phoneNumber);
+    const snapshot = await this.collection.doc(clean)
+      .collection('business_intelligence')
       .orderBy('timestamp', 'desc')
       .get();
     
