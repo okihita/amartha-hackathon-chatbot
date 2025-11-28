@@ -26,6 +26,10 @@ tests/
 # Scripts (not needed in runtime)
 scripts/
 
+# Frontend source (only need built files in public/)
+frontend/
+vite.config.js
+
 # Deployment
 deploy.sh
 .gcloudignore

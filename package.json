@@ -4,11 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "dev:frontend": "vite",
-    "build:frontend": "vite build",
-    "preview": "vite preview"
+    "build": "vite build",
+    "dev": "vite"
   },
   "keywords": [],
   "author": "",
