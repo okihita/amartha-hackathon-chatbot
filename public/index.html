@@ -25,6 +25,8 @@
         .btn-approve:hover { background: #218838; }
         .btn-reject { background: #dc3545; color: white; }
         .btn-reject:hover { background: #c82333; }
+        .btn-delete { background: #6c757d; color: white; }
+        .btn-delete:hover { background: #5a6268; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         .loading { text-align: center; padding: 40px; color: #666; }
     </style>
@@ -89,16 +91,19 @@
                         </span>
                     </td>
                     <td>
-                        ${!user.is_verified ? `
-                            <div class="actions">
+                        <div class="actions">
+                            ${!user.is_verified ? `
                                 <button class="btn-approve" onclick="handleVerify('${user.phone}', true)" ${processing ? 'disabled' : ''}>
                                     ✓ Approve
                                 </button>
                                 <button class="btn-reject" onclick="handleVerify('${user.phone}', false)" ${processing ? 'disabled' : ''}>
                                     ✗ Reject
                                 </button>
-                            </div>
-                        ` : '-'}
+                            ` : ''}
+                            <button class="btn-delete" onclick="handleDelete('${user.phone}', '${user.name}')" ${processing ? 'disabled' : ''}>
+                                🗑️ Delete
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -116,6 +121,30 @@
             } catch (error) {
                 console.error('Verification failed', error);
                 alert('Verification failed. Please try again.');
+            } finally {
+                processing = null;
+            }
+        }
+
+        async function handleDelete(phone, name) {
+            if (!confirm(`Are you sure you want to delete ${name}?`)) {
+                return;
+            }
+            
+            processing = phone;
+            try {
+                const res = await fetch(`/api/users/${phone}`, {
+                    method: 'DELETE'
+                });
+                
+                if (res.ok) {
+                    await fetchUsers();
+                } else {
+                    alert('Failed to delete user. Please try again.');
+                }
+            } catch (error) {
+                console.error('Delete failed', error);
+                alert('Delete failed. Please try again.');
             } finally {
                 processing = null;
             }

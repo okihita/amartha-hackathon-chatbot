@@ -36,7 +36,7 @@ const model = genAI.getGenerativeModel({
 
 async function getGeminiResponse(userText, senderPhone) {
   try {
-    const userProfile = getUserContext(senderPhone);
+    const userProfile = await getUserContext(senderPhone);
     
     // 🐛 DEBUG COMMAND
     const lowerText = userText.toLowerCase().trim();
@@ -65,11 +65,11 @@ async function getGeminiResponse(userText, senderPhone) {
       PERAN: Akademi-AI, asisten pendaftaran Amartha.
       TUGAS: Kamu sedang berbicara dengan pengguna BARU (belum terdaftar).
       INSTRUKSI:
-      1. Sapa dengan ramah SEKALI SAJA.
-      2. Minta data diri: Nama, Jenis Usaha, dan Lokasi dalam SATU pesan.
-      3. JANGAN minta data berulang-ulang. Tunggu user memberikan semua info.
-      4. Jika mereka memberikan ketiga data tersebut, LANGSUNG GUNAKAN TOOL 'registerUser'.
-      5. JANGAN jawab pertanyaan lain sebelum mereka mendaftar.
+      1. Jika user BELUM memberikan data, minta: Nama, Jenis Usaha, dan Lokasi.
+      2. Jika user SUDAH memberikan Nama DAN Jenis Usaha DAN Lokasi, WAJIB panggil tool 'registerUser' dengan data tersebut.
+      3. Contoh input valid: "Nama saya Ibu Siti, usaha warung sembako di Bogor" -> PANGGIL TOOL
+      4. JANGAN minta konfirmasi lagi setelah user memberikan data lengkap. LANGSUNG PANGGIL TOOL.
+      5. Setelah tool dipanggil, ucapkan terima kasih dan beritahu mereka menunggu verifikasi petugas.
       `;
     } else {
       // 🔵 EXISTING USER FLOW
@@ -107,11 +107,18 @@ async function getGeminiResponse(userText, senderPhone) {
     // ✨ HANDLE TOOL CALLS
     const functionCall = response.functionCalls() ? response.functionCalls()[0] : null;
     
+    console.log('🔍 Function Call:', functionCall ? JSON.stringify(functionCall) : 'None');
+    
     if (functionCall) {
       const { name, args } = functionCall;
       if (name === "registerUser") {
+        console.log('📝 Registering user with args:', JSON.stringify(args));
         // Execute DB Update
-        registerNewUser(senderPhone, args);
+        const newUser = await registerNewUser(senderPhone, args);
+        
+        if (!newUser) {
+          return "Maaf, terjadi kesalahan saat mendaftar. Silakan coba lagi.";
+        }
         
         // Send Tool Output back to Gemini
         const finalResult = await chat.sendMessage([
