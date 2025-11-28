@@ -23,16 +23,26 @@ const MY_VERIFY_TOKEN = process.env.MY_VERIFY_TOKEN;
 app.use(bodyParser.json());
 app.use(cors()); // Enable CORS for Dashboard
 
-// --- SERVE STATIC DASHBOARD ---
-app.use(express.static(path.join(__dirname, 'public')));
-
-// --- SERVE MAJELIS PAGE ---
+// --- SERVE MAJELIS PAGE (before static middleware) ---
 app.get('/majelis', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'public/majelis.html'));
 });
 
 // --- HEALTH CHECK ---
 app.get('/health', (req, res) => res.status(200).send('🤖 Akademi-AI (Modular) is Online!'));
+
+// --- SERVE STATIC DASHBOARD ---
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+  }
+}));
 
 // --- WEBHOOK VERIFICATION ---
 app.get('/webhook', (req, res) => {
