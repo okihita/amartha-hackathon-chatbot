@@ -1,61 +1,131 @@
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import { User, Building2, CreditCard, BookOpen, Users as UsersIcon, ArrowLeft, Target, Calendar, Phone, TrendingUp, Shield, AlertTriangle, CheckCircle, Activity, PieChart, BarChart3, Clock, Zap, Award, FileText, Package } from 'lucide-preact';
+import { User, Building2, CreditCard, BookOpen, Users as UsersIcon, ArrowLeft, Target, Calendar, Phone, TrendingUp, Shield, AlertTriangle, CheckCircle, Activity, PieChart, BarChart3, Clock, Zap, Award, FileText, Package, Ban } from 'lucide-preact';
 
-// MOCK DATA GENERATOR - All data is simulated for demonstration
-const generateMockCreditData = (userData) => {
+// Amartha Credit Scoring Model (Max 40 points)
+const calculateCreditScore = (userData) => {
   const seed = userData.phone?.slice(-4) || '1234';
   const seedNum = parseInt(seed, 10) || 1234;
-  const pseudoRandom = (n) => ((seedNum * n) % 100);
+  const mockVal = (base, variance) => base + (seedNum % variance) - variance/2;
+
+  // Mock external data (SLIK, financials) - in production these would come from real sources
+  const mockData = {
+    slik_status: seedNum % 10 < 8 ? 'COL1' : 'COL2',
+    slik_last_col2_months: 6 + (seedNum % 18),
+    monthly_installment: mockVal(500000, 200000),
+    net_profit: mockVal(3000000, 1000000),
+    total_monthly_debt: mockVal(800000, 400000),
+    claimed_monthly_revenue: mockVal(5000000, 2000000),
+  };
+
+  // Get real data from user
+  const literacy = userData.literacy || {};
+  const completedWeeks = Object.keys(literacy).filter(k => k.startsWith('week_') && literacy[k]?.score >= 100).length;
+  const literacyPercent = (completedWeeks / 15) * 100;
+  const quizScores = Object.values(literacy).filter(w => w?.score).map(w => w.score);
+  const avgQuizScore = quizScores.length > 0 ? quizScores.reduce((a,b) => a+b, 0) / quizScores.length : 0;
   
-  const baseScore = 650 + pseudoRandom(7) + (userData.status === 'active' ? 50 : 0) + 
-    (userData.business?.maturity_level || 0) * 20 + (userData.majelis ? 30 : 0);
-  const score = Math.min(850, Math.max(300, baseScore));
+  const majelisAttendance = userData.majelis ? mockVal(88, 20) : 0;
+  const majelisLatePayments = userData.majelis ? (seedNum % 3) : 3;
   
+  // BI data
+  const bi = userData.business_intelligence || [];
+  const latestInventory = bi.filter(b => b.type === 'inventory').sort((a,b) => new Date(b.analyzed_at) - new Date(a.analyzed_at))[0];
+  const latestBuilding = bi.filter(b => b.type === 'building').sort((a,b) => new Date(b.analyzed_at) - new Date(a.analyzed_at))[0];
+  const inventoryLevel = latestInventory?.data?.stock_level === 'High' ? 85 : latestInventory?.data?.stock_level === 'Medium' ? 60 : latestInventory?.data?.stock_level === 'Low' ? 30 : mockVal(50, 40);
+  const assetValuation = latestBuilding?.data?.estimated_value || mockVal(15000000, 10000000);
+
+  // AUTO REJECT checks
+  const autoReject = {
+    slik: ['COL3', 'COL4', 'COL5'].includes(mockData.slik_status),
+    goldenRule: (mockData.monthly_installment / mockData.net_profit) > 0.30
+  };
+  const isRejected = autoReject.slik || autoReject.goldenRule;
+
+  // A1: SLIK OJK Status (max 8)
+  let a1 = 0;
+  if (mockData.slik_status === 'COL1') a1 = 8;
+  else if (mockData.slik_status === 'COL2') {
+    if (mockData.slik_last_col2_months > 12) a1 = 6.4;
+    else if (mockData.slik_last_col2_months >= 6) a1 = 4;
+    else a1 = 2;
+  }
+
+  // A2: Repayment Capacity (max 7)
+  const rpc = (mockData.monthly_installment / mockData.net_profit) * 100;
+  let a2 = rpc <= 15 ? 7 : rpc <= 20 ? 5 : rpc <= 25 ? 3 : rpc <= 30 ? 1 : 0;
+
+  // A3: Cashflow Volatility (max 3) - mock CV
+  const cv = 0.2 + (seedNum % 50) / 100;
+  let a3 = cv <= 0.3 ? 3 : cv <= 0.5 ? 2 : cv <= 0.7 ? 1 : 0;
+
+  // A4: Debt Burden Ratio (max 2)
+  const dbr = (mockData.total_monthly_debt / mockData.net_profit) * 100;
+  let a4 = dbr <= 35 ? 2 : dbr <= 40 ? 1.5 : dbr <= 45 ? 1 : dbr <= 50 ? 0.5 : 0;
+
+  // B1: Capacity Match (max 5)
+  const capacityRatio = assetValuation / (mockData.claimed_monthly_revenue * 3);
+  let b1 = (capacityRatio >= 0.8 && capacityRatio <= 1.2) ? 5 : 
+           (capacityRatio >= 0.6 && capacityRatio < 0.8) || (capacityRatio > 1.2 && capacityRatio <= 1.4) ? 3 :
+           (capacityRatio >= 0.4 && capacityRatio < 0.6) || (capacityRatio > 1.4 && capacityRatio <= 1.6) ? 1 : 0;
+
+  // B2: Inventory Level (max 5)
+  let b2 = inventoryLevel >= 75 ? 5 : inventoryLevel >= 50 ? 3 : inventoryLevel >= 25 ? 1 : 0;
+
+  // C1: Financial Literacy (max 5)
+  const c1Module = literacyPercent >= 100 ? 2.5 : literacyPercent >= 80 ? 1.5 : 0;
+  const c1Quiz = avgQuizScore >= 90 ? 2.5 : avgQuizScore >= 75 ? 1.5 : 0;
+  const c1 = c1Module + c1Quiz;
+
+  // C2: Majelis Cohesion (max 5)
+  let c2 = 0;
+  if (userData.majelis) {
+    if (majelisAttendance >= 95 && majelisLatePayments === 0) c2 = 5;
+    else if (majelisAttendance >= 85 || majelisLatePayments <= 1) c2 = 3;
+    else if (majelisAttendance >= 75 || majelisLatePayments <= 2) c2 = 1;
+  }
+
+  const totalScore = a1 + a2 + a3 + a4 + b1 + b2 + c1 + c2;
+  const maxScore = 40;
+  const normalizedScore = Math.round((totalScore / maxScore) * 550 + 300); // Convert to 300-850 scale
+
   return {
-    score,
-    scoreHistory: [
-      { month: 'Jun', score: score - 45 },
-      { month: 'Jul', score: score - 32 },
-      { month: 'Aug', score: score - 18 },
-      { month: 'Sep', score: score - 8 },
-      { month: 'Oct', score: score - 3 },
-      { month: 'Nov', score },
-    ],
+    rawScore: Math.round(totalScore * 10) / 10,
+    maxScore,
+    normalizedScore: isRejected ? 300 : normalizedScore,
+    isRejected,
+    autoReject,
     factors: [
-      { name: 'Payment History', score: 75 + pseudoRandom(3), weight: 35, icon: Clock },
-      { name: 'Credit Utilization', score: 60 + pseudoRandom(5), weight: 30, icon: PieChart },
-      { name: 'Business Performance', score: 70 + pseudoRandom(7), weight: 15, icon: BarChart3 },
-      { name: 'Majelis Engagement', score: 80 + pseudoRandom(2), weight: 10, icon: UsersIcon },
-      { name: 'Financial Literacy', score: 50 + pseudoRandom(11), weight: 10, icon: BookOpen },
+      { name: 'SLIK OJK Status', score: a1, max: 8, weight: 20, icon: Shield, category: 'A' },
+      { name: 'Repayment Capacity', score: a2, max: 7, weight: 17.5, icon: CreditCard, category: 'A', detail: `${rpc.toFixed(1)}%` },
+      { name: 'Cashflow Volatility', score: a3, max: 3, weight: 7.5, icon: Activity, category: 'A', detail: `CV ${cv.toFixed(2)}` },
+      { name: 'Debt Burden Ratio', score: a4, max: 2, weight: 5, icon: PieChart, category: 'A', detail: `${dbr.toFixed(1)}%` },
+      { name: 'Capacity Match', score: b1, max: 5, weight: 12.5, icon: BarChart3, category: 'B', detail: `Ratio ${capacityRatio.toFixed(2)}` },
+      { name: 'Inventory Level', score: b2, max: 5, weight: 12.5, icon: Package, category: 'B', detail: `${inventoryLevel}%` },
+      { name: 'Financial Literacy', score: c1, max: 5, weight: 12.5, icon: BookOpen, category: 'C', detail: `${literacyPercent.toFixed(0)}% done` },
+      { name: 'Majelis Cohesion', score: c2, max: 5, weight: 12.5, icon: UsersIcon, category: 'C', detail: userData.majelis ? `${majelisAttendance}% att.` : 'No group' },
     ],
-    riskMatrix: {
-      probability: score >= 700 ? 'Low' : score >= 600 ? 'Medium' : 'High',
-      impact: 'Medium',
-      overall: score >= 700 ? 'Acceptable' : score >= 600 ? 'Monitor' : 'Elevated',
+    sections: {
+      A: { name: 'Financial Capacity', score: a1+a2+a3+a4, max: 20, weight: 60 },
+      B: { name: 'Business Validation', score: b1+b2, max: 10, weight: 20 },
+      C: { name: 'Literacy & Quality', score: c1+c2, max: 10, weight: 20 },
     },
-    benchmarks: {
-      portfolio: 685,
-      industry: 670,
-      region: 662,
-    },
-    loanEligibility: Math.round(score * 12000),
-    interestRate: score >= 750 ? 12 : score >= 700 ? 14 : score >= 650 ? 16 : 18,
+    riskLevel: isRejected ? 'Rejected' : totalScore >= 32 ? 'Low' : totalScore >= 24 ? 'Medium' : totalScore >= 16 ? 'High' : 'Very High',
+    loanEligibility: isRejected ? 0 : Math.round(totalScore * 250000),
+    interestRate: isRejected ? null : totalScore >= 32 ? 12 : totalScore >= 24 ? 15 : totalScore >= 16 ? 18 : 24,
   };
 };
 
 const CreditScoreDashboard = ({ userData }) => {
-  const mock = generateMockCreditData(userData);
-  const { score, scoreHistory, factors, riskMatrix, benchmarks, loanEligibility, interestRate } = mock;
+  const credit = calculateCreditScore(userData);
+  const { rawScore, maxScore, normalizedScore, isRejected, autoReject, factors, sections, riskLevel, loanEligibility, interestRate } = credit;
 
-  const getScoreColor = (s) => s >= 750 ? '#10B981' : s >= 650 ? '#F59E0B' : '#EF4444';
-  const getScoreGrade = (s) => s >= 800 ? 'A+' : s >= 750 ? 'A' : s >= 700 ? 'B+' : s >= 650 ? 'B' : s >= 600 ? 'C' : 'D';
-  const getScoreLabel = (s) => s >= 800 ? 'Excellent' : s >= 750 ? 'Very Good' : s >= 700 ? 'Good' : s >= 650 ? 'Fair' : 'Needs Improvement';
-  const getRiskColor = (r) => r === 'Low' || r === 'Acceptable' ? '#10B981' : r === 'Medium' || r === 'Monitor' ? '#F59E0B' : '#EF4444';
-  const scorePercent = ((score - 300) / 550) * 100;
+  const getScoreColor = (s) => isRejected ? '#EF4444' : s >= 32 ? '#10B981' : s >= 24 ? '#F59E0B' : '#EF4444';
+  const getRiskColor = (r) => r === 'Low' ? '#10B981' : r === 'Medium' ? '#F59E0B' : '#EF4444';
+  const scorePercent = (rawScore / maxScore) * 100;
 
   const MockBadge = () => (
-    <span style="background: #FEF3C7; color: #92400E; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px;">MOCK DATA</span>
+    <span style="background: #FEF3C7; color: #92400E; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px;">PARTIAL MOCK</span>
   );
 
   return (
@@ -67,159 +137,116 @@ const CreditScoreDashboard = ({ userData }) => {
         <MockBadge />
       </div>
 
-      {/* Executive Summary Row */}
-      <div style="display: grid; grid-template-columns: 320px 1fr; gap: 24px; margin-bottom: 24px;">
-        {/* Score Card */}
-        <div class="card" style="text-align: center; padding: 28px;">
-          <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #6B7280; margin-bottom: 16px;">Composite Credit Score</div>
-          <div style="position: relative; width: 180px; height: 180px; margin: 0 auto;">
-            <svg viewBox="0 0 180 180" style="transform: rotate(-90deg);">
-              <circle cx="90" cy="90" r="75" fill="none" stroke="#E5E7EB" stroke-width="12" />
-              <circle cx="90" cy="90" r="75" fill="none" stroke={getScoreColor(score)} stroke-width="12" stroke-dasharray={`${scorePercent * 4.71} 471`} stroke-linecap="round" />
+      {/* Auto Reject Warning */}
+      {isRejected && (
+        <div style="margin-bottom: 20px; padding: 16px; background: #FEE2E2; border-radius: 12px; border: 1px solid #FECACA;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <Ban size={24} style="color: #DC2626;" />
+            <div>
+              <div style="font-size: 15px; font-weight: 700; color: #DC2626;">AUTO REJECT</div>
+              <div style="font-size: 13px; color: #991B1B;">
+                {autoReject.slik && 'SLIK OJK: COL 3/4/5 dalam 12 bulan terakhir. '}
+                {autoReject.goldenRule && 'Golden Rule: Angsuran > 30% dari Net Profit.'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Score Summary */}
+      <div style="display: grid; grid-template-columns: 280px 1fr; gap: 24px; margin-bottom: 24px;">
+        {/* Score Gauge */}
+        <div class="card" style="text-align: center; padding: 24px;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #6B7280; margin-bottom: 12px;">Total Score</div>
+          <div style="position: relative; width: 160px; height: 160px; margin: 0 auto;">
+            <svg viewBox="0 0 160 160" style="transform: rotate(-90deg);">
+              <circle cx="80" cy="80" r="65" fill="none" stroke="#E5E7EB" stroke-width="12" />
+              <circle cx="80" cy="80" r="65" fill="none" stroke={getScoreColor(rawScore)} stroke-width="12" stroke-dasharray={`${scorePercent * 4.08} 408`} stroke-linecap="round" />
             </svg>
             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-              <div style={`font-size: 44px; font-weight: 800; color: ${getScoreColor(score)}; line-height: 1;`}>{score}</div>
-              <div style="font-size: 12px; color: #9CA3AF; margin-top: 4px;">/ 850</div>
+              <div style={`font-size: 36px; font-weight: 800; color: ${getScoreColor(rawScore)}; line-height: 1;`}>{rawScore}</div>
+              <div style="font-size: 12px; color: #9CA3AF;">/ {maxScore}</div>
             </div>
           </div>
-          <div style={`margin-top: 16px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 20px; background: ${getScoreColor(score)}15;`}>
-            <Award size={16} style={`color: ${getScoreColor(score)};`} />
-            <span style={`font-size: 16px; font-weight: 700; color: ${getScoreColor(score)};`}>Grade {getScoreGrade(score)}</span>
+          <div style={`margin-top: 12px; padding: 6px 16px; border-radius: 20px; display: inline-block; background: ${getRiskColor(riskLevel)}15; color: ${getRiskColor(riskLevel)}; font-weight: 700; font-size: 14px;`}>
+            {riskLevel} Risk
           </div>
-          <div style="font-size: 13px; color: #6B7280; margin-top: 8px;">{getScoreLabel(score)}</div>
         </div>
 
-        {/* Trend & Benchmark */}
+        {/* Section Breakdown */}
         <div class="card" style="padding: 24px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div style="font-size: 14px; font-weight: 600; color: #374151;">6-Month Score Trend</div>
-            <div style="display: flex; align-items: center; gap: 6px; color: #10B981; font-size: 13px; font-weight: 600;">
-              <TrendingUp size={14} /> +{score - scoreHistory[0].score} pts
-            </div>
-          </div>
-          {/* Mini Chart */}
-          <div style="display: flex; align-items: end; gap: 12px; height: 100px; margin-bottom: 20px;">
-            {scoreHistory.map((h, i) => {
-              const height = ((h.score - 300) / 550) * 100;
+          <div style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 16px;">Score by Section</div>
+          <div style="display: grid; gap: 16px;">
+            {Object.entries(sections).map(([key, sec]) => {
+              const pct = (sec.score / sec.max) * 100;
+              const color = pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444';
               return (
-                <div key={i} style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                  <div style={`width: 100%; background: ${i === scoreHistory.length - 1 ? '#63297A' : '#E5E7EB'}; border-radius: 4px 4px 0 0; height: ${height}%;`} />
-                  <span style="font-size: 11px; color: #6B7280;">{h.month}</span>
+                <div key={key}>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span style="font-size: 13px; color: #374151;">{key}. {sec.name}</span>
+                    <span style="font-size: 13px; font-weight: 700;">{sec.score}/{sec.max} <span style="color: #9CA3AF; font-weight: 400;">({sec.weight}%)</span></span>
+                  </div>
+                  <div style="height: 8px; background: #E5E7EB; border-radius: 4px; overflow: hidden;">
+                    <div style={`height: 100%; width: ${pct}%; background: ${color}; border-radius: 4px;`} />
+                  </div>
                 </div>
               );
             })}
           </div>
-          {/* Benchmarks */}
-          <div style="border-top: 1px solid #E5E7EB; padding-top: 16px;">
-            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin-bottom: 12px;">Benchmark Comparison</div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-              {[
-                { label: 'Portfolio Avg', value: benchmarks.portfolio, diff: score - benchmarks.portfolio },
-                { label: 'Industry Avg', value: benchmarks.industry, diff: score - benchmarks.industry },
-                { label: 'Regional Avg', value: benchmarks.region, diff: score - benchmarks.region },
-              ].map((b, i) => (
-                <div key={i} style="text-align: center; padding: 12px; background: #F9FAFB; border-radius: 8px;">
-                  <div style="font-size: 18px; font-weight: 700; color: #1F2937;">{b.value}</div>
-                  <div style="font-size: 11px; color: #6B7280; margin: 2px 0;">{b.label}</div>
-                  <div style={`font-size: 12px; font-weight: 600; color: ${b.diff >= 0 ? '#10B981' : '#EF4444'};`}>{b.diff >= 0 ? '+' : ''}{b.diff}</div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Factor Analysis */}
+      {/* Factor Details */}
       <div class="card" style="margin-bottom: 24px; padding: 24px;">
-        <div style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 20px;">Score Factor Analysis</div>
-        <div style="display: grid; gap: 16px;">
+        <div style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 16px;">Scoring Factors</div>
+        <div style="display: grid; gap: 12px;">
           {factors.map((f, i) => {
             const Icon = f.icon;
-            const status = f.score >= 80 ? 'excellent' : f.score >= 65 ? 'good' : f.score >= 50 ? 'fair' : 'poor';
-            const statusColor = status === 'excellent' ? '#10B981' : status === 'good' ? '#3B82F6' : status === 'fair' ? '#F59E0B' : '#EF4444';
+            const pct = (f.score / f.max) * 100;
+            const color = pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444';
             return (
-              <div key={i} style="display: grid; grid-template-columns: 200px 1fr 80px 80px; align-items: center; gap: 16px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <div style={`width: 32px; height: 32px; border-radius: 8px; background: ${statusColor}15; display: flex; align-items: center; justify-content: center;`}>
-                    <Icon size={16} style={`color: ${statusColor};`} />
+              <div key={i} style="display: grid; grid-template-columns: 180px 1fr 70px 90px; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style={`width: 28px; height: 28px; border-radius: 6px; background: ${color}15; display: flex; align-items: center; justify-content: center;`}>
+                    <Icon size={14} style={`color: ${color};`} />
                   </div>
-                  <span style="font-size: 14px; color: #374151;">{f.name}</span>
+                  <span style="font-size: 13px; color: #374151;">{f.name}</span>
                 </div>
-                <div style="height: 8px; background: #E5E7EB; border-radius: 4px; overflow: hidden;">
-                  <div style={`height: 100%; width: ${f.score}%; background: ${statusColor}; border-radius: 4px; transition: width 0.5s;`} />
+                <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
+                  <div style={`height: 100%; width: ${pct}%; background: ${color}; border-radius: 3px;`} />
                 </div>
-                <div style="text-align: right; font-size: 15px; font-weight: 700; color: #1F2937;">{f.score}<span style="font-size: 12px; color: #9CA3AF;">/100</span></div>
-                <div style={`text-align: center; font-size: 11px; padding: 4px 8px; border-radius: 4px; background: ${statusColor}15; color: ${statusColor}; font-weight: 600;`}>
-                  {f.weight}% weight
-                </div>
+                <div style="text-align: right; font-size: 14px; font-weight: 700; color: #1F2937;">{f.score}<span style="font-size: 11px; color: #9CA3AF;">/{f.max}</span></div>
+                <div style="font-size: 11px; color: #6B7280; text-align: right;">{f.detail || ''}</div>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Risk Matrix & Loan Eligibility */}
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-        {/* Risk Matrix */}
-        <div class="card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-            <AlertTriangle size={18} style="color: #63297A;" />
-            <span style="font-size: 14px; font-weight: 600; color: #374151;">Risk Assessment Matrix</span>
-          </div>
-          <div style="display: grid; gap: 12px;">
-            {[
-              { label: 'Default Probability', value: riskMatrix.probability },
-              { label: 'Loss Impact', value: riskMatrix.impact },
-              { label: 'Overall Risk Rating', value: riskMatrix.overall },
-            ].map((r, i) => (
-              <div key={i} style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: #F9FAFB; border-radius: 8px;">
-                <span style="font-size: 14px; color: #374151;">{r.label}</span>
-                <span style={`font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 4px; background: ${getRiskColor(r.value)}15; color: ${getRiskColor(r.value)};`}>{r.value}</span>
-              </div>
-            ))}
-          </div>
-          <div style="margin-top: 16px; padding: 12px; background: #F5F3FF; border-radius: 8px; border-left: 3px solid #63297A;">
-            <div style="font-size: 12px; color: #5B21B6; font-weight: 600;">Analyst Note</div>
-            <div style="font-size: 13px; color: #374151; margin-top: 4px;">
-              {score >= 700 ? 'Low-risk profile. Recommend standard approval process.' : score >= 600 ? 'Moderate risk. Enhanced monitoring recommended.' : 'Elevated risk. Additional verification required.'}
-            </div>
-          </div>
-        </div>
-
-        {/* Loan Eligibility */}
+      {/* Loan Eligibility */}
+      {!isRejected && (
         <div class="card" style="padding: 0; overflow: hidden;">
-          <div style="background: linear-gradient(135deg, #63297A 0%, #7E3D99 100%); padding: 24px; color: white;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
-              <Zap size={18} />
-              <span style="font-size: 14px; font-weight: 600;">Loan Eligibility Assessment</span>
-            </div>
-            <div style="font-size: 36px; font-weight: 800;">Rp {loanEligibility.toLocaleString('id-ID')}</div>
-            <div style="font-size: 13px; opacity: 0.85; margin-top: 4px;">Maximum Recommended Limit</div>
-          </div>
-          <div style="padding: 20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-              <div style="text-align: center; padding: 12px; background: #F9FAFB; border-radius: 8px;">
-                <div style="font-size: 22px; font-weight: 700; color: #63297A;">{interestRate}%</div>
-                <div style="font-size: 11px; color: #6B7280;">Suggested Rate p.a.</div>
+          <div style="background: linear-gradient(135deg, #63297A 0%, #7E3D99 100%); padding: 20px; color: white;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Loan Eligibility</div>
+                <div style="font-size: 28px; font-weight: 800;">Rp {loanEligibility.toLocaleString('id-ID')}</div>
               </div>
-              <div style="text-align: center; padding: 12px; background: #F9FAFB; border-radius: 8px;">
-                <div style="font-size: 22px; font-weight: 700; color: #63297A;">12</div>
-                <div style="font-size: 11px; color: #6B7280;">Max Tenure (months)</div>
+              <div style="text-align: right;">
+                <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Suggested Rate</div>
+                <div style="font-size: 24px; font-weight: 700;">{interestRate}% <span style="font-size: 13px; opacity: 0.8;">p.a.</span></div>
               </div>
             </div>
-            <button class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-              <FileText size={16} /> Generate Full Report
-            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Disclaimer */}
       <div style="margin-top: 20px; padding: 12px 16px; background: #FEF3C7; border-radius: 8px; border: 1px solid #FCD34D;">
         <div style="display: flex; align-items: flex-start; gap: 10px;">
           <AlertTriangle size={16} style="color: #92400E; flex-shrink: 0; margin-top: 2px;" />
           <div style="font-size: 12px; color: #92400E;">
-            <strong>Disclaimer:</strong> This credit assessment uses mock/simulated data for demonstration purposes only. Actual credit decisions should be based on verified financial data and comply with applicable regulations.
+            <strong>Note:</strong> SLIK OJK, financial data (income, debt) are mocked. Real data: literacy progress, majelis, business intelligence.
           </div>
         </div>
       </div>
