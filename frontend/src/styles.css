@@ -78,9 +78,9 @@
 /* CSS Custom Properties - Consulting Theme */
 :root {
     /* Primary Brand */
-    --amartha-eminence: #63297A;
-    --amartha-eminence-dark: #4A1F5C;
-    --amartha-eminence-light: #7E3D99;
+    --amartha-eminence: #7B3F9E;
+    --amartha-eminence-dark: #5E2D7A;
+    --amartha-eminence-light: #9B5FBE;
     --amartha-goldenrod: #F9CF79;
     --amartha-goldenrod-dark: #E5B85A;
     --amartha-tundora: #444444;
@@ -155,11 +155,11 @@
     --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
     
     /* Transitions - Snappier */
-    --transition-instant: 0.1s var(--ease-out-expo);
-    --transition-fast: 0.15s var(--ease-out-expo);
-    --transition-normal: 0.25s var(--ease-out-expo);
-    --transition-slow: 0.4s var(--ease-out-expo);
-    --transition-bounce: 0.35s var(--ease-spring);
+    --transition-instant: 0s;
+    --transition-fast: 0s;
+    --transition-normal: 0s;
+    --transition-slow: 0s;
+    --transition-bounce: 0s;
 }
 
 /* Reset & Base */
@@ -169,8 +169,12 @@
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-primary);
     font-size: var(--text-base);
     min-height: 100vh;
@@ -196,7 +200,7 @@ body {
     padding: 16px 32px;
     margin: -24px -24px 28px -24px;
     border-bottom: 1px solid var(--border-color);
-    animation: slideDown 0.4s var(--ease-out-expo);
+    
 }
 
 .header-content {
@@ -299,7 +303,7 @@ body {
     box-shadow: var(--card-shadow);
     margin-bottom: 24px;
     border: 1px solid var(--border-color);
-    animation: slideInScale 0.35s var(--ease-out-expo) backwards;
+    
     transition: all var(--transition-fast);
     will-change: transform, box-shadow;
 }
@@ -309,14 +313,14 @@ body {
 }
 
 /* Staggered card animations - faster */
-.card:nth-child(1) { animation-delay: 0.02s; }
-.card:nth-child(2) { animation-delay: 0.05s; }
-.card:nth-child(3) { animation-delay: 0.08s; }
-.card:nth-child(4) { animation-delay: 0.11s; }
-.card:nth-child(5) { animation-delay: 0.14s; }
-.card:nth-child(6) { animation-delay: 0.17s; }
-.card:nth-child(7) { animation-delay: 0.2s; }
-.card:nth-child(8) { animation-delay: 0.23s; }
+.card:nth-child(1) {  }
+.card:nth-child(2) {  }
+.card:nth-child(3) {  }
+.card:nth-child(4) {  }
+.card:nth-child(5) {  }
+.card:nth-child(6) {  }
+.card:nth-child(7) {  }
+.card:nth-child(8) {  }
 
 .card h2 {
     font-size: var(--text-lg);
@@ -536,7 +540,7 @@ button[disabled],
     align-items: center;
     justify-content: center;
     padding: 20px;
-    animation: fadeIn 0.2s ease;
+    
 }
 
 .modal-content {
@@ -548,7 +552,7 @@ button[disabled],
     max-height: 85vh;
     overflow-y: auto;
     border: 1px solid var(--border-color);
-    animation: fadeIn 0.3s ease;
+    
 }
 
 .modal-content h2 {
@@ -698,7 +702,7 @@ tbody tr:hover {
     border: 4px solid #E5E7EB;
     border-top-color: var(--amartha-eminence);
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    
 }
 
 @keyframes spin {
@@ -747,14 +751,14 @@ tbody tr:hover {
     text-align: center;
     border: 1px solid var(--border-color);
     transition: all var(--transition-fast);
-    animation: slideInScale 0.3s var(--ease-out-expo) backwards;
+    
 }
 
-.stat-card:nth-child(1) { animation-delay: 0.03s; }
-.stat-card:nth-child(2) { animation-delay: 0.06s; }
-.stat-card:nth-child(3) { animation-delay: 0.09s; }
-.stat-card:nth-child(4) { animation-delay: 0.12s; }
-.stat-card:nth-child(5) { animation-delay: 0.15s; }
+.stat-card:nth-child(1) {  }
+.stat-card:nth-child(2) {  }
+.stat-card:nth-child(3) {  }
+.stat-card:nth-child(4) {  }
+.stat-card:nth-child(5) {  }
 
 .stat-card:hover {
     border-color: var(--amartha-eminence);
@@ -767,8 +771,8 @@ tbody tr:hover {
     color: var(--consulting-dark);
     margin-bottom: 4px;
     line-height: 1.1;
-    animation: numberPop 0.4s var(--ease-out-back) backwards;
-    animation-delay: inherit;
+    
+    
 }
 
 .stat-label {
@@ -789,7 +793,7 @@ tbody tr:hover {
     padding: 16px 20px;
     border-radius: 0 var(--radius-md) var(--radius-md) 0;
     margin: 16px 0;
-    animation: insightSlide 0.35s var(--ease-out-expo) backwards;
+    
     position: relative;
     overflow: hidden;
 }
@@ -835,7 +839,7 @@ tbody tr:hover {
     padding: 14px 18px;
     border-radius: 0 var(--radius-md) var(--radius-md) 0;
     margin: 12px 0;
-    animation: insightSlide 0.35s var(--ease-out-expo) backwards;
+    
 }
 
 .key-takeaway-title {
@@ -860,7 +864,7 @@ tbody tr:hover {
     padding: 14px 18px;
     border-radius: 0 var(--radius-md) var(--radius-md) 0;
     margin: 12px 0;
-    animation: insightSlide 0.4s var(--ease-out-expo) backwards;
+    
 }
 
 .so-what-title {
@@ -880,29 +884,29 @@ tbody tr:hover {
 
 /* Progress bar animation */
 .progress-bar-fill {
-    animation: barGrow 0.6s var(--ease-out-expo) backwards;
+    
 }
 
 /* Number counter animation */
 .animate-number {
-    animation: numberPop 0.35s var(--ease-out-back) backwards;
+    
 }
 
 /* Fade in stagger for lists - faster */
 .stagger-item {
-    animation: slideInScale 0.25s var(--ease-out-expo) backwards;
+    
 }
 
-.stagger-item:nth-child(1) { animation-delay: 0.02s; }
-.stagger-item:nth-child(2) { animation-delay: 0.04s; }
-.stagger-item:nth-child(3) { animation-delay: 0.06s; }
-.stagger-item:nth-child(4) { animation-delay: 0.08s; }
-.stagger-item:nth-child(5) { animation-delay: 0.1s; }
-.stagger-item:nth-child(6) { animation-delay: 0.12s; }
-.stagger-item:nth-child(7) { animation-delay: 0.14s; }
-.stagger-item:nth-child(8) { animation-delay: 0.16s; }
-.stagger-item:nth-child(9) { animation-delay: 0.18s; }
-.stagger-item:nth-child(10) { animation-delay: 0.2s; }
+.stagger-item:nth-child(1) {  }
+.stagger-item:nth-child(2) {  }
+.stagger-item:nth-child(3) {  }
+.stagger-item:nth-child(4) {  }
+.stagger-item:nth-child(5) {  }
+.stagger-item:nth-child(6) {  }
+.stagger-item:nth-child(7) {  }
+.stagger-item:nth-child(8) {  }
+.stagger-item:nth-child(9) {  }
+.stagger-item:nth-child(10) {  }
 
 /* ===================================
    ACTIONS
@@ -928,6 +932,14 @@ tbody tr:hover {
 /* ===================================
    RESPONSIVE
    =================================== */
+
+/* Hide floating nav on smaller screens */
+@media (max-width: 1200px) {
+    .floating-nav {
+        display: none !important;
+    }
+}
+
 @media (max-width: 768px) {
     /* Base Layout */
     body {
@@ -1775,7 +1787,7 @@ textarea:focus {
     font-size: var(--text-base);
     font-weight: 500;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    animation: slideIn 0.3s ease-out;
+    
     z-index: 10000;
 }
 
@@ -2364,7 +2376,7 @@ textarea:focus {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-.spin { animation: spin 1s linear infinite; }
+.spin {  }
 
 /* ===================================
    CONSULTING COMPONENTS - McKinsey Style
@@ -2377,7 +2389,7 @@ textarea:focus {
     padding: 28px 32px;
     border-radius: var(--radius-lg);
     margin-bottom: 24px;
-    animation: slideInScale 0.35s var(--ease-out-expo);
+    
     position: relative;
     overflow: hidden;
 }
@@ -2419,7 +2431,7 @@ textarea:focus {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 20px;
-    animation: slideInScale 0.3s var(--ease-out-expo) backwards;
+    
     transition: all var(--transition-fast);
 }
 
@@ -2444,7 +2456,7 @@ textarea:focus {
     font-weight: 800;
     color: var(--consulting-dark);
     line-height: 1;
-    animation: numberPop 0.4s var(--ease-out-back) backwards;
+    
 }
 
 .metric-trend {
@@ -2483,7 +2495,7 @@ textarea:focus {
     font-size: 13px;
     color: var(--consulting-slate);
     line-height: 1.6;
-    animation: fadeInUp 0.3s var(--ease-out-expo) backwards;
+    
 }
 
 .chart-annotation::before {
@@ -2504,7 +2516,7 @@ textarea:focus {
     align-items: center;
     gap: 16px;
     margin: 32px 0 24px;
-    animation: fadeInUp 0.3s var(--ease-out-expo);
+    
 }
 
 .section-divider-line {
@@ -2533,7 +2545,7 @@ textarea:focus {
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    animation: scaleIn 0.25s var(--ease-out-back) backwards;
+    
 }
 
 .risk-indicator.low {
@@ -2577,7 +2589,7 @@ textarea:focus {
 }
 
 .data-table tbody tr {
-    animation: fadeInUp 0.25s var(--ease-out-expo) backwards;
+    
     transition: background var(--transition-instant);
 }
 
@@ -2607,7 +2619,7 @@ textarea:focus {
 .waterfall-bar {
     height: 8px;
     border-radius: 4px;
-    animation: barGrow 0.5s var(--ease-out-expo) backwards;
+    
     transition: all var(--transition-fast);
 }
 
@@ -2626,7 +2638,7 @@ textarea:focus {
     font-size: 12px;
     white-space: nowrap;
     z-index: 100;
-    animation: scaleIn 0.15s var(--ease-out-expo);
+    
     pointer-events: none;
 }
 
@@ -2653,7 +2665,7 @@ textarea:focus {
     border-radius: var(--radius-md);
     padding: 16px;
     text-align: center;
-    animation: slideInScale 0.25s var(--ease-out-expo) backwards;
+    
     transition: all var(--transition-fast);
 }
 
@@ -2665,7 +2677,7 @@ textarea:focus {
     font-size: 28px;
     font-weight: 800;
     color: var(--amartha-eminence);
-    animation: numberPop 0.35s var(--ease-out-back) backwards;
+    
 }
 
 .kpi-item-label {
@@ -2691,10 +2703,11 @@ textarea:focus {
     height: 3px;
     background: linear-gradient(90deg, var(--amartha-eminence) 0%, var(--amartha-goldenrod) 100%);
     border-radius: 2px;
-    animation: underlineGrow 0.5s var(--ease-out-expo) forwards;
-    animation-delay: 0.2s;
+    
+    
 }
 
 @keyframes underlineGrow {
     to { width: 100%; }
 }
+

@@ -43,6 +43,14 @@ class MajelisRepository {
     await batch.commit();
     return snapshot.size;
   }
+
+  async deleteAll() {
+    const snapshot = await this.collection.get();
+    const batch = db.batch();
+    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    return snapshot.size;
+  }
 }
 
 module.exports = new MajelisRepository();

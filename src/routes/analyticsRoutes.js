@@ -72,4 +72,14 @@ router.get('/segments', (req, res) => {
   res.json(analyticsService.getCustomerSegments());
 });
 
+// IDEA 6: Field Collections (from task_participants)
+router.get('/collections', (req, res) => {
+  try {
+    const data = require('../data/analytics-participants.json');
+    res.json(data);
+  } catch (err) {
+    res.status(404).json({ error: 'Collections data not available' });
+  }
+});
+
 module.exports = router;

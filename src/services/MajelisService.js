@@ -86,7 +86,12 @@ class MajelisService {
   }
 
   async deleteMockMajelis() {
-    return MajelisRepository.deleteMany({ field: 'is_mock', operator: '==', value: true });
+    // Delete ALL majelis (not just mock) since old ones don't have is_mock flag
+    return MajelisRepository.deleteAll();
+  }
+
+  async deleteAllMajelis() {
+    return MajelisRepository.deleteAll();
   }
 
   async createMockMajelis() {

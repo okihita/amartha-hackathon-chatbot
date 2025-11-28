@@ -43,4 +43,14 @@ router.delete('/delete-all-mock-majelis', async (req, res) => {
   }
 });
 
+router.delete('/delete-all-majelis', async (req, res) => {
+  try {
+    const count = await MajelisService.deleteAllMajelis();
+    res.json({ success: true, count });
+  } catch (error) {
+    console.error('Error deleting all majelis:', error);
+    res.status(500).json({ error: 'Failed to delete all majelis' });
+  }
+});
+
 module.exports = router;

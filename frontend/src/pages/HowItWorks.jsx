@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { Bot, User, Menu, BookOpen, BarChart3, UserCircle, Calendar, Camera, Check, X, Cog, Smartphone, Monitor, FileText, Package, Store, Receipt } from 'lucide-preact';
+import { Bot, User, Menu, BookOpen, BarChart3, UserCircle, Calendar, Camera, Check, X, Cog, Smartphone, Monitor, FileText, Package, Store, Receipt, Mic } from 'lucide-preact';
 
 // Styled flow components
 const FlowBox = ({ children, type = 'default', style = {} }) => {
@@ -65,7 +65,7 @@ export default function HowItWorks() {
       {/* Command Triggers */}
       <div class="card" style="margin-bottom: 20px;">
         <h2 style="display: flex; align-items: center; gap: 8px;"><Menu size={18} /> Kata Kunci Perintah</h2>
-        <p style="color: #666; margin-bottom: 16px;">Kata-kata yang bisa diketik anggota (case-insensitive)</p>
+        <p style="color: #666; margin-bottom: 16px;">Kata-kata yang bisa diketik/diucapkan anggota (case-insensitive)</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
           <div style={cardStyle('#e3f2fd', '#2196f3')}>
             <strong style="display: flex; align-items: center; gap: 4px;"><Menu size={14} /> MENU</strong>
@@ -90,7 +90,13 @@ export default function HowItWorks() {
           </div>
           <div style={cardStyle('#fce4ec', '#e91e63')}>
             <strong style="display: flex; align-items: center; gap: 4px;"><Camera size={14} /> FOTO</strong>
-            <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">Kirim gambar langsung</p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">Kirim gambar + caption</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">Tanpa caption: bot minta deskripsi</p>
+          </div>
+          <div style={cardStyle('#fff8e1', '#ffc107')}>
+            <strong style="display: flex; align-items: center; gap: 4px;"><Mic size={14} /> VOICE NOTE</strong>
+            <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">Kirim pesan suara</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">AI transkripsi → proses seperti teks<br/>Balasan: teks + audio</p>
           </div>
         </div>
       </div>
@@ -98,25 +104,25 @@ export default function HowItWorks() {
       {/* Registration Flow */}
       <div class="card" style="margin-bottom: 20px;">
         <h2>1. Pendaftaran Anggota Baru</h2>
-        <p style="color: #666; margin-bottom: 8px;">Ketika nomor baru menghubungi chatbot</p>
+        <p style="color: #666; margin-bottom: 8px;">Ketika nomor baru menghubungi chatbot • <strong>Bisa teks atau voice note</strong></p>
         <FlowContainer>
           <FlowBox type="user" style={{minWidth: '200px'}}>
             <strong>Ibu kirim pesan</strong><br/>
-            (nomor belum terdaftar)
+            🎤 voice / ⌨️ teks
           </FlowBox>
           <Arrow />
           <FlowBox type="bot" style={{minWidth: '240px'}}>
-            <strong>Bot tanya:</strong><br/>
+            <strong>Bot tanya + 🔊 audio:</strong><br/>
             "Siapa nama Ibu, usaha apa, dimana?"
           </FlowBox>
           <Arrow />
           <FlowBox type="user" style={{minWidth: '240px'}}>
-            <strong>Ibu jawab:</strong><br/>
+            <strong>Ibu jawab (voice/teks):</strong><br/>
             "Saya Bu Siti, warung sembako di Bogor"
           </FlowBox>
           <Arrow />
           <FlowBox type="action" style={{minWidth: '200px'}}>
-            <strong>Proses: AI ekstrak data:</strong><br/>
+            <strong>AI ekstrak data:</strong><br/>
             name, business, location
           </FlowBox>
           <Arrow />
@@ -196,11 +202,11 @@ export default function HowItWorks() {
       {/* Image Analysis Flow */}
       <div class="card" style="margin-bottom: 20px;">
         <h2>3. Analisis Foto Bisnis</h2>
-        <p style="color: #666; margin-bottom: 8px;">AI menganalisis foto • Dashboard update real-time</p>
+        <p style="color: #666; margin-bottom: 8px;">AI menganalisis foto • <strong>Caption bisa via voice note</strong></p>
         <FlowContainer>
           <FlowBox type="user" style={{minWidth: '180px'}}>
             <strong>Ibu kirim foto</strong><br/>
-            
+            📷 + caption (opsional)
           </FlowBox>
           <Arrow />
           <FlowBox type="decision" style={{minWidth: '180px'}}>
@@ -215,21 +221,21 @@ export default function HowItWorks() {
               <div style={{color: '#666', fontSize: '12px'}}>✗ Tidak</div>
               <FlowBox type="bot" style={{minWidth: '140px'}}>"Jelaskan foto ini"</FlowBox>
               <Arrow />
-              <FlowBox type="user" style={{minWidth: '140px'}}>Ibu balas<br/>(5 menit)</FlowBox>
+              <FlowBox type="user" style={{minWidth: '140px'}}>🎤 voice / ⌨️ teks<br/>(5 menit)</FlowBox>
             </>}
           />
           <Arrow />
           <FlowBox type="action" style={{minWidth: '220px'}}>
-            <strong>Proses: Gemini Vision analisis</strong><br/>
+            <strong>Gemini Vision analisis</strong><br/>
             Klasifikasi + ekstrak data
           </FlowBox>
           <Arrow />
           <div style={{display: 'flex', gap: '16px'}}>
             <FlowBox type="success" style={{minWidth: '140px'}}>
-              <strong>Mobile: Kirim hasil</strong><br/>ke Ibu
+              <strong>Mobile:</strong><br/>teks + 🔊 audio
             </FlowBox>
             <FlowBox type="end" style={{minWidth: '140px'}}>
-              <strong>Web: Dashboard</strong><br/>update + blink 
+              <strong>Web: Dashboard</strong><br/>update real-time
             </FlowBox>
           </div>
         </FlowContainer>

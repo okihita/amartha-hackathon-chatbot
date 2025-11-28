@@ -56,19 +56,28 @@ app.get('/health', (req, res) => res.status(200).send('🤖 Akademi-AI (Modular)
 app.get('/api/events/:phone', (req, res) => {
   const { phone } = req.params;
   res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx/Cloud Run buffering
   res.flushHeaders();
 
+  // Send initial ping
+  res.write(': ping\n\n');
+
+  // Keep-alive every 30s to prevent timeout
+  const keepAlive = setInterval(() => res.write(': ping\n\n'), 30000);
+
   const onUpdate = (data) => {
-    // Match specific phone OR 'demo' channel for all demo user updates
-    if (data.phone === phone || (phone === 'demo' && data.data?.is_demo)) {
+    if (data.phone === phone || (phone === 'demo' && data.data?.is_demo) || phone === 'users') {
       res.write(`data: ${JSON.stringify(data)}\n\n`);
     }
   };
 
   dataEvents.on('update', onUpdate);
-  req.on('close', () => dataEvents.off('update', onUpdate));
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    dataEvents.off('update', onUpdate);
+  });
 });
 
 // Static assets
@@ -81,7 +90,7 @@ dashboardRoutes.forEach(route => {
   app.get(route, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;");
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https: blob:; frame-src https://www.google.com https://maps.google.com;");
     res.sendFile(path.join(__dirname, 'public/index.html'));
   });
 });

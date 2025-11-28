@@ -1,0 +1,162 @@
+{
+  "totalRecords": 1330909,
+  "paymentsRecorded": 263631,
+  "totalCollectedRp": 43303505000,
+  "totalCollectedB": 43,
+  "avgPaymentRp": 164258,
+  "branchCount": 87,
+  "topBranches": [
+    {
+      "branchId": "94e634ac6362...",
+      "collections": 1059,
+      "totalRp": 159769500,
+      "avgRp": 150868
+    },
+    {
+      "branchId": "08f373788f82...",
+      "collections": 776,
+      "totalRp": 150635600,
+      "avgRp": 194118
+    },
+    {
+      "branchId": "327cfcee38c9...",
+      "collections": 882,
+      "totalRp": 150391400,
+      "avgRp": 170512
+    },
+    {
+      "branchId": "7665a1519d90...",
+      "collections": 933,
+      "totalRp": 141757600,
+      "avgRp": 151937
+    },
+    {
+      "branchId": "9598d1edef9a...",
+      "collections": 964,
+      "totalRp": 141340800,
+      "avgRp": 146619
+    },
+    {
+      "branchId": "d01d82b68199...",
+      "collections": 771,
+      "totalRp": 131777400,
+      "avgRp": 170918
+    },
+    {
+      "branchId": "4c895f0dfc42...",
+      "collections": 641,
+      "totalRp": 126853000,
+      "avgRp": 197899
+    },
+    {
+      "branchId": "0e5ffec77f62...",
+      "collections": 686,
+      "totalRp": 119454300,
+      "avgRp": 174132
+    },
+    {
+      "branchId": "b0c2b09b4e68...",
+      "collections": 633,
+      "totalRp": 119128000,
+      "avgRp": 188196
+    },
+    {
+      "branchId": "64ad95b5f354...",
+      "collections": 725,
+      "totalRp": 118793100,
+      "avgRp": 163853
+    },
+    {
+      "branchId": "9ce05729fee4...",
+      "collections": 745,
+      "totalRp": 117634900,
+      "avgRp": 157899
+    },
+    {
+      "branchId": "45efed81cd24...",
+      "collections": 764,
+      "totalRp": 117515800,
+      "avgRp": 153816
+    },
+    {
+      "branchId": "500d2b1630b5...",
+      "collections": 588,
+      "totalRp": 112928600,
+      "avgRp": 192055
+    },
+    {
+      "branchId": "ea7db4a1db0f...",
+      "collections": 751,
+      "totalRp": 111354400,
+      "avgRp": 148275
+    },
+    {
+      "branchId": "c915025295d5...",
+      "collections": 674,
+      "totalRp": 109043200,
+      "avgRp": 161785
+    }
+  ],
+  "bottomBranches": [
+    {
+      "branchId": "7965e441427e...",
+      "collections": 2,
+      "totalRp": 267400,
+      "avgRp": 133700
+    },
+    {
+      "branchId": "83339f742d0f...",
+      "collections": 2,
+      "totalRp": 371800,
+      "avgRp": 185900
+    },
+    {
+      "branchId": "8b445fd132a2...",
+      "collections": 3,
+      "totalRp": 533900,
+      "avgRp": 177967
+    },
+    {
+      "branchId": "36c9c2db7f67...",
+      "collections": 3,
+      "totalRp": 550300,
+      "avgRp": 183433
+    },
+    {
+      "branchId": "e0340697bea5...",
+      "collections": 3,
+      "totalRp": 575100,
+      "avgRp": 191700
+    },
+    {
+      "branchId": "c49be405fba4...",
+      "collections": 3,
+      "totalRp": 637700,
+      "avgRp": 212567
+    },
+    {
+      "branchId": "795eae196f62...",
+      "collections": 3,
+      "totalRp": 662700,
+      "avgRp": 220900
+    },
+    {
+      "branchId": "c8f276975e74...",
+      "collections": 5,
+      "totalRp": 801300,
+      "avgRp": 160260
+    },
+    {
+      "branchId": "4125f36c4b73...",
+      "collections": 4,
+      "totalRp": 824300,
+      "avgRp": 206075
+    },
+    {
+      "branchId": "5d32262c4feb...",
+      "collections": 5,
+      "totalRp": 935300,
+      "avgRp": 187060
+    }
+  ]
+}

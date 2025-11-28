@@ -1,6 +1,7 @@
 /**
  * Data Analytics Service
  * Processes hackathon dataset for ML predictions and insights
+ * Falls back to pre-computed static JSON when CSVs unavailable (production)
  */
 
 const fs = require('fs');
@@ -8,6 +9,7 @@ const path = require('path');
 const csv = require('csv-parser');
 
 const DATA_PATH = path.join(__dirname, '../../docs/dataset/HACKATHON_2025_DATA');
+const STATIC_DATA_PATH = path.join(__dirname, '../data');
 
 class DataAnalyticsService {
   constructor() {
@@ -18,12 +20,25 @@ class DataAnalyticsService {
     this.taskParticipants = [];
     this.loaded = false;
     this.customerMetrics = new Map();
+    this.useStaticData = false;
+    this.staticData = {};
   }
 
   async loadData() {
     if (this.loaded) return;
     
-    console.log('[Analytics] Loading dataset...');
+    // Check if CSV data exists
+    const csvExists = fs.existsSync(path.join(DATA_PATH, 'customers.csv'));
+    
+    if (!csvExists) {
+      console.log('[Analytics] CSV not found, using pre-computed static data');
+      this.useStaticData = true;
+      this._loadStaticData();
+      this.loaded = true;
+      return;
+    }
+    
+    console.log('[Analytics] Loading dataset from CSV...');
     
     const [customers, loans, bills, tasks] = await Promise.all([
       this._loadCSV('customers.csv'),
@@ -41,6 +56,47 @@ class DataAnalyticsService {
     
     this._computeMetrics();
     this.loaded = true;
+  }
+
+  _loadStaticData() {
+    try {
+      this.staticData = {
+        summary: JSON.parse(fs.readFileSync(path.join(STATIC_DATA_PATH, 'analytics-summary.json'), 'utf8')),
+        payments: JSON.parse(fs.readFileSync(path.join(STATIC_DATA_PATH, 'analytics-payments.json'), 'utf8')),
+        segments: JSON.parse(fs.readFileSync(path.join(STATIC_DATA_PATH, 'analytics-segments.json'), 'utf8')),
+        routes: JSON.parse(fs.readFileSync(path.join(STATIC_DATA_PATH, 'analytics-routes.json'), 'utf8')),
+        risks: JSON.parse(fs.readFileSync(path.join(STATIC_DATA_PATH, 'analytics-risks.json'), 'utf8')),
+      };
+      console.log('[Analytics] Static data loaded successfully');
+    } catch (err) {
+      console.error('[Analytics] Failed to load static data:', err.message);
+    }
+  }
+
+  // Override methods to return static data when in static mode
+  getDashboardSummary() {
+    if (this.useStaticData) return this.staticData.summary;
+    return this._computeDashboardSummary();
+  }
+
+  getAllRiskPredictions() {
+    if (this.useStaticData) return this.staticData.risks;
+    return this._computeAllRiskPredictions();
+  }
+
+  getPaymentAnalytics() {
+    if (this.useStaticData) return this.staticData.payments;
+    return this._computePaymentAnalytics();
+  }
+
+  getCustomerSegments() {
+    if (this.useStaticData) return this.staticData.segments;
+    return this._computeCustomerSegments();
+  }
+
+  analyzeFieldAgentRoutes() {
+    if (this.useStaticData) return this.staticData.routes;
+    return this._computeFieldAgentRoutes();
   }
 
   _loadCSV(filename) {
@@ -177,7 +233,7 @@ class DataAnalyticsService {
     }
   }
 
-  getAllRiskPredictions() {
+  _computeAllRiskPredictions() {
     const predictions = [];
     this.customerMetrics.forEach((_, customerNumber) => {
       predictions.push(this.predictDefaultRisk(customerNumber));
@@ -186,7 +242,7 @@ class DataAnalyticsService {
   }
 
   // ============ IDEA 2: Field Agent Route Analysis ============
-  analyzeFieldAgentRoutes() {
+  _computeFieldAgentRoutes() {
     const branchTasks = new Map();
     
     this.tasks.forEach(task => {
@@ -267,7 +323,7 @@ class DataAnalyticsService {
   }
 
   // ============ IDEA 4: Payment Behavior Analytics ============
-  getPaymentAnalytics() {
+  _computePaymentAnalytics() {
     const monthlyPayments = new Map();
     const businessTypePayments = new Map();
     let totalScheduled = 0, totalPaid = 0, totalLate = 0;
@@ -339,12 +395,12 @@ class DataAnalyticsService {
       },
       monthlyTrend,
       businessTypeStats: businessTypeStats.sort((a, b) => b.count - a.count),
-      atRiskCustomers: this.getAllRiskPredictions().filter(p => p.riskLevel === 'High').length,
+      atRiskCustomers: this._computeAllRiskPredictions().filter(p => p.riskLevel === 'High').length,
     };
   }
 
   // ============ IDEA 5: Customer Segmentation ============
-  getCustomerSegments() {
+  _computeCustomerSegments() {
     const segments = {
       'star_performers': { criteria: 'Low risk + High payment ratio', customers: [], recommendations: [] },
       'growth_potential': { criteria: 'Medium risk + Retail business', customers: [], recommendations: [] },
@@ -416,7 +472,7 @@ class DataAnalyticsService {
   }
 
   // ============ Dashboard Summary ============
-  getDashboardSummary() {
+  _computeDashboardSummary() {
     const riskDistribution = { Low: 0, Medium: 0, High: 0 };
     this.customerMetrics.forEach((_, customerNumber) => {
       const risk = this.predictDefaultRisk(customerNumber);

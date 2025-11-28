@@ -47,7 +47,14 @@ class UserRepository {
       this.updateLiteracy(clean, User.createLiteracy(userData))
     ]);
 
-    return this.findByPhone(clean);
+    const result = await this.findByPhone(clean);
+    
+    // Emit SSE event for real-time dashboard update
+    if (global.dataEvents) {
+      global.dataEvents.emit('update', { phone: 'users', type: 'user_created', data: result });
+    }
+    
+    return result;
   }
 
   async findAll() {

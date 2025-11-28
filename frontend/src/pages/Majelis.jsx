@@ -86,9 +86,8 @@ export default function Majelis() {
   const handleDelete = async (id, name) => {
     const confirmed = await showConfirm({
       title: 'Delete Majelis',
-      message: `Are you sure you want to delete "${name}"? All member associations will be cleared.`
+      message: `Are you sure you want to delete "${name}"?`
     });
-    
     if (!confirmed) return;
     
     try {
@@ -154,14 +153,6 @@ export default function Majelis() {
   };
 
   const handleDeleteAllMock = async () => {
-    const confirmed = await showConfirm({
-      title: 'Delete All Mock Majelis',
-      message: 'This will permanently delete all mock majelis groups. Continue?',
-      confirmText: 'Delete All'
-    });
-    
-    if (!confirmed) return;
-    
     setProcessing('delete-all');
     try {
       await superadminApi.deleteAllMockMajelis();
