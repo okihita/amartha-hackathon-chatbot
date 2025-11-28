@@ -28,8 +28,6 @@ export default function BusinessTypes() {
   const [businessTypes, setBusinessTypes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  console.log('BusinessTypes render, selectedBusiness:', selectedBusiness);
-
   useEffect(() => {
     fetchBusinessTypes();
   }, []);
@@ -94,10 +92,7 @@ export default function BusinessTypes() {
               <div 
                 key={bt.id} 
                 class="business-card" 
-                onClick={() => {
-                  console.log('Card clicked:', bt.business_type);
-                  setSelectedBusiness(bt);
-                }}
+                onClick={() => setSelectedBusiness(bt)}
                 style={{ cursor: 'pointer' }}
               >
                 <div class="card-header">

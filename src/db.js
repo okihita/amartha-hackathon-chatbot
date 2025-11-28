@@ -1,15 +1,29 @@
 const { Firestore } = require('@google-cloud/firestore');
+const {
+  COLLECTIONS,
+  createUserDocument,
+  createMajelisDocument,
+  createMockUser,
+  createMockMajelisDocument,
+  MOCK_USERS,
+  MOCK_MAJELIS
+} = require('./schemas');
 
 // Initialize Firestore
 const db = new Firestore({
   projectId: process.env.GCP_PROJECT_ID,
 });
 
-const USERS_COLLECTION = 'users';
-const MAJELIS_COLLECTION = 'majelis';
-const BUSINESS_INTELLIGENCE_COLLECTION = 'business_intelligence';
+// Legacy collection names for backward compatibility
+const USERS_COLLECTION = COLLECTIONS.USERS;
+const MAJELIS_COLLECTION = COLLECTIONS.MAJELIS;
+const BUSINESS_INTELLIGENCE_COLLECTION = COLLECTIONS.BUSINESS_TYPES;
 
-// Helper to get User Context
+/**
+ * Get user context from database
+ * @param {string} phoneNumber - User's phone number
+ * @returns {Promise<Object|null>} User data or null if not found
+ */
 async function getUserContext(phoneNumber) {
   const cleanPhone = phoneNumber.replace(/\D/g, '');
   try {
@@ -24,28 +38,18 @@ async function getUserContext(phoneNumber) {
   }
 }
 
-// Helper to Register New User
+/**
+ * Register a new user in the database
+ * @param {string} phoneNumber - User's phone number
+ * @param {Object} data - User registration data
+ * @param {string} data.name - User's name
+ * @param {string} data.business_type - Type of business
+ * @param {string} data.location - User's location
+ * @returns {Promise<Object|null>} Created user data or null on error
+ */
 async function registerNewUser(phoneNumber, data) {
   const cleanPhone = phoneNumber.replace(/\D/g, '');
-  const userData = {
-    name: data.name,
-    business_type: data.business_type,
-    location: data.location,
-    majelis_day: "BELUM VERIFIKASI (Hubungi Petugas)",
-    current_module: "Welcome Phase",
-    literacy_score: "Low",
-    is_verified: false,
-    pending_verification: null,
-    verified_transactions: [],
-    // Loan fields
-    loan_limit: 0,
-    loan_used: 0,
-    loan_remaining: 0,
-    next_payment_date: null,
-    next_payment_amount: 0,
-    loan_history: [],
-    created_at: new Date().toISOString(),
-  };
+  const userData = createUserDocument(data);
   
   try {
     await db.collection(USERS_COLLECTION).doc(cleanPhone).set(userData);
@@ -631,30 +635,13 @@ async function updateUserBusinessProfile(phoneNumber, structuredData) {
 
 // Create mock users for testing
 async function createMockUsers() {
-  const mockUsers = [
-    { name: 'Siti Nurhaliza', phone: '6281234567801', business_type: 'Warung Kelontong', location: 'Jakarta Selatan' },
-    { name: 'Dewi Lestari', phone: '6281234567802', business_type: 'Toko Pakaian', location: 'Bandung' },
-    { name: 'Rina Susanti', phone: '6281234567803', business_type: 'Warung Makan', location: 'Surabaya' },
-    { name: 'Maya Sari', phone: '6281234567804', business_type: 'Salon Kecantikan', location: 'Yogyakarta' },
-    { name: 'Ani Wijaya', phone: '6281234567805', business_type: 'Toko Kue', location: 'Semarang' },
-    { name: 'Fitri Handayani', phone: '6281234567806', business_type: 'Laundry', location: 'Malang' },
-    { name: 'Ratna Dewi', phone: '6281234567807', business_type: 'Toko Bunga', location: 'Solo' },
-    { name: 'Sri Wahyuni', phone: '6281234567808', business_type: 'Warung Kopi', location: 'Medan' },
-  ];
-
   let count = 0;
-  for (const user of mockUsers) {
-    const userRef = db.collection('users').doc(user.phone);
+  for (const user of MOCK_USERS) {
+    const userRef = db.collection(USERS_COLLECTION).doc(user.phone);
     const doc = await userRef.get();
     
     if (!doc.exists) {
-      await userRef.set({
-        ...user,
-        status: 'pending',
-        is_mock: true,
-        registered_at: new Date().toISOString(),
-        majelis_id: null
-      });
+      await userRef.set(createMockUser(user));
       count++;
     }
   }
@@ -679,28 +666,17 @@ async function deleteAllMockUsers() {
 
 // Create mock majelis for testing
 async function createMockMajelis() {
-  const mockMajelis = [
-    { name: 'Majelis Sejahtera', description: 'Kelompok UMKM Jakarta Selatan', schedule_day: 'Senin', schedule_time: '10:00', location: 'Balai Desa Kebayoran' },
-    { name: 'Majelis Berkah', description: 'Kelompok UMKM Bandung', schedule_day: 'Selasa', schedule_time: '14:00', location: 'Gedung Serbaguna Dago' },
-    { name: 'Majelis Mandiri', description: 'Kelompok UMKM Surabaya', schedule_day: 'Rabu', schedule_time: '09:00', location: 'Balai RW 05' },
-  ];
-
   let count = 0;
-  for (const majelis of mockMajelis) {
-    const majelisRef = db.collection('majelis').doc();
-    await majelisRef.set({
-      ...majelis,
-      members: [],
-      is_mock: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    });
+  for (const majelis of MOCK_MAJELIS) {
+    const majelisRef = db.collection(MAJELIS_COLLECTION).doc();
+    await majelisRef.set(createMockMajelisDocument(majelis));
     count++;
   }
   
   console.log(`✅ Created ${count} mock majelis`);
   return count;
 }
+
 
 // Delete all mock majelis
 async function deleteAllMockMajelis() {
