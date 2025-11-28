@@ -114,6 +114,22 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+// Get User Business Images
+app.get('/api/users/:phone/images', async (req, res) => {
+  try {
+    const { getUserBusinessIntelligence } = require('./src/db');
+    const biData = await getUserBusinessIntelligence(req.params.phone);
+    
+    // Filter only items with images (building and inventory)
+    const imagesData = biData.filter(item => item.has_image && item.image_data);
+    
+    res.json(imagesData);
+  } catch (error) {
+    console.error('Error fetching user images:', error);
+    res.status(500).json({ error: 'Failed to fetch images' });
+  }
+});
+
 // Verify User
 app.post('/api/users/verify', async (req, res) => {
   const { phone, status } = req.body;

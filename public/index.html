@@ -50,6 +50,21 @@
         .transaction-item .amount.negative { color: #dc3545; }
         .transaction-item .date { color: #999; font-size: 11px; }
         .btn-close { background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; }
+        .score-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 14px; }
+        .score-high { background: #d4edda; color: #155724; }
+        .score-medium { background: #fff3cd; color: #856404; }
+        .score-low { background: #f8d7da; color: #721c24; }
+        .business-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 10px; }
+        .business-image-card { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: #f9f9f9; }
+        .business-image-card img { width: 100%; height: 150px; object-fit: cover; cursor: pointer; transition: transform 0.2s; }
+        .business-image-card img:hover { transform: scale(1.05); }
+        .business-image-info { padding: 10px; font-size: 12px; }
+        .business-image-category { font-weight: 600; color: #333; margin-bottom: 4px; }
+        .business-image-date { color: #999; font-size: 11px; }
+        .image-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
+        .image-modal.active { display: flex; }
+        .image-modal img { max-width: 90%; max-height: 90%; object-fit: contain; }
+        .image-modal-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -94,6 +109,12 @@
         </div>
     </div>
 
+    <!-- Image Viewer Modal -->
+    <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+        <span class="image-modal-close">&times;</span>
+        <img id="modalImage" src="" alt="Business Image">
+    </div>
+
     <script>
         let processing = null;
         let allUsers = [];
@@ -109,7 +130,16 @@
             }
         }
         
-        function viewProfile(phone) {
+        function viewImage(imageData) {
+            document.getElementById('modalImage').src = 'data:image/jpeg;base64,' + imageData;
+            document.getElementById('imageModal').classList.add('active');
+        }
+        
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+        
+        async function viewProfile(phone) {
             const user = allUsers.find(u => u.phone === phone);
             if (!user) {
                 alert('User not found');
@@ -118,6 +148,43 @@
             
             const majelisInfo = user.majelis_name || 'Not assigned';
             const hasLoan = user.loan_limit > 0;
+            
+            // Fetch business images
+            let businessImagesSection = '';
+            try {
+                const imagesRes = await fetch(`/api/users/${phone}/images`);
+                const images = await imagesRes.json();
+                
+                if (images && images.length > 0) {
+                    const categoryLabels = {
+                        building: '🏪 Building/Store',
+                        inventory: '📦 Inventory/Stock'
+                    };
+                    
+                    const imagesHtml = images.map(img => `
+                        <div class="business-image-card">
+                            <img src="data:image/jpeg;base64,${img.image_data}" 
+                                 alt="${img.category}" 
+                                 onclick="viewImage('${img.image_data}')" />
+                            <div class="business-image-info">
+                                <div class="business-image-category">${categoryLabels[img.category] || img.category}</div>
+                                <div class="business-image-date">${new Date(img.analyzed_at).toLocaleDateString('id-ID')}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    businessImagesSection = `
+                        <div class="profile-section">
+                            <h3>📸 Business Photos (${images.length})</h3>
+                            <div class="business-images">
+                                ${imagesHtml}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to fetch business images:', error);
+            }
             
             let loanSection = '';
             if (hasLoan) {
@@ -172,6 +239,84 @@
                 `;
             }
             
+            // Business profile section with credit metrics
+            let businessProfileSection = '';
+            if (user.credit_metrics) {
+                const cm = user.credit_metrics;
+                const creditScore = user.credit_score || 0;
+                
+                // Determine risk color
+                let riskColor = '#dc3545'; // red for high risk
+                if (cm.risk_level === 'rendah') riskColor = '#28a745'; // green
+                else if (cm.risk_level === 'sedang') riskColor = '#ffc107'; // yellow
+                
+                // Credit score color
+                let scoreColor = '#dc3545';
+                if (creditScore >= 70) scoreColor = '#28a745';
+                else if (creditScore >= 50) scoreColor = '#ffc107';
+                
+                businessProfileSection = `
+                    <div class="profile-section">
+                        <h3>📊 Credit Score & Business Health</h3>
+                        <div class="profile-row">
+                            <span class="profile-label">Overall Credit Score</span>
+                            <span class="profile-value" style="color: ${scoreColor}; font-weight: 700; font-size: 18px;">${creditScore}/100</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Risk Level</span>
+                            <span class="profile-value" style="color: ${riskColor}; font-weight: 600; text-transform: uppercase;">${cm.risk_level || 'N/A'}</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Business Health</span>
+                            <span class="profile-value">${cm.business_health_score || 0}/100</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Asset Score</span>
+                            <span class="profile-value">${cm.asset_score || 0}/100</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Cashflow Score</span>
+                            <span class="profile-value">${cm.cashflow_score || 0}/100</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Management Score</span>
+                            <span class="profile-value">${cm.management_score || 0}/100</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Growth Potential</span>
+                            <span class="profile-value">${cm.growth_potential || 0}/100</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Data Points</span>
+                            <span class="profile-value">${cm.data_points || 0} images analyzed</span>
+                        </div>
+                    </div>
+                    <div class="profile-section">
+                        <h3>🏢 Business Assets & Cashflow</h3>
+                        <div class="profile-row">
+                            <span class="profile-label">Total Asset Value</span>
+                            <span class="profile-value" style="color: #007bff; font-weight: 600;">Rp ${(cm.total_asset_value || 0).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Inventory Value</span>
+                            <span class="profile-value">Rp ${(cm.total_inventory_value || 0).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Est. Monthly Cashflow</span>
+                            <span class="profile-value" style="color: #28a745; font-weight: 600;">Rp ${(cm.estimated_monthly_cashflow || 0).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Recommended Loan</span>
+                            <span class="profile-value" style="color: #007bff; font-weight: 600;">Rp ${(cm.recommended_loan_amount || 0).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="profile-label">Last Updated</span>
+                            <span class="profile-value">${cm.last_updated ? new Date(cm.last_updated).toLocaleDateString('id-ID') : 'N/A'}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
             document.getElementById('profileContent').innerHTML = `
                 <div class="profile-section">
                     <h3>👤 Personal Information</h3>
@@ -202,6 +347,8 @@
                         </span>
                     </div>
                 </div>
+                ${businessProfileSection}
+                ${businessImagesSection}
                 ${loanSection}
             `;
             

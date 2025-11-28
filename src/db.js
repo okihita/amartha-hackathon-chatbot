@@ -7,6 +7,7 @@ const db = new Firestore({
 
 const USERS_COLLECTION = 'users';
 const MAJELIS_COLLECTION = 'majelis';
+const BUSINESS_INTELLIGENCE_COLLECTION = 'business_intelligence';
 
 // Helper to get User Context
 async function getUserContext(phoneNumber) {
@@ -367,6 +368,257 @@ async function populateLoanData(phoneNumber) {
   }
 }
 
+// ===== BUSINESS INTELLIGENCE =====
+
+// Save business intelligence data from image analysis
+async function saveBusinessIntelligence(phoneNumber, data, imageData = null, imageId = null) {
+  const cleanPhone = phoneNumber.replace(/\D/g, '');
+  try {
+    const biData = {
+      user_phone: cleanPhone,
+      category: data.category,
+      confidence: data.confidence,
+      extracted_data: data.extracted_data,
+      credit_metrics: data.credit_metrics,
+      insights: data.insights,
+      recommendations: data.recommendations,
+      user_business_type: data.user_business_type,
+      user_location: data.user_location,
+      analyzed_at: data.analyzed_at || new Date().toISOString(),
+      // Store image data for building and inventory photos
+      image_data: imageData,
+      image_id: imageId,
+      has_image: imageData !== null
+    };
+    
+    await db.collection(BUSINESS_INTELLIGENCE_COLLECTION).add(biData);
+    console.log(`💾 Business intelligence saved for ${cleanPhone}: ${data.category}`);
+    
+    // Update user's credit score aggregate
+    await updateUserCreditScore(cleanPhone);
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving business intelligence:', error);
+    return false;
+  }
+}
+
+// Get all business intelligence for a user
+async function getUserBusinessIntelligence(phoneNumber) {
+  const cleanPhone = phoneNumber.replace(/\D/g, '');
+  try {
+    const snapshot = await db.collection(BUSINESS_INTELLIGENCE_COLLECTION)
+      .where('user_phone', '==', cleanPhone)
+      .orderBy('analyzed_at', 'desc')
+      .get();
+    
+    const data = [];
+    snapshot.forEach(doc => {
+      data.push({ id: doc.id, ...doc.data() });
+    });
+    
+    return data;
+  } catch (error) {
+    console.error('Error getting business intelligence:', error);
+    return [];
+  }
+}
+
+// Update user's aggregate credit score based on all business intelligence
+async function updateUserCreditScore(phoneNumber) {
+  const cleanPhone = phoneNumber.replace(/\D/g, '');
+  try {
+    const biData = await getUserBusinessIntelligence(cleanPhone);
+    
+    if (biData.length === 0) return;
+    
+    // Calculate aggregate scores
+    let totalHealthScore = 0;
+    let totalAssetScore = 0;
+    let totalCashflowScore = 0;
+    let totalManagementScore = 0;
+    let totalGrowthPotential = 0;
+    let count = 0;
+    
+    let totalAssetValue = 0;
+    let totalInventoryValue = 0;
+    let estimatedMonthlyCashflow = 0;
+    
+    biData.forEach(item => {
+      if (item.credit_metrics) {
+        const m = item.credit_metrics;
+        if (m.business_health_score) {
+          totalHealthScore += m.business_health_score;
+          count++;
+        }
+        if (m.asset_score) totalAssetScore += m.asset_score;
+        if (m.cashflow_score) totalCashflowScore += m.cashflow_score;
+        if (m.management_score) totalManagementScore += m.management_score;
+        if (m.growth_potential) totalGrowthPotential += m.growth_potential;
+      }
+      
+      // Aggregate financial data
+      if (item.extracted_data) {
+        const ed = item.extracted_data;
+        if (ed.estimated_value) totalAssetValue += ed.estimated_value;
+        if (ed.inventory_value_estimate) totalInventoryValue += ed.inventory_value_estimate;
+        if (ed.monthly_cashflow_estimate) estimatedMonthlyCashflow += ed.monthly_cashflow_estimate;
+      }
+    });
+    
+    const avgHealthScore = count > 0 ? Math.round(totalHealthScore / count) : 0;
+    const avgAssetScore = count > 0 ? Math.round(totalAssetScore / count) : 0;
+    const avgCashflowScore = count > 0 ? Math.round(totalCashflowScore / count) : 0;
+    const avgManagementScore = count > 0 ? Math.round(totalManagementScore / count) : 0;
+    const avgGrowthPotential = count > 0 ? Math.round(totalGrowthPotential / count) : 0;
+    
+    // Calculate overall credit score (weighted average)
+    const overallCreditScore = Math.round(
+      (avgHealthScore * 0.3) +
+      (avgAssetScore * 0.2) +
+      (avgCashflowScore * 0.3) +
+      (avgManagementScore * 0.1) +
+      (avgGrowthPotential * 0.1)
+    );
+    
+    // Determine risk level
+    let riskLevel = 'tinggi';
+    if (overallCreditScore >= 70) riskLevel = 'rendah';
+    else if (overallCreditScore >= 50) riskLevel = 'sedang';
+    
+    // Calculate recommended loan based on credit score and assets
+    const baseRecommendation = totalAssetValue + totalInventoryValue;
+    const scoreMultiplier = overallCreditScore / 100;
+    const recommendedLoan = Math.round(baseRecommendation * scoreMultiplier * 0.5); // 50% of assets
+    
+    // Update user document
+    const userRef = db.collection(USERS_COLLECTION).doc(cleanPhone);
+    await userRef.update({
+      credit_score: overallCreditScore,
+      credit_metrics: {
+        business_health_score: avgHealthScore,
+        asset_score: avgAssetScore,
+        cashflow_score: avgCashflowScore,
+        management_score: avgManagementScore,
+        growth_potential: avgGrowthPotential,
+        risk_level: riskLevel,
+        total_asset_value: totalAssetValue,
+        total_inventory_value: totalInventoryValue,
+        estimated_monthly_cashflow: estimatedMonthlyCashflow,
+        recommended_loan_amount: recommendedLoan,
+        last_updated: new Date().toISOString(),
+        data_points: biData.length
+      }
+    });
+    
+    console.log(`📊 Credit score updated for ${cleanPhone}: ${overallCreditScore}/100`);
+  } catch (error) {
+    console.error('Error updating credit score:', error);
+  }
+}
+
+// ===== BUSINESS PROFILE MANAGEMENT =====
+
+// Update user's business profile with asset and cashflow predictions
+async function updateUserBusinessProfile(phoneNumber, structuredData) {
+  const cleanPhone = phoneNumber.replace(/\D/g, '');
+  try {
+    const userRef = db.collection(USERS_COLLECTION).doc(cleanPhone);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      console.log(`⚠️ User ${cleanPhone} not found for profile update`);
+      return false;
+    }
+    
+    const userData = userDoc.data();
+    const category = structuredData.category;
+    const extractedData = structuredData.extracted_data || {};
+    const creditMetrics = structuredData.credit_metrics || {};
+    
+    // Initialize business_profile if not exists
+    let businessProfile = userData.business_profile || {
+      total_asset_value: 0,
+      building_value: 0,
+      inventory_value: 0,
+      estimated_monthly_cashflow: 0,
+      estimated_daily_revenue: 0,
+      last_updated: null,
+      data_sources: []
+    };
+    
+    // Update based on category
+    if (category === 'building') {
+      const buildingValue = extractedData.estimated_value || 0;
+      businessProfile.building_value = buildingValue;
+      businessProfile.data_sources.push({
+        type: 'building',
+        date: new Date().toISOString(),
+        value: buildingValue
+      });
+      console.log(`🏪 Building value updated: Rp ${buildingValue.toLocaleString('id-ID')}`);
+    }
+    
+    if (category === 'inventory') {
+      const inventoryValue = extractedData.inventory_value_estimate || 0;
+      businessProfile.inventory_value = inventoryValue;
+      
+      // Estimate daily revenue based on inventory turnover
+      const turnover = extractedData.turnover_indicator || 'sedang';
+      const turnoverMultiplier = {
+        'cepat': 0.3,    // 30% of inventory per day
+        'sedang': 0.15,  // 15% of inventory per day
+        'lambat': 0.05   // 5% of inventory per day
+      };
+      const dailyRevenue = Math.round(inventoryValue * (turnoverMultiplier[turnover] || 0.15));
+      businessProfile.estimated_daily_revenue = dailyRevenue;
+      
+      // Estimate monthly cashflow (daily revenue * 25 working days * 30% profit margin)
+      const monthlyCashflow = Math.round(dailyRevenue * 25 * 0.3);
+      businessProfile.estimated_monthly_cashflow = monthlyCashflow;
+      
+      businessProfile.data_sources.push({
+        type: 'inventory',
+        date: new Date().toISOString(),
+        value: inventoryValue,
+        daily_revenue: dailyRevenue,
+        monthly_cashflow: monthlyCashflow
+      });
+      
+      console.log(`📦 Inventory value: Rp ${inventoryValue.toLocaleString('id-ID')}`);
+      console.log(`💰 Estimated daily revenue: Rp ${dailyRevenue.toLocaleString('id-ID')}`);
+      console.log(`📊 Estimated monthly cashflow: Rp ${monthlyCashflow.toLocaleString('id-ID')}`);
+    }
+    
+    // Calculate total asset value
+    businessProfile.total_asset_value = businessProfile.building_value + businessProfile.inventory_value;
+    businessProfile.last_updated = new Date().toISOString();
+    
+    // Calculate recommended loan based on assets and cashflow
+    const assetBasedLoan = Math.round(businessProfile.total_asset_value * 0.4); // 40% of assets
+    const cashflowBasedLoan = Math.round(businessProfile.estimated_monthly_cashflow * 3); // 3 months cashflow
+    const recommendedLoan = Math.min(assetBasedLoan, cashflowBasedLoan); // Conservative approach
+    
+    // Update user document
+    await userRef.update({
+      business_profile: businessProfile,
+      recommended_loan_amount: recommendedLoan > 0 ? recommendedLoan : userData.recommended_loan_amount || 0,
+      profile_updated_at: new Date().toISOString()
+    });
+    
+    console.log(`✅ Business profile updated for ${userData.name}`);
+    console.log(`   Total Assets: Rp ${businessProfile.total_asset_value.toLocaleString('id-ID')}`);
+    console.log(`   Monthly Cashflow: Rp ${businessProfile.estimated_monthly_cashflow.toLocaleString('id-ID')}`);
+    console.log(`   Recommended Loan: Rp ${recommendedLoan.toLocaleString('id-ID')}`);
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating business profile:', error);
+    return false;
+  }
+}
+
 module.exports = { 
   getUserContext, 
   registerNewUser, 
@@ -380,5 +632,9 @@ module.exports = {
   deleteMajelis,
   addMemberToMajelis,
   removeMemberFromMajelis,
-  populateLoanData
+  populateLoanData,
+  saveBusinessIntelligence,
+  getUserBusinessIntelligence,
+  updateUserCreditScore,
+  updateUserBusinessProfile
 };
