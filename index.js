@@ -148,6 +148,19 @@ app.get('/api/users/:phone/images', async (req, res) => {
   }
 });
 
+// Get User Business Intelligence (all data)
+app.get('/api/users/:phone/business-intelligence', async (req, res) => {
+  try {
+    const { getUserBusinessIntelligence } = require('./src/db');
+    const biData = await getUserBusinessIntelligence(req.params.phone);
+    
+    res.json(biData);
+  } catch (error) {
+    console.error('Error fetching business intelligence:', error);
+    res.status(500).json({ error: 'Failed to fetch business intelligence' });
+  }
+});
+
 // Verify User
 app.post('/api/users/verify', async (req, res) => {
   const { phone, status } = req.body;
@@ -184,6 +197,43 @@ app.delete('/api/users/:phone', async (req, res) => {
   } catch (error) {
     console.error('Error deleting user:', error);
     res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// Recalculate Credit Score for User
+app.post('/api/users/:phone/recalculate-credit', async (req, res) => {
+  const { phone } = req.params;
+  
+  try {
+    const { updateUserCreditScore, getUserBusinessIntelligence } = require('./src/db');
+    
+    // Check if user has business intelligence data
+    const biData = await getUserBusinessIntelligence(phone);
+    
+    if (biData.length === 0) {
+      return res.status(404).json({ 
+        error: 'No business intelligence data found',
+        message: 'User needs to send business photos via WhatsApp first'
+      });
+    }
+    
+    // Recalculate credit score
+    await updateUserCreditScore(phone);
+    
+    // Fetch updated user data
+    const users = await getAllUsers();
+    const updatedUser = users.find(u => u.phone === phone);
+    
+    res.json({ 
+      success: true, 
+      message: 'Credit score recalculated',
+      credit_score: updatedUser?.credit_score,
+      credit_metrics: updatedUser?.credit_metrics,
+      data_points: biData.length
+    });
+  } catch (error) {
+    console.error('Error recalculating credit score:', error);
+    res.status(500).json({ error: 'Failed to recalculate credit score' });
   }
 });
 

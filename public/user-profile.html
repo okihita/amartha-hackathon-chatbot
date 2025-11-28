@@ -244,7 +244,12 @@
     <div class="container">
         <div id="header-placeholder"></div>
         
-        <a href="/" class="back-btn">← Back to Users</a>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <a href="/" class="back-btn">← Back to Users</a>
+            <button id="recalculateBtn" class="btn btn-primary" onclick="recalculateCreditScore()" style="display: none;">
+                🔄 Recalculate Credit Score
+            </button>
+        </div>
         
         <div id="loading" class="loading">Loading user profile...</div>
         
@@ -279,6 +284,12 @@
                     <h2>📜 Transaction History</h2>
                     <div id="transactionHistory"></div>
                 </div>
+            </div>
+            
+            <!-- Business Intelligence Data -->
+            <div class="card full-width">
+                <h2>� BBusiness Intelligence Analysis</h2>
+                <div id="businessIntelligence"></div>
             </div>
             
             <!-- Business Photos -->
@@ -321,19 +332,66 @@
                 const imagesRes = await fetch(`/api/users/${phone}/images`);
                 const images = await imagesRes.json();
                 
+                // Fetch business intelligence data
+                const biRes = await fetch(`/api/users/${phone}/business-intelligence`);
+                const businessIntelligence = await biRes.json();
+                
                 // Render profile
-                renderProfile(user, images);
+                renderProfile(user, images, businessIntelligence);
                 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('profileContent').style.display = 'block';
+                
+                // Show recalculate button if user has BI data
+                if (businessIntelligence && businessIntelligence.length > 0) {
+                    document.getElementById('recalculateBtn').style.display = 'block';
+                }
                 
             } catch (error) {
                 console.error('Error loading profile:', error);
                 document.getElementById('loading').textContent = 'Error loading profile';
             }
         }
+        
+        async function recalculateCreditScore() {
+            const btn = document.getElementById('recalculateBtn');
+            const originalText = btn.textContent;
+            
+            try {
+                btn.disabled = true;
+                btn.textContent = '⏳ Calculating...';
+                
+                const response = await fetch(`/api/users/${phone}/recalculate-credit`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(`✅ Credit score recalculated!\n\nScore: ${result.credit_score}/100\nRisk Level: ${result.credit_metrics?.risk_level}\nData Points: ${result.data_points} images`);
+                    
+                    // Reload the page to show updated data
+                    location.reload();
+                } else {
+                    alert(`❌ ${result.error}\n\n${result.message || ''}`);
+                }
+            } catch (error) {
+                console.error('Error recalculating credit score:', error);
+                alert('❌ Failed to recalculate credit score. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
 
-        function renderProfile(user, images) {
+        function renderProfile(user, images, businessIntelligence) {
+            // Debug: Log user data to console
+            console.log('User data:', user);
+            console.log('Credit score:', user.credit_score);
+            console.log('Credit metrics:', user.credit_metrics);
+            console.log('Images:', images);
+            console.log('Business Intelligence:', businessIntelligence);
+            
             // Personal Info
             const majelisInfo = user.majelis_name || 'Not assigned';
             document.getElementById('personalInfo').innerHTML = `
@@ -486,6 +544,87 @@
                 document.getElementById('transactionHistory').innerHTML = historyHtml;
             } else {
                 document.getElementById('transactionHistory').innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No transaction history</p>';
+            }
+            
+            // Business Intelligence Data
+            if (businessIntelligence && businessIntelligence.length > 0) {
+                const biHtml = businessIntelligence.map((bi, index) => {
+                    const categoryLabels = {
+                        building: '🏪 Building/Store',
+                        inventory: '📦 Inventory/Stock',
+                        financial_record: '💰 Financial Record'
+                    };
+                    
+                    const categoryLabel = categoryLabels[bi.category] || bi.category;
+                    const analyzedDate = new Date(bi.analyzed_at).toLocaleString('id-ID');
+                    
+                    // Credit metrics
+                    let metricsHtml = '';
+                    if (bi.credit_metrics) {
+                        const cm = bi.credit_metrics;
+                        metricsHtml = `
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px;">
+                                ${cm.business_health_score ? `<div class="metric-item"><div class="metric-value">${cm.business_health_score}</div><div class="metric-label">Health</div></div>` : ''}
+                                ${cm.asset_score ? `<div class="metric-item"><div class="metric-value">${cm.asset_score}</div><div class="metric-label">Asset</div></div>` : ''}
+                                ${cm.cashflow_score ? `<div class="metric-item"><div class="metric-value">${cm.cashflow_score}</div><div class="metric-label">Cashflow</div></div>` : ''}
+                                ${cm.management_score ? `<div class="metric-item"><div class="metric-value">${cm.management_score}</div><div class="metric-label">Management</div></div>` : ''}
+                                ${cm.growth_potential ? `<div class="metric-item"><div class="metric-value">${cm.growth_potential}</div><div class="metric-label">Growth</div></div>` : ''}
+                            </div>
+                        `;
+                    }
+                    
+                    // Extracted data
+                    let extractedHtml = '';
+                    if (bi.extracted_data) {
+                        const ed = bi.extracted_data;
+                        extractedHtml = `
+                            <div style="margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 6px;">
+                                <strong style="font-size: 13px; color: #333;">Extracted Data:</strong>
+                                <div style="margin-top: 10px; font-size: 13px; color: #555;">
+                                    ${ed.estimated_value ? `<div>💵 Estimated Value: Rp ${ed.estimated_value.toLocaleString('id-ID')}</div>` : ''}
+                                    ${ed.inventory_value_estimate ? `<div>📦 Inventory Value: Rp ${ed.inventory_value_estimate.toLocaleString('id-ID')}</div>` : ''}
+                                    ${ed.monthly_cashflow_estimate ? `<div>💰 Monthly Cashflow: Rp ${ed.monthly_cashflow_estimate.toLocaleString('id-ID')}</div>` : ''}
+                                    ${ed.condition ? `<div>🔍 Condition: ${ed.condition}</div>` : ''}
+                                    ${ed.items_count ? `<div>📊 Items Count: ${ed.items_count}</div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Insights
+                    let insightsHtml = '';
+                    if (bi.insights && bi.insights.length > 0) {
+                        insightsHtml = `
+                            <div style="margin-top: 15px;">
+                                <strong style="font-size: 13px; color: #333;">Insights:</strong>
+                                <ul style="margin-top: 8px; margin-left: 20px; font-size: 13px; color: #555;">
+                                    ${bi.insights.map(insight => `<li style="margin-bottom: 5px;">${insight}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    return `
+                        <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 15px; background: white;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                                <div>
+                                    <div style="font-size: 16px; font-weight: 600; color: #333;">${categoryLabel}</div>
+                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">📅 ${analyzedDate}</div>
+                                </div>
+                                <div style="padding: 4px 12px; background: #e3f2fd; color: #1976d2; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                                    #${index + 1}
+                                </div>
+                            </div>
+                            ${metricsHtml}
+                            ${extractedHtml}
+                            ${insightsHtml}
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('businessIntelligence').innerHTML = biHtml;
+            } else {
+                document.getElementById('businessIntelligence').innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No business intelligence data yet. User needs to send business photos via WhatsApp.</p>';
             }
             
             // Business Photos

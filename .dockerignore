@@ -1,6 +1,7 @@
 # Git
 .git
 .gitignore
+.github
 
 # Node
 node_modules
@@ -11,21 +12,41 @@ npm-debug.log
 
 # Documentation
 README.md
+CHANGELOG.md
 *.md
+docs/
 test-chats.md
 FEATURE_PLAN.md
+
+# Tests
+tests/
+*.test.js
+*.spec.js
+
+# Scripts (not needed in runtime)
+scripts/
 
 # Deployment
 deploy.sh
 .gcloudignore
+Dockerfile
 
 # IDE
 .vscode
 .idea
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
+.env.example
 
 # Logs
 *.log
+logs/
+
+# Credentials (should be in .gitignore too)
+service-account-key.json
+*.pem
+*.key
