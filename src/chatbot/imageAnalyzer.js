@@ -33,6 +33,9 @@ async function analyzeImage(imageId, caption, senderPhone) {
       return "Maaf Bu, gagal mengunduh gambar. Silakan coba lagi.";
     }
     
+    // Convert to base64 data URL for storage
+    const base64Image = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
+    
     // Prepare image for Gemini
     const imagePart = {
       inlineData: {
@@ -55,7 +58,7 @@ async function analyzeImage(imageId, caption, senderPhone) {
       
       const biData = {
         type: typeMap[structuredData.category] || 'general',
-        category: structuredData.category,
+        analysis_category: structuredData.category,
         extracted: structuredData.extracted_data,
         credit_metrics: structuredData.credit_metrics,
         insights: structuredData.insights,
@@ -63,9 +66,9 @@ async function analyzeImage(imageId, caption, senderPhone) {
         confidence: structuredData.confidence
       };
       
-      // Store image URL for building/inventory, null for financial records
+      // Store base64 image for building/inventory
       const shouldStoreImage = ['building', 'inventory'].includes(structuredData.category);
-      const imageUrl = shouldStoreImage ? `https://graph.facebook.com/${GRAPH_API_VERSION}/${imageId}` : null;
+      const imageUrl = shouldStoreImage ? base64Image : null;
       
       await UserService.createBusinessIntelligence(senderPhone, biData, imageUrl, caption);
     }

@@ -197,8 +197,8 @@ export default function Users() {
               <th onClick={() => handleSort('majelis_name')} style="cursor: pointer;">
                 Majelis {getSortIcon('majelis_name')}
               </th>
-              <th onClick={() => handleSort('is_verified')} style="cursor: pointer;">
-                Status {getSortIcon('is_verified')}
+              <th onClick={() => handleSort('status')} style="cursor: pointer;">
+                Status {getSortIcon('status')}
               </th>
               <th>Actions</th>
             </tr>
@@ -218,8 +218,8 @@ export default function Users() {
                     </span>
                   </td>
                   <td>
-                    <span class={`status ${user.is_verified ? 'verified' : 'pending'}`}>
-                      {user.is_verified ? 'Verified' : 'Pending'}
+                    <span class={`status ${user.status === 'active' ? 'verified' : 'pending'}`}>
+                      {user.status === 'active' ? 'Verified' : 'Pending'}
                     </span>
                   </td>
                   <td>
@@ -227,7 +227,7 @@ export default function Users() {
                       <button
                         class="btn btn-icon btn-success"
                         onClick={() => handleVerify(user.phone, true)}
-                        disabled={processing === user.phone || user.is_verified === true}
+                        disabled={processing === user.phone || user.status === 'active'}
                         title="Verify user"
                       >
                         <Check size={16} />

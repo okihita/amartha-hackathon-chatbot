@@ -3,6 +3,9 @@ const { sendMessage, sendQuizQuestion } = require('../chatbot/whatsapp');
 const { analyzeImage } = require('../chatbot/imageAnalyzer');
 const QuizService = require('../services/QuizService');
 
+// Store pending images waiting for caption
+const pendingImages = new Map();
+
 class WebhookController {
   verify(req, res) {
     const { 'hub.mode': mode, 'hub.verify_token': token, 'hub.challenge': challenge } = req.query;
@@ -16,10 +19,27 @@ class WebhookController {
     const phone = message.from;
     const handlers = {
       text: async () => {
-        await sendMessage(phone, await getGeminiResponse(message.text.body, phone));
+        // Check if user has pending image waiting for caption
+        if (pendingImages.has(phone)) {
+          const imageId = pendingImages.get(phone);
+          pendingImages.delete(phone);
+          const caption = message.text.body;
+          await sendMessage(phone, await analyzeImage(imageId, caption, phone));
+        } else {
+          await sendMessage(phone, await getGeminiResponse(message.text.body, phone));
+        }
       },
       image: async () => {
-        await sendMessage(phone, await analyzeImage(message.image.id, message.image.caption || '', phone));
+        const caption = message.image.caption || '';
+        if (!caption.trim()) {
+          // No caption - store image and ask for description
+          pendingImages.set(phone, message.image.id);
+          // Auto-expire after 5 minutes
+          setTimeout(() => pendingImages.delete(phone), 5 * 60 * 1000);
+          await sendMessage(phone, "📸 Gambar diterima!\n\nMohon jelaskan foto ini ya Bu. Contoh:\n• \"Ini foto warung saya\"\n• \"Stok barang dagangan\"\n• \"Catatan penjualan hari ini\"\n\nBalas dengan deskripsi agar saya bisa menganalisis dengan tepat. 😊");
+        } else {
+          await sendMessage(phone, await analyzeImage(message.image.id, caption, phone));
+        }
       },
       audio: async () => {
         await sendMessage(phone, "Maaf Bu, saat ini saya belum bisa memproses pesan suara. Silakan kirim pesan teks. 😊");

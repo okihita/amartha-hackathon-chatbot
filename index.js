@@ -3,6 +3,12 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const EventEmitter = require('events');
+
+// Global event emitter for real-time updates
+const dataEvents = new EventEmitter();
+dataEvents.setMaxListeners(100);
+global.dataEvents = dataEvents;
 
 // Validate required environment variables
 const requiredEnvVars = ['MY_VERIFY_TOKEN', 'WHATSAPP_TOKEN', 'PHONE_NUMBER_ID', 'GEMINI_API_KEY', 'GCP_PROJECT_ID'];
@@ -44,6 +50,24 @@ app.use(cors());
 
 // Health check
 app.get('/health', (req, res) => res.status(200).send('🤖 Akademi-AI (Modular) is Online!'));
+
+// SSE endpoint for real-time updates
+app.get('/api/events/:phone', (req, res) => {
+  const { phone } = req.params;
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const onUpdate = (data) => {
+    if (data.phone === phone) {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    }
+  };
+
+  dataEvents.on('update', onUpdate);
+  req.on('close', () => dataEvents.off('update', onUpdate));
+});
 
 // Static assets
 app.use('/assets', express.static(path.join(__dirname, 'public/assets')));

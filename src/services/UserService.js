@@ -79,8 +79,7 @@ class UserService {
       throw new Error('User not found');
     }
     return UserRepository.update(phoneNumber, { 
-      status: isVerified ? 'active' : 'pending',
-      is_verified: isVerified
+      status: isVerified ? 'active' : 'pending'
     });
   }
 

@@ -38,7 +38,7 @@ export default function Majelis() {
     const currentMembers = currentMajelis?.members || [];
     
     const available = users.filter(u => 
-      u.is_verified === true && 
+      u.status === 'active' && 
       !currentMembers.includes(u.phone) &&
       !u.majelis_id
     );

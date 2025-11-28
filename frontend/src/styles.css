@@ -2,6 +2,12 @@
    AMARTHA DASHBOARD - UNIFIED STYLES
    =================================== */
 
+/* Blink animation for new items */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
 /* CSS Custom Properties for Theming */
 :root {
     /* Status Colors */

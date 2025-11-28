@@ -7,14 +7,10 @@ export default function UserProfile({ phone }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
-
-  useEffect(() => {
-    fetchProfile();
-  }, [phone]);
+  const [newBiIds, setNewBiIds] = useState(new Set());
 
   const fetchProfile = async () => {
     try {
-      setLoading(true);
       const res = await fetch(`/api/users/${phone}/complete`);
       if (!res.ok) throw new Error('User not found');
       setData(await res.json());
@@ -23,6 +19,33 @@ export default function UserProfile({ phone }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+    
+    // SSE for real-time updates
+    const eventSource = new EventSource(`/api/events/${phone}`);
+    eventSource.onmessage = (e) => {
+      const update = JSON.parse(e.data);
+      if (update.type === 'bi_added') {
+        // Mark as new and refresh
+        setNewBiIds(prev => new Set([...prev, update.data.id]));
+        fetchProfile();
+        // Remove blink after 5 seconds
+        setTimeout(() => {
+          setNewBiIds(prev => { const n = new Set(prev); n.delete(update.data.id); return n; });
+        }, 5000);
+      }
+    };
+    
+    return () => eventSource.close();
+  }, [phone]);
+
+  const formatDateTime = (isoString) => {
+    if (!isoString) return '-';
+    const d = new Date(isoString);
+    return d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
   if (loading) return <div class="card" style="text-align: center; padding: 40px;">Loading...</div>;
@@ -249,13 +272,14 @@ export default function UserProfile({ phone }) {
           {filteredBI?.length > 0 ? (
             <div style="display: grid; gap: 16px;">
               {filteredBI.map(bi => (
-                <div key={bi.id} style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+                <div key={bi.id} class={newBiIds.has(bi.id) ? 'bi-card-new' : ''} style={`border: 1px solid ${newBiIds.has(bi.id) ? '#4caf50' : '#ddd'}; border-radius: 8px; padding: 16px; ${newBiIds.has(bi.id) ? 'animation: blink 1s ease-in-out 3; background: #e8f5e9;' : ''}`}>
                   <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                     <div>
                       <span style="font-weight: bold; font-size: 16px;">{bi.type.toUpperCase()}</span>
                       <span style="font-size: 14px; color: var(--color-neutral); margin-left: 8px;">({bi.analysis_category})</span>
+                      {newBiIds.has(bi.id) && <span style="margin-left: 8px; background: #4caf50; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">NEW</span>}
                     </div>
-                    <span style="font-size: 12px; color: var(--color-neutral);">{new Date(bi.analyzed_at).toLocaleDateString('id-ID')}</span>
+                    <span style="font-size: 12px; color: var(--color-neutral);">{formatDateTime(bi.analyzed_at)}</span>
                   </div>
                   
                   <div style="display: flex; gap: 16px; align-items: flex-start;">

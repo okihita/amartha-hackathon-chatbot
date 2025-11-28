@@ -28,7 +28,14 @@ class BusinessIntelligenceRepository {
     };
     
     const docRef = await biCollection.add(record);
-    return { id: docRef.id, ...record };
+    const result = { id: docRef.id, ...record };
+    
+    // Emit real-time update event
+    if (global.dataEvents) {
+      global.dataEvents.emit('update', { phone: clean, type: 'bi_added', data: result });
+    }
+    
+    return result;
   }
 
   async findByUser(phoneNumber) {
