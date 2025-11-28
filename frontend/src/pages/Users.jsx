@@ -41,7 +41,7 @@ export default function Users() {
 
   const handleDelete = async (phone, name) => {
     if (!confirm(`Are you sure you want to delete ${name}?`)) return;
-    
+
     setProcessing(phone);
     try {
       const res = await fetch(`/api/users/${phone}`, { method: 'DELETE' });
@@ -67,20 +67,20 @@ export default function Users() {
       <div class="card">
         <h2>Quick Actions</h2>
         <div class="quick-actions-grid">
-          <a href="/business-types" class="quick-action-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <div style="font-size: 32px; margin-bottom: 10px;">🏪</div>
-            <div style="font-weight: 600; font-size: 16px;">Business Types</div>
-            <div style="font-size: 12px; opacity: 0.9; margin-top: 5px;">View RAG Classifications</div>
+          <a href="/business-types" class="quick-action-card business">
+            <div class="quick-action-icon">🏪</div>
+            <div class="quick-action-title">Business Types</div>
+            <div class="quick-action-desc">View RAG Classifications</div>
           </a>
-          <a href="/majelis" class="quick-action-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
-            <div style="font-size: 32px; margin-bottom: 10px;">📅</div>
-            <div style="font-weight: 600; font-size: 16px;">Majelis Groups</div>
-            <div style="font-size: 12px; opacity: 0.9; margin-top: 5px;">Manage Groups</div>
+          <a href="/majelis" class="quick-action-card majelis">
+            <div class="quick-action-icon">📅</div>
+            <div class="quick-action-title">Majelis Groups</div>
+            <div class="quick-action-desc">Manage Groups</div>
           </a>
-          <a href="/financial-literacy" class="quick-action-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-            <div style="font-size: 32px; margin-bottom: 10px;">📚</div>
-            <div style="font-weight: 600; font-size: 16px;">Financial Literacy</div>
-            <div style="font-size: 12px; opacity: 0.9; margin-top: 5px;">15-Week Course</div>
+          <a href="/financial-literacy" class="quick-action-card literacy">
+            <div class="quick-action-icon">📚</div>
+            <div class="quick-action-title">Financial Literacy</div>
+            <div class="quick-action-desc">15-Week Course</div>
           </a>
         </div>
       </div>
@@ -104,7 +104,7 @@ export default function Users() {
               const isAssigned = user.majelis_name !== null;
               return (
                 <tr key={user.phone}>
-                  <td><strong><a href={`/user-profile/${user.phone}`} style="color: #007bff; text-decoration: none;">{user.name}</a></strong></td>
+                  <td><strong><a href={`/user-profile/${user.phone}`} class="user-link">{user.name}</a></strong></td>
                   <td>{user.phone}</td>
                   <td>{user.business_type}</td>
                   <td>{user.location}</td>
@@ -123,22 +123,22 @@ export default function Users() {
                       <button class="btn btn-primary" onClick={() => route(`/user-profile/${user.phone}`)}>
                         👁️ View
                       </button>
-                      <button 
-                        class="btn btn-success" 
+                      <button
+                        class="btn btn-success"
                         onClick={() => handleVerify(user.phone, true)}
                         disabled={processing === user.phone || user.is_verified}
                       >
                         ✓ Approve
                       </button>
-                      <button 
-                        class="btn btn-danger" 
+                      <button
+                        class="btn btn-danger"
                         onClick={() => handleVerify(user.phone, false)}
                         disabled={processing === user.phone || user.is_verified}
                       >
                         ✗ Reject
                       </button>
-                      <button 
-                        class="btn btn-secondary" 
+                      <button
+                        class="btn btn-secondary"
                         onClick={() => handleDelete(user.phone, user.name)}
                         disabled={processing === user.phone}
                       >

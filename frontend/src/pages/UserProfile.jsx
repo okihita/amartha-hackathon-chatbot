@@ -21,7 +21,7 @@ export default function UserProfile({ phone }) {
 
       const users = await usersRes.json();
       const foundUser = users.find(u => u.phone === phone);
-      
+
       if (!foundUser) {
         alert('User not found');
         route('/');
@@ -42,7 +42,7 @@ export default function UserProfile({ phone }) {
     try {
       const res = await fetch(`/api/users/${phone}/recalculate-credit`, { method: 'POST' });
       const result = await res.json();
-      
+
       if (res.ok) {
         alert(`✅ Credit score recalculated!\n\nScore: ${result.credit_score}/100\nRisk Level: ${result.credit_metrics?.risk_level}\nData Points: ${result.data_points} images`);
         loadProfile();
@@ -63,7 +63,7 @@ export default function UserProfile({ phone }) {
 
   return (
     <>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <div class="profile-header">
         <a href="/" class="back-btn">← Back to Users</a>
         {biData.length > 0 && (
           <button class="btn btn-primary" onClick={recalculateCredit}>
@@ -111,14 +111,14 @@ export default function UserProfile({ phone }) {
             <>
               <div class="score-display">
                 <div class="score-label">Overall Credit Score</div>
-                <div class="score-number" style={`color: ${user.credit_score >= 70 ? '#28a745' : user.credit_score >= 50 ? '#ffc107' : '#dc3545'}`}>
+                <div class={`score-number score-color-${user.credit_score >= 70 ? 'success' : user.credit_score >= 50 ? 'warning' : 'danger'}`}>
                   {user.credit_score}
                 </div>
                 <div class="score-label">out of 100</div>
               </div>
               <div class="profile-row">
                 <span class="profile-label">Risk Level</span>
-                <span class="profile-value" style={`color: ${cm.risk_level === 'rendah' ? '#28a745' : cm.risk_level === 'sedang' ? '#ffc107' : '#dc3545'}; text-transform: uppercase;`}>
+                <span class={`profile-value risk-level-${cm.risk_level === 'rendah' ? 'low' : cm.risk_level === 'sedang' ? 'medium' : 'high'}`}>
                   {cm.risk_level || 'N/A'}
                 </span>
               </div>
@@ -128,7 +128,7 @@ export default function UserProfile({ phone }) {
               </div>
             </>
           ) : (
-            <p style="color: #999; padding: 20px; text-align: center;">No credit data available yet</p>
+            <p class="empty-data-message">No credit data available yet</p>
           )}
         </div>
 
@@ -168,8 +168,8 @@ export default function UserProfile({ phone }) {
                 <div class="metric-value">Rp {(cm.estimated_monthly_cashflow || 0).toLocaleString('id-ID')}</div>
                 <div class="metric-label">Monthly Cashflow</div>
               </div>
-              <div class="metric-item" style="grid-column: 1 / -1;">
-                <div class="metric-value" style="color: #007bff;">Rp {(cm.recommended_loan_amount || 0).toLocaleString('id-ID')}</div>
+              <div class="metric-item metric-full-width">
+                <div class="metric-value metric-value-highlight">Rp {(cm.recommended_loan_amount || 0).toLocaleString('id-ID')}</div>
                 <div class="metric-label">Recommended Loan Amount</div>
               </div>
             </div>
@@ -181,20 +181,20 @@ export default function UserProfile({ phone }) {
         <div class="card">
           <h2>🔍 Business Intelligence Analysis</h2>
           {biData.map((bi, index) => (
-            <div key={bi.id || index} style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 15px; background: white;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+            <div key={bi.id || index} class="bi-card">
+              <div class="bi-header">
                 <div>
-                  <div style="font-size: 16px; font-weight: 600;">{bi.category}</div>
-                  <div style="font-size: 12px; color: #999;">📅 {new Date(bi.analyzed_at).toLocaleString('id-ID')}</div>
+                  <div class="bi-category">{bi.category}</div>
+                  <div class="bi-date">📅 {new Date(bi.analyzed_at).toLocaleString('id-ID')}</div>
                 </div>
-                <div style="padding: 4px 12px; background: #e3f2fd; color: #1976d2; border-radius: 12px; font-size: 12px;">
+                <div class="bi-tag">
                   #{index + 1}
                 </div>
               </div>
               {bi.insights && bi.insights.length > 0 && (
-                <div style="margin-top: 15px;">
-                  <strong style="font-size: 13px;">Insights:</strong>
-                  <ul style="margin-top: 8px; margin-left: 20px; font-size: 13px;">
+                <div class="bi-insights">
+                  <strong class="bi-insights-title">Insights:</strong>
+                  <ul class="bi-insights-list">
                     {bi.insights.map((insight, i) => <li key={i}>{insight}</li>)}
                   </ul>
                 </div>

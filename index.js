@@ -36,7 +36,7 @@ dashboardRoutes.forEach(route => {
   app.get(route, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.sendFile(path.join(__dirname, 'public/frontend/index.html'));
+    res.sendFile(path.join(__dirname, 'public/index.html'));
   });
 });
 
