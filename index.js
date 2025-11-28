@@ -242,6 +242,27 @@ app.delete('/api/majelis/:id', async (req, res) => {
   }
 });
 
+// Get all Business Types (RAG)
+app.get('/api/business-types', async (req, res) => {
+  try {
+    const { Firestore } = require('@google-cloud/firestore');
+    const db = new Firestore({
+      projectId: process.env.GCP_PROJECT_ID || 'stellar-zoo-478021-v8',
+    });
+    
+    const snapshot = await db.collection('business_classifications').get();
+    const businessTypes = [];
+    snapshot.forEach(doc => {
+      businessTypes.push({ id: doc.id, ...doc.data() });
+    });
+    
+    res.json(businessTypes);
+  } catch (error) {
+    console.error('Error fetching business types:', error);
+    res.status(500).json({ error: 'Failed to fetch business types' });
+  }
+});
+
 // Add member to Majelis
 app.post('/api/majelis/:id/members', async (req, res) => {
   try {
