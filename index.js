@@ -7,7 +7,7 @@ const EventEmitter = require('events');
 
 // Global event emitter for real-time updates
 const dataEvents = new EventEmitter();
-dataEvents.setMaxListeners(100);
+dataEvents.setMaxListeners(500); // Increased for multiple concurrent SSE connections
 global.dataEvents = dataEvents;
 
 // Validate required environment variables
@@ -41,6 +41,15 @@ const webhookLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 100,
   message: 'Too many requests from this IP',
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Rate limiting for analytics (200 requests per minute - more lenient for dashboard)
+const analyticsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  message: 'Too many analytics requests',
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -101,6 +110,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/majelis', majelisRoutes);
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api', ragRoutes);
-app.use('/api/analytics', analyticsRoutes);
+app.use('/api/analytics', analyticsLimiter, analyticsRoutes);
 
 app.listen(PORT, () => console.log(`🚀 Server listening on ${PORT}`));

@@ -56,15 +56,16 @@ class UserService {
   }
 
   async getAllUsers() {
-    const users = await UserRepository.findAll();
+    const [users, allMajelis] = await Promise.all([
+      UserRepository.findAll(),
+      MajelisRepository.findAll()
+    ]);
     
-    const majelisCache = {};
+    const majelisMap = new Map(allMajelis.map(m => [m.id, m]));
+    
     for (const user of users) {
       if (user.majelis_id) {
-        if (!majelisCache[user.majelis_id]) {
-          majelisCache[user.majelis_id] = await MajelisRepository.findById(user.majelis_id);
-        }
-        const majelis = majelisCache[user.majelis_id];
+        const majelis = majelisMap.get(user.majelis_id);
         if (majelis) {
           user.majelis_name = majelis.name;
           user.majelis_day = majelis.schedule_day;

@@ -21,9 +21,14 @@ export default function Users() {
     const eventSource = new EventSource('/api/events/users');
     eventSource.onmessage = (e) => {
       const data = JSON.parse(e.data);
-      if (data.type === 'user_created' || data.type === 'user_updated') {
-        fetchData(); // Refresh list
-        showToast(`User ${data.type === 'user_created' ? 'registered' : 'updated'}: ${data.data?.name || 'New user'}`, 'success');
+      if (data.type === 'user_created' && data.data) {
+        // Prepend new user without full refresh to avoid layout shift
+        setUsers(prev => [data.data, ...prev.filter(u => u.phone !== data.data.phone)]);
+        showToast(`User registered: ${data.data?.name || 'New user'}`, 'success');
+      } else if (data.type === 'user_updated' && data.data) {
+        // Update in place
+        setUsers(prev => prev.map(u => u.phone === data.data.phone ? data.data : u));
+        showToast(`User updated: ${data.data?.name || 'User'}`, 'success');
       }
     };
     return () => eventSource.close();

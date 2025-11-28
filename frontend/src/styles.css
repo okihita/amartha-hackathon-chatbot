@@ -2589,8 +2589,19 @@ textarea:focus {
 }
 
 .data-table tbody tr {
-    
+    animation: fadeSlideIn 0.3s ease-out;
     transition: background var(--transition-instant);
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .data-table tbody tr:hover {

@@ -1,0 +1,26 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/whatsapp-bot', '.']
+  
+  # Push to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/whatsapp-bot']
+  
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'whatsapp-bot'
+      - '--image=asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/whatsapp-bot'
+      - '--region=asia-southeast2'
+      - '--allow-unauthenticated'
+      - '--min-instances=1'
+
+images:
+  - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/whatsapp-bot'
+
+options:
+  machineType: 'E2_MEDIUM'  # Default machine - uses free tier!
