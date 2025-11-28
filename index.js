@@ -60,7 +60,8 @@ app.get('/api/events/:phone', (req, res) => {
   res.flushHeaders();
 
   const onUpdate = (data) => {
-    if (data.phone === phone) {
+    // Match specific phone OR 'demo' channel for all demo user updates
+    if (data.phone === phone || (phone === 'demo' && data.data?.is_demo)) {
       res.write(`data: ${JSON.stringify(data)}\n\n`);
     }
   };

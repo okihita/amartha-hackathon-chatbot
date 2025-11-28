@@ -31,6 +31,8 @@ async function clearCollection() {
 
 async function getGoogleDriveClient() {
   const fs = require('fs');
+  
+  // Option 1: Service account key file
   if (fs.existsSync('./service-account-key.json')) {
     console.log('🔐 Using service account authentication\n');
     const auth = new google.auth.GoogleAuth({
@@ -41,6 +43,20 @@ async function getGoogleDriveClient() {
       ],
     });
     return await auth.getClient();
+  }
+  
+  // Option 2: Application Default Credentials (gcloud auth application-default login)
+  try {
+    console.log('🔐 Using Application Default Credentials\n');
+    const auth = new google.auth.GoogleAuth({
+      scopes: [
+        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/documents.readonly'
+      ],
+    });
+    return await auth.getClient();
+  } catch (e) {
+    // Fall through to API key
   }
   
   if (GOOGLE_API_KEY) {

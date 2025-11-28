@@ -281,6 +281,15 @@ class DemoService {
     const scenarioName = parts[1] || 'sukses';
     const flags = scenario.flags ? `\n⚠️ Flags: ${scenario.flags.join(', ')}` : '';
     
+    // Emit event for real-time updates
+    if (global.dataEvents) {
+      global.dataEvents.emit('update', { 
+        phone, 
+        type: 'user_created', 
+        data: { phone, name: persona.name, is_demo: true }
+      });
+    }
+    
     return {
       error: false,
       message: `✅ *Demo Mode Activated*\n\n` +

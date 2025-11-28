@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import { Copy, Trash2, RefreshCw, User, Phone, Gamepad2, Smartphone, Users, Clapperboard, Shuffle, RotateCcw, List } from 'lucide-preact';
+import { Copy, Trash2, RefreshCw, Gamepad2, Smartphone, Users, Clapperboard, Shuffle, RotateCcw, List, CheckCircle, Route } from 'lucide-preact';
 
 const API_BASE = '/api';
 
@@ -16,20 +16,51 @@ const PERSONAS = [
 ];
 
 const SCENARIOS = [
-  { key: 'sukses', name: 'Sukses', icon: '🌟', desc: 'Rp 10jt, 80% quiz, good payments' },
-  { key: 'baru', name: 'Baru', icon: '🆕', desc: 'No loan, 0% quiz, no majelis' },
-  { key: 'krisis', name: 'Krisis', icon: '📉', desc: 'Missed payments, struggling' },
-  { key: 'lulus', name: 'Lulus', icon: '🎓', desc: '100% quiz, fully paid, graduate' },
-  { key: 'fraud', name: 'Fraud', icon: '⚠️', desc: 'Suspicious activity flags' },
+  { key: 'sukses', name: 'Sukses', icon: '🌟', desc: 'Rp 10jt, 80% quiz' },
+  { key: 'baru', name: 'Baru', icon: '🆕', desc: 'No loan, 0% quiz' },
+  { key: 'krisis', name: 'Krisis', icon: '📉', desc: 'Missed payments' },
+  { key: 'lulus', name: 'Lulus', icon: '🎓', desc: '100% quiz, paid' },
+  { key: 'fraud', name: 'Fraud', icon: '⚠️', desc: 'Suspicious flags' },
+];
+
+const JOURNEYS = [
+  { title: 'New User Registration', steps: [
+    'Send /demo:reset to clear existing data',
+    'Send "Halo" → Bot asks for name, business, location',
+    'Reply: "Saya Dewi, jualan kue di Bandung"',
+    'Check Dashboard → User appears as "Pending"',
+    'Click Verify → Status changes to "Active"'
+  ]},
+  { title: 'Quiz Flow', steps: [
+    'Send /demo:warung to get a persona',
+    'Send "kuis" → Bot sends intro + first question',
+    'Answer 4 questions via WhatsApp list',
+    'See score result after completion',
+    'Send "nilai" → See overall progress'
+  ]},
+  { title: 'Image Analysis (BI)', steps: [
+    'Send /demo:makanan to get food business',
+    'Send photo of receipt/inventory with caption',
+    'Bot analyzes and extracts data',
+    'Check Dashboard → User Profile → BI section',
+    'New card appears with green "NEW" badge'
+  ]},
+  { title: 'Profile & Majelis', steps: [
+    'Send /demo:sukses to get successful member',
+    'Send "cek data" → See full profile + loan',
+    'Send "jadwal" → See majelis schedule',
+    'Dashboard → Majelis → Click card',
+    'See members and attendance tracking'
+  ]},
 ];
 
 export default function Demo() {
   const [demoUsers, setDemoUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(null);
+  const [newUserIds, setNewUserIds] = useState(new Set());
 
   const fetchDemoUsers = async () => {
-    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/users`);
       const users = await res.json();
@@ -40,7 +71,23 @@ export default function Demo() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchDemoUsers(); }, []);
+  useEffect(() => {
+    fetchDemoUsers();
+    
+    // SSE for real-time updates
+    const eventSource = new EventSource('/api/events/demo');
+    eventSource.onmessage = (e) => {
+      const update = JSON.parse(e.data);
+      if (update.type === 'user_created' && update.data?.is_demo) {
+        setNewUserIds(prev => new Set([...prev, update.data.phone]));
+        fetchDemoUsers();
+        setTimeout(() => {
+          setNewUserIds(prev => { const n = new Set(prev); n.delete(update.data.phone); return n; });
+        }, 5000);
+      }
+    };
+    return () => eventSource.close();
+  }, []);
 
   const copyCommand = (cmd) => {
     navigator.clipboard.writeText(cmd);
@@ -54,183 +101,202 @@ export default function Demo() {
     fetchDemoUsers();
   };
 
-  const cardStyle = (selected) => ({
-    padding: '12px',
-    background: selected ? '#e3f2fd' : '#fff',
-    border: `2px solid ${selected ? '#2196f3' : '#e0e0e0'}`,
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  });
+  const CommandCard = ({ item, prefix }) => {
+    const cmd = `${prefix}${item.key}`;
+    const isActive = copied === cmd;
+    return (
+      <div 
+        onClick={() => copyCommand(cmd)}
+        style={{
+          padding: '14px',
+          background: isActive ? '#e3f2fd' : '#fff',
+          border: `1px solid ${isActive ? '#2196f3' : '#e0e0e0'}`,
+          borderRadius: '8px',
+          cursor: 'pointer',
+          transition: 'all 0.15s',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+          <span style={{ fontSize: '28px' }}>{item.icon}</span>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '14px' }}>{item.name}</div>
+            <div style={{ fontSize: '11px', color: '#666' }}>{item.desc}</div>
+          </div>
+        </div>
+        <div style={{ fontSize: '12px', color: '#2196f3', fontFamily: 'monospace', background: '#f5f5f5', padding: '4px 8px', borderRadius: '4px', display: 'inline-block' }}>
+          {cmd} {isActive && '✓'}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div style="padding: 20px;">
-      <div class="card" style="margin-bottom: 20px;">
-        <h1 style="margin: 0 0 8px 0; display: flex; align-items: center; gap: 8px;"><Gamepad2 size={28} /> Demo Mode</h1>
-        <p style="color: #666; margin: 0;">Commands untuk hackathon judges. Kirim via WhatsApp ke chatbot.</p>
+    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '24px', borderBottom: '2px solid #e0e0e0', paddingBottom: '16px' }}>
+        <h1 style={{ margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '24px' }}>
+          <Gamepad2 size={28} /> Demo Mode
+        </h1>
+        <p style={{ color: '#666', margin: 0, fontSize: '14px' }}>Commands untuk hackathon judges. Kirim via WhatsApp ke chatbot.</p>
       </div>
 
-      {/* How to Use */}
-      <div class="card" style="margin-bottom: 20px; background: #fff3e0;">
-        <h2 style="margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;"><Smartphone size={20} /> Cara Pakai</h2>
-        <ol style="margin: 0; padding-left: 20px; line-height: 1.8;">
-          <li>Buka WhatsApp, chat ke nomor bot</li>
-          <li>Copy command di bawah, kirim ke chat</li>
-          <li>Bot akan inject data persona ke nomor Anda</li>
-          <li>Coba fitur: ketik "menu", "cek data", "kuis", dll</li>
-          <li>Selesai? Kirim <code>/demo:reset</code> untuk hapus data</li>
-        </ol>
+      {/* Quick Start */}
+      <div style={{ background: '#fff3e0', padding: '16px 20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffcc80' }}>
+        <h3 style={{ margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px' }}>
+          <Smartphone size={18} /> Quick Start
+        </h3>
+        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '13px', color: '#5d4037' }}>
+          <span>1. Copy command below</span>
+          <span>2. Send to WhatsApp bot</span>
+          <span>3. Try features: "menu", "kuis", "cek data"</span>
+          <span>4. Reset: <code style={{ background: '#fff', padding: '2px 6px', borderRadius: '3px' }}>/demo:reset</code></span>
+        </div>
       </div>
 
-      {/* Persona Commands */}
-      <div class="card" style="margin-bottom: 20px;">
-        <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;"><Users size={20} /> Persona</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-          {PERSONAS.map(p => (
-            <div 
-              key={p.key} 
-              style={cardStyle(copied === `/demo:${p.key}`)}
-              onClick={() => copyCommand(`/demo:${p.key}`)}
-            >
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <span style="font-size: 24px;">{p.icon}</span>
-                <strong>{p.name}</strong>
-              </div>
-              <div style="font-size: 12px; color: #666;">{p.desc}</div>
-              <div style="font-size: 11px; color: #2196f3; margin-top: 8px; font-family: monospace;">
-                /demo:{p.key} {copied === `/demo:${p.key}` ? '✓ Copied!' : ''}
+      {/* Two Column Layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+        {/* Personas */}
+        <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+          <h3 style={{ margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', color: '#333' }}>
+            <Users size={18} /> Personas
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            {PERSONAS.map(p => <CommandCard key={p.key} item={p} prefix="/demo:" />)}
+          </div>
+        </div>
+
+        {/* Scenarios */}
+        <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+          <h3 style={{ margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', color: '#333' }}>
+            <Clapperboard size={18} /> Scenarios
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            {SCENARIOS.map(s => <CommandCard key={s.key} item={s} prefix="/demo:" />)}
+          </div>
+          
+          {/* Combinations */}
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e0e0e0' }}>
+            <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Shuffle size={14} /> Kombinasi (persona+scenario)
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {['/demo:warung+krisis', '/demo:random+lulus', '/demo:makanan+fraud'].map(cmd => (
+                <button 
+                  key={cmd}
+                  onClick={() => copyCommand(cmd)}
+                  style={{
+                    padding: '6px 12px',
+                    background: copied === cmd ? '#4caf50' : '#f5f5f5',
+                    color: copied === cmd ? '#fff' : '#333',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontFamily: 'monospace',
+                    fontSize: '11px',
+                  }}
+                >
+                  {cmd} {copied === cmd && '✓'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Test Journeys */}
+      <div style={{ background: '#e8f5e9', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #a5d6a7' }}>
+        <h3 style={{ margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', color: '#2e7d32' }}>
+          <Route size={18} /> Test Journeys
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+          {JOURNEYS.map((j, idx) => (
+            <div key={idx} style={{ background: '#fff', padding: '14px', borderRadius: '6px', border: '1px solid #c8e6c9' }}>
+              <div style={{ fontWeight: 600, fontSize: '13px', color: '#2e7d32', marginBottom: '10px' }}>{idx + 1}. {j.title}</div>
+              <div style={{ fontSize: '12px', color: '#555', lineHeight: '1.7' }}>
+                {j.steps.map((step, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ color: '#81c784', fontWeight: 600, minWidth: '16px' }}>{i + 1}.</span>
+                    <span>{step}</span>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Scenario Commands */}
-      <div class="card" style="margin-bottom: 20px;">
-        <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;"><Clapperboard size={20} /> Skenario</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-          {SCENARIOS.map(s => (
-            <div 
-              key={s.key} 
-              style={cardStyle(copied === `/demo:${s.key}`)}
-              onClick={() => copyCommand(`/demo:${s.key}`)}
-            >
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <span style="font-size: 24px;">{s.icon}</span>
-                <strong>{s.name}</strong>
-              </div>
-              <div style="font-size: 12px; color: #666;">{s.desc}</div>
-              <div style="font-size: 11px; color: #2196f3; margin-top: 8px; font-family: monospace;">
-                /demo:{s.key} {copied === `/demo:${s.key}` ? '✓ Copied!' : ''}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Combination Examples */}
-      <div class="card" style="margin-bottom: 20px;">
-        <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;"><Shuffle size={20} /> Kombinasi (Persona + Skenario)</h2>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-          {['/demo:warung+krisis', '/demo:random+lulus', '/demo:makanan+fraud', '/demo:toko+baru'].map(cmd => (
-            <button 
-              key={cmd}
-              onClick={() => copyCommand(cmd)}
-              style={{
-                padding: '8px 16px',
-                background: copied === cmd ? '#4caf50' : '#f5f5f5',
-                color: copied === cmd ? '#fff' : '#333',
-                border: 'none',
-                borderRadius: '20px',
-                cursor: 'pointer',
-                fontFamily: 'monospace',
-                fontSize: '13px',
-              }}
-            >
-              {cmd} {copied === cmd ? '✓' : ''}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Reset Command */}
-      <div class="card" style="margin-bottom: 20px; background: #ffebee;">
-        <h2 style="margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;"><RotateCcw size={20} /> Reset</h2>
-        <p style="margin: 0 0 12px 0; color: #666;">Hapus semua data demo dari nomor Anda:</p>
-        <button 
-          onClick={() => copyCommand('/demo:reset')}
-          style={{
-            padding: '10px 20px',
-            background: copied === '/demo:reset' ? '#4caf50' : '#f44336',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontFamily: 'monospace',
-            fontSize: '14px',
-          }}
-        >
-          /demo:reset {copied === '/demo:reset' ? '✓ Copied!' : ''}
-        </button>
-      </div>
-
-      {/* Demo Users List */}
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;"><List size={20} /> Demo Users Created</h2>
-          <button onClick={fetchDemoUsers} style="padding: 8px 16px; cursor: pointer; border: 1px solid #ddd; border-radius: 4px; background: #fff;">
-            <RefreshCw size={16} /> Refresh
+      {/* Reset + Demo Users */}
+      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '20px' }}>
+        {/* Reset */}
+        <div style={{ background: '#ffebee', padding: '16px', borderRadius: '8px', border: '1px solid #ef9a9a', textAlign: 'center' }}>
+          <RotateCcw size={24} style={{ color: '#c62828', marginBottom: '8px' }} />
+          <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>Clear demo data</div>
+          <button 
+            onClick={() => copyCommand('/demo:reset')}
+            style={{
+              padding: '10px 16px',
+              background: copied === '/demo:reset' ? '#4caf50' : '#f44336',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontFamily: 'monospace',
+              fontSize: '13px',
+              width: '100%',
+            }}
+          >
+            /demo:reset {copied === '/demo:reset' && '✓'}
           </button>
         </div>
-        
-        {loading ? (
-          <p>Loading...</p>
-        ) : demoUsers.length === 0 ? (
-          <p style="color: #666; text-align: center; padding: 20px;">
-            Belum ada demo users. Kirim command via WhatsApp untuk membuat.
-          </p>
-        ) : (
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="background: #f5f5f5;">
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">User</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Persona</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Scenario</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Created</th>
-                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {demoUsers.map(user => (
-                <tr key={user.phone} style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 12px;">
-                    <div style="font-weight: 500;">{user.name}</div>
-                    <div style="font-size: 12px; color: #666;">{user.phone}</div>
-                  </td>
-                  <td style="padding: 12px;">
-                    <span style="padding: 4px 8px; background: #e3f2fd; border-radius: 4px; font-size: 12px;">
-                      {user.demo_persona || '-'}
-                    </span>
-                  </td>
-                  <td style="padding: 12px;">
-                    <span style="padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 12px;">
-                      {user.demo_scenario || '-'}
-                    </span>
-                  </td>
-                  <td style="padding: 12px; font-size: 12px; color: #666;">
-                    {new Date(user.created_at).toLocaleString('id-ID')}
-                  </td>
-                  <td style="padding: 12px; text-align: center;">
-                    <a href={`/user-profile/${user.phone}`} style="color: #2196f3; margin-right: 12px;">View</a>
-                    <button onClick={() => deleteUser(user.phone)} style="color: #f44336; background: none; border: none; cursor: pointer;">
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+
+        {/* Demo Users List */}
+        <div style={{ background: '#fff', padding: '16px', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+              <List size={16} /> Demo Users ({demoUsers.length})
+            </h3>
+            <button onClick={fetchDemoUsers} style={{ padding: '4px 10px', cursor: 'pointer', border: '1px solid #ddd', borderRadius: '4px', background: '#fff', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <RefreshCw size={12} /> Refresh
+            </button>
+          </div>
+          
+          {loading ? (
+            <div style={{ color: '#666', fontSize: '13px' }}>Loading...</div>
+          ) : demoUsers.length === 0 ? (
+            <div style={{ color: '#999', fontSize: '13px', fontStyle: 'italic' }}>No demo users yet. Send a command via WhatsApp.</div>
+          ) : (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {demoUsers.map(u => {
+                const isNew = newUserIds.has(u.phone);
+                return (
+                  <div 
+                    key={u.phone} 
+                    style={{ 
+                      padding: '8px 12px', 
+                      background: isNew ? '#e8f5e9' : '#f5f5f5', 
+                      borderRadius: '6px', 
+                      fontSize: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      border: isNew ? '2px solid #4caf50' : '1px solid #e0e0e0',
+                      animation: isNew ? 'blink 0.5s ease-in-out 3' : 'none',
+                    }}
+                  >
+                    {isNew && <span style={{ background: '#4caf50', color: '#fff', padding: '1px 5px', borderRadius: '3px', fontSize: '9px', fontWeight: 600 }}>NEW</span>}
+                    <span style={{ fontWeight: 500 }}>{u.name}</span>
+                    <span style={{ color: '#999' }}>{u.phone.slice(-4)}</span>
+                    <Trash2 
+                      size={14} 
+                      style={{ color: '#999', cursor: 'pointer', marginLeft: '4px' }} 
+                      onClick={() => deleteUser(u.phone)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
