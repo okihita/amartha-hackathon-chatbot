@@ -118,10 +118,10 @@
     --color-info-bg: rgba(59, 130, 246, 0.08);
     --color-info-text: #1E40AF;
 
-    /* Card Styles */
+    /* Card Styles - shadcn style */
     --card-bg: #FFFFFF;
-    --card-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.06);
-    --card-shadow-hover: 0 20px 40px rgba(15, 23, 42, 0.08);
+    --card-shadow: none;
+    --card-shadow-hover: none;
     
     /* Layout */
     --spacing-xs: 4px;
@@ -195,7 +195,7 @@ body {
     background: linear-gradient(135deg, var(--consulting-dark) 0%, var(--consulting-navy) 100%);
     padding: 16px 32px;
     margin: -24px -24px 28px -24px;
-    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15);
+    border-bottom: 1px solid var(--border-color);
     animation: slideDown 0.4s var(--ease-out-expo);
 }
 
@@ -305,7 +305,7 @@ body {
 }
 
 .card:hover {
-    box-shadow: var(--card-shadow-hover);
+    border-color: var(--border-color);
 }
 
 /* Staggered card animations - faster */
@@ -353,7 +353,7 @@ body {
 }
 
 .quick-action-card:hover {
-    box-shadow: var(--card-shadow-hover);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* ===================================
@@ -391,33 +391,30 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--amartha-eminence) 0%, var(--amartha-eminence-dark) 100%);
+    background: var(--amartha-eminence);
     color: white;
-    box-shadow: 0 4px 14px rgba(99, 41, 122, 0.25);
 }
 
 .btn-primary:hover {
-    box-shadow: 0 6px 20px rgba(99, 41, 122, 0.35);
+    background: var(--amartha-eminence-dark);
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    background: #10B981;
     color: white;
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
 }
 
 .btn-success:hover {
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+    background: #059669;
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    background: #EF4444;
     color: white;
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
 }
 
 .btn-danger:hover {
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+    background: #DC2626;
 }
 
 .btn-secondary {
@@ -434,12 +431,10 @@ body {
 .btn-gold {
     background: var(--amartha-goldenrod);
     color: var(--amartha-eminence-dark);
-    box-shadow: 0 2px 4px rgba(249, 207, 121, 0.3);
 }
 
 .btn-gold:hover {
     background: var(--amartha-goldenrod-dark);
-    box-shadow: 0 4px 12px rgba(249, 207, 121, 0.4);
 }
 
 button:disabled,
@@ -552,7 +547,7 @@ button[disabled],
     width: 100%;
     max-height: 85vh;
     overflow-y: auto;
-    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-color);
     animation: fadeIn 0.3s ease;
 }
 
@@ -749,12 +744,10 @@ tbody tr:hover {
     background: var(--card-bg);
     padding: 20px;
     border-radius: var(--radius-lg);
-    box-shadow: var(--card-shadow);
     text-align: center;
     border: 1px solid var(--border-color);
     transition: all var(--transition-fast);
     animation: slideInScale 0.3s var(--ease-out-expo) backwards;
-    will-change: transform;
 }
 
 .stat-card:nth-child(1) { animation-delay: 0.03s; }
@@ -764,8 +757,8 @@ tbody tr:hover {
 .stat-card:nth-child(5) { animation-delay: 0.15s; }
 
 .stat-card:hover {
-    box-shadow: var(--card-shadow-hover);
     border-color: var(--amartha-eminence);
+    background: var(--bg-tertiary);
 }
 
 .stat-value {
@@ -1536,8 +1529,7 @@ textarea:focus {
 }
 
 .business-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    border-color: var(--amartha-eminence);
 }
 
 .business-card .card-header {
@@ -2306,7 +2298,7 @@ textarea:focus {
     border-radius: 8px;
     max-width: 500px;
     width: 90%;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
 }
 
 .modal-content h3 {
@@ -2433,7 +2425,7 @@ textarea:focus {
 
 .metric-card:hover {
     border-color: var(--amartha-eminence);
-    box-shadow: 0 8px 24px rgba(99, 41, 122, 0.08);
+    background: var(--bg-tertiary);
 }
 
 .metric-label {
