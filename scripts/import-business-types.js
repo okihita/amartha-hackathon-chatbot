@@ -4,11 +4,15 @@
  * Import business types from Google Drive folder
  * Parses complex Google Docs with maturity levels, SWOT, and leveling guides
  * 
+ * Uses public Google Drive API (no authentication required for public folders)
+ * 
  * Expected folder structure:
  * - 1 doc: UMKM definition
  * - 1 doc: Summary of 25 business types
  * - 25 docs: Individual business type specifications
  */
+
+require('dotenv').config();
 
 const { google } = require('googleapis');
 const { Firestore } = require('@google-cloud/firestore');
@@ -17,20 +21,38 @@ const db = new Firestore({
   projectId: process.env.GCP_PROJECT_ID || 'stellar-zoo-478021-v8',
 });
 
-// Google Drive folder ID
-const FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID || '14D6sdUsJevp30p1xNGQVKh_1im_QAKVH';
+// Google Drive folder ID from environment
+const FOLDER_ID = process.env.BUSINESS_TYPES_FOLDER_ID || '14D6sdUsJevp30p1xNGQVKh_1im_QAKVH';
+
+// Google API Key for public access (optional - will try service account if not available)
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
 
 async function getGoogleDriveClient() {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: './service-account-key.json',
-    scopes: [
-      'https://www.googleapis.com/auth/drive.readonly',
-      'https://www.googleapis.com/auth/documents.readonly'
-    ],
-  });
-
-  const authClient = await auth.getClient();
-  return authClient;
+  // Try service account first (if available)
+  const fs = require('fs');
+  if (fs.existsSync('./service-account-key.json')) {
+    console.log('🔐 Using service account authentication\n');
+    const auth = new google.auth.GoogleAuth({
+      keyFile: './service-account-key.json',
+      scopes: [
+        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/documents.readonly'
+      ],
+    });
+    return await auth.getClient();
+  }
+  
+  // Fallback to API key for public folders
+  if (GOOGLE_API_KEY) {
+    console.log('🔓 Using API key for public folder access\n');
+    return GOOGLE_API_KEY;
+  }
+  
+  console.error('❌ Error: No authentication method available');
+  console.log('\nPlease either:');
+  console.log('  1. Add service-account-key.json to project root, OR');
+  console.log('  2. Set GOOGLE_API_KEY environment variable with Drive API enabled');
+  process.exit(1);
 }
 
 async function listDocsInFolder(drive, folderId) {
@@ -553,11 +575,11 @@ async function importBusinessTypes() {
   } catch (error) {
     console.error('❌ Error during import:', error.message);
     
-    if (error.message.includes('permission')) {
+    if (error.message.includes('permission') || error.message.includes('403')) {
       console.log('\n💡 Make sure:');
-      console.log('   1. The service account has access to the Google Drive folder');
-      console.log('   2. The folder is shared with the service account email');
-      console.log('   3. The service account has "Viewer" permission');
+      console.log('   1. The Google Drive folder is set to "Anyone with the link can view"');
+      console.log('   2. The GEMINI_API_KEY environment variable is set');
+      console.log('   3. The API key has Google Drive API enabled');
     }
     
     process.exit(1);

@@ -43,16 +43,60 @@ const amarthaKnowledge = [
 ];
 
 // Helper to retrieve relevant knowledge based on keywords
-function retrieveKnowledge(userText) {
+async function retrieveKnowledge(userText) {
   const lowerText = userText.toLowerCase();
   let foundKnowledge = [];
 
+  // Check static knowledge base
   amarthaKnowledge.forEach(item => {
     const match = item.keywords.some(keyword => lowerText.includes(keyword));
     if (match) {
       foundKnowledge.push(item.content);
     }
   });
+
+  // Check Firestore financial literacy modules
+  try {
+    const { Firestore } = require('@google-cloud/firestore');
+    const db = new Firestore({
+      projectId: process.env.GCP_PROJECT_ID || 'stellar-zoo-478021-v8',
+    });
+    
+    const snapshot = await db.collection('financial_literacy').get();
+    
+    snapshot.forEach(doc => {
+      const module = doc.data();
+      
+      // Check if keywords match
+      const keywordMatch = module.keywords?.some(keyword => 
+        lowerText.includes(keyword.toLowerCase())
+      );
+      
+      // Check if module name or description matches
+      const titleMatch = module.module_name?.toLowerCase().includes(lowerText) ||
+                        module.description?.toLowerCase().includes(lowerText);
+      
+      if (keywordMatch || titleMatch) {
+        // Build knowledge snippet from module
+        let snippet = `📚 ${module.module_name}:\n${module.description || ''}`;
+        
+        // Add key points from lessons
+        if (module.lessons?.length > 0) {
+          const keyPoints = module.lessons
+            .flatMap(lesson => lesson.key_points || [])
+            .slice(0, 3); // Limit to 3 key points
+          
+          if (keyPoints.length > 0) {
+            snippet += '\n\nPoin Penting:\n' + keyPoints.map(p => `• ${p}`).join('\n');
+          }
+        }
+        
+        foundKnowledge.push(snippet);
+      }
+    });
+  } catch (error) {
+    console.error('Error retrieving financial literacy knowledge:', error);
+  }
 
   if (foundKnowledge.length === 0) return ""; 
   return foundKnowledge.join("\n\n");

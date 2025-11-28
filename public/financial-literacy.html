@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Literacy Course - Amartha Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Financial Literacy specific styles */
+        .module-preview { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .module-preview h3 { font-size: 20px; color: #333; margin-bottom: 20px; }
+        .preview-section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0; }
+        .preview-section:last-child { border-bottom: none; }
+        .preview-section h4 { font-size: 14px; color: #667eea; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; }
+        .preview-content { font-size: 14px; color: #555; line-height: 1.6; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+        
+        .quiz-audit { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .quiz-audit-item { margin-bottom: 30px; padding: 20px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #667eea; }
+        .quiz-audit-question { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 15px; }
+        .quiz-audit-options { margin-left: 20px; }
+        .quiz-audit-option { padding: 8px 0; font-size: 14px; color: #555; }
+        .quiz-audit-option.correct { color: #28a745; font-weight: 600; }
+        .quiz-audit-option.correct::before { content: "✓ "; }
+        .quiz-audit-explanation { margin-top: 15px; padding: 15px; background: #e8f5e9; border-radius: 4px; font-size: 13px; color: #2e7d32; }
+        .view-toggle-btns { display: flex; gap: 10px; margin-bottom: 20px; }
+        
+        .quiz-container { max-width: 800px; margin: 0 auto; }
+        .quiz-header { text-align: center; margin-bottom: 30px; }
+        .quiz-header h2 { font-size: 24px; color: #333; margin-bottom: 10px; }
+        .quiz-question { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .question-number { font-size: 14px; color: #667eea; font-weight: 600; margin-bottom: 15px; }
+        .question-text { font-size: 18px; color: #333; margin-bottom: 25px; line-height: 1.6; }
+        .quiz-options { display: flex; flex-direction: column; gap: 12px; }
+        .quiz-option { padding: 16px 20px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 15px; background: white; }
+        .quiz-option:hover { border-color: #667eea; background: #f8f9ff; }
+        .quiz-option.selected { border-color: #667eea; background: #e3f2fd; }
+        .quiz-option.correct { border-color: #28a745; background: #d4edda; color: #155724; }
+        .quiz-option.incorrect { border-color: #dc3545; background: #f8d7da; color: #721c24; }
+        .quiz-option.disabled { cursor: not-allowed; opacity: 0.7; }
+        .explanation { background: #d4edda; border-left: 4px solid #28a745; padding: 20px; border-radius: 8px; margin-top: 20px; display: none; }
+        .explanation.show { display: block; }
+        .explanation-title { font-weight: 600; color: #155724; margin-bottom: 10px; }
+        .explanation-text { color: #155724; line-height: 1.6; }
+        .quiz-nav { display: flex; justify-content: space-between; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+
+        <!-- Weeks View -->
+        <div id="weeks-view">
+            <div class="card">
+                <h2>📚 Financial Literacy Course - 15 Weeks</h2>
+                <div class="stats-grid" id="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-weeks">0</div>
+                        <div class="stat-label">Total Weeks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-quizzes">0</div>
+                        <div class="stat-label">Total Quizzes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="completed-weeks">0</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="progress-percent">0%</div>
+                        <div class="stat-label">Progress</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="weeks-grid" id="weeks-grid">
+                    <div class="loading">Loading course content...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz View -->
+        <div id="quiz-view" style="display: none;">
+            <a href="#" class="back-btn" onclick="showWeeksView(); return false;">← Back to Course</a>
+            
+            <div class="quiz-container">
+                <div class="quiz-header">
+                    <h2 id="quiz-week-title">Week 1 Quiz</h2>
+                    <div class="quiz-progress">
+                        <div class="quiz-progress-bar" id="quiz-progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div style="font-size: 14px; color: #666; margin-top: 10px;">
+                        Question <span id="current-question">1</span> of <span id="total-questions">10</span>
+                    </div>
+                </div>
+
+                <div id="quiz-content"></div>
+
+                <div class="quiz-nav">
+                    <button class="btn btn-secondary" id="prev-btn" onclick="previousQuestion()">← Previous</button>
+                    <button class="btn btn-success" id="complete-btn" onclick="completeWeek()" style="display: none;">✓ Complete Week</button>
+                    <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()">Next →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allWeeks = [];
+        let currentWeek = null;
+        let currentQuestionIndex = 0;
+        let answers = {};
+        let completedWeeks = new Set();
+        let showingPreview = false;
+
+        async function loadCourse() {
+            try {
+                const response = await fetch('/api/financial-literacy');
+                const data = await response.json();
+                
+                // Sort by week number and filter valid weeks
+                allWeeks = data
+                    .filter(w => w.week_number && w.quizzes && w.quizzes.length > 0)
+                    .sort((a, b) => a.week_number - b.week_number);
+                
+                updateStats();
+                renderWeeks();
+            } catch (error) {
+                console.error('Error loading course:', error);
+                document.getElementById('weeks-grid').innerHTML = 
+                    '<div class="loading" style="color: #dc3545;">Failed to load course content</div>';
+            }
+        }
+        
+        function replaceSapaan(text) {
+            if (!text) return text;
+            return text.replace(/\[Sapaan\]/g, 'Anda');
+        }
+
+        function updateStats() {
+            const totalQuizzes = allWeeks.reduce((sum, w) => sum + (w.quizzes?.length || 0), 0);
+            const progress = allWeeks.length > 0 ? (completedWeeks.size / allWeeks.length) * 100 : 0;
+
+            document.getElementById('total-weeks').textContent = allWeeks.length;
+            document.getElementById('total-quizzes').textContent = totalQuizzes;
+            document.getElementById('completed-weeks').textContent = completedWeeks.size;
+            document.getElementById('progress-percent').textContent = Math.round(progress) + '%';
+        }
+
+        function renderWeeks() {
+            const grid = document.getElementById('weeks-grid');
+            
+            if (allWeeks.length === 0) {
+                grid.innerHTML = '<div class="loading">No course content available</div>';
+                return;
+            }
+
+            // Group by module number
+            const modules = {};
+            allWeeks.forEach(week => {
+                const modNum = week.module_number || 0;
+                if (!modules[modNum]) modules[modNum] = [];
+                modules[modNum].push(week);
+            });
+
+            let html = '';
+            Object.keys(modules).sort((a, b) => a - b).forEach(modNum => {
+                const weeks = modules[modNum];
+                if (modNum > 0) {
+                    html += `<div class="module-section">
+                        <h3>Module ${modNum}</h3>
+                    </div>`;
+                }
+                
+                weeks.forEach(week => {
+                    const isCompleted = completedWeeks.has(week.week_number);
+                    const quizCount = week.quizzes?.length || 0;
+                    const progress = isCompleted ? 100 : 0;
+                    
+                    // Remove "Modul X - Minggu Y:" prefix from title
+                    let title = replaceSapaan(week.module_name);
+                    title = title.replace(/^Modul\s+\d+\s*-\s*/i, '');
+                    title = title.replace(/^Minggu\s+\d+:\s*/i, '');
+
+                    html += `
+                        <div class="week-card ${isCompleted ? 'completed' : ''}" onclick="startWeek(${week.week_number})">
+                            <div class="week-header">
+                                <div class="week-number">Week ${week.week_number}</div>
+                                <div class="week-badge">${isCompleted ? '✅' : ''}</div>
+                            </div>
+                            <div class="week-title">${title}</div>
+                            <div class="week-quiz-count">${quizCount} questions</div>
+                            <div class="week-meta">M${week.module_number || '?'}</div>
+                            <div class="week-progress">
+                                <div class="week-progress-bar" style="width: ${progress}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            grid.innerHTML = html;
+        }
+
+        function startWeek(weekNumber) {
+            currentWeek = allWeeks.find(w => w.week_number === weekNumber);
+            if (!currentWeek || !currentWeek.quizzes || currentWeek.quizzes.length === 0) {
+                alert('No quizzes available for this week');
+                return;
+            }
+
+            currentQuestionIndex = 0;
+            answers = {};
+            showingPreview = true;
+            
+            document.getElementById('weeks-view').style.display = 'none';
+            document.getElementById('quiz-view').style.display = 'block';
+            document.getElementById('quiz-week-title').textContent = replaceSapaan(currentWeek.module_name);
+            document.getElementById('total-questions').textContent = currentWeek.quizzes.length;
+            
+            renderModulePreview();
+        }
+        
+        function renderModulePreview() {
+            const content = document.getElementById('quiz-content');
+            
+            // Clean title
+            let title = replaceSapaan(currentWeek.module_name);
+            title = title.replace(/^Modul\s+\d+\s*-\s*/i, '');
+            title = title.replace(/^Minggu\s+\d+:\s*/i, '');
+            
+            let html = '<div class="module-preview">';
+            html += `<h3>Week ${currentWeek.week_number}: ${title}</h3>`;
+            
+            // View toggle buttons
+            html += `<div class="view-toggle-btns">
+                <button class="btn btn-primary" onclick="startQuiz()">Start Quiz →</button>
+                <button class="btn btn-secondary" onclick="showAuditView()">View All Questions</button>
+            </div>`;
+            
+            if (currentWeek.description) {
+                html += `<div class="preview-section">
+                    <h4>Description</h4>
+                    <div class="preview-content">${replaceSapaan(currentWeek.description)}</div>
+                </div>`;
+            }
+            
+            if (currentWeek.materi_penyampaian && currentWeek.materi_penyampaian.length > 0) {
+                html += `<div class="preview-section">
+                    <h4>Materi Penyampaian</h4>
+                    <div class="preview-content">${replaceSapaan(currentWeek.materi_penyampaian.slice(0, 10).join('\n'))}</div>
+                </div>`;
+            }
+            
+            if (currentWeek.logika_feedback && currentWeek.logika_feedback.length > 0) {
+                html += `<div class="preview-section">
+                    <h4>Logika Feedback Bot</h4>
+                    <div class="preview-content">${replaceSapaan(currentWeek.logika_feedback.slice(0, 5).join('\n'))}</div>
+                </div>`;
+            }
+            
+            if (currentWeek.indikator_kelulusan && currentWeek.indikator_kelulusan.length > 0) {
+                html += `<div class="preview-section">
+                    <h4>Indikator Kelulusan</h4>
+                    <div class="preview-content">${replaceSapaan(currentWeek.indikator_kelulusan.slice(0, 5).join('\n'))}</div>
+                </div>`;
+            }
+            
+            html += '</div>';
+            content.innerHTML = html;
+            
+            // Update navigation
+            document.getElementById('prev-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('complete-btn').style.display = 'none';
+        }
+        
+        function showAuditView() {
+            const content = document.getElementById('quiz-content');
+            
+            let title = replaceSapaan(currentWeek.module_name);
+            title = title.replace(/^Modul\s+\d+\s*-\s*/i, '');
+            title = title.replace(/^Minggu\s+\d+:\s*/i, '');
+            
+            let html = '<div class="quiz-audit">';
+            html += `<h3>Week ${currentWeek.week_number}: ${title} - All Questions</h3>`;
+            html += `<div class="view-toggle-btns">
+                <button class="btn btn-secondary" onclick="renderModulePreview()">← Back to Preview</button>
+                <button class="btn btn-primary" onclick="startQuiz()">Start Quiz →</button>
+            </div>`;
+            
+            currentWeek.quizzes.forEach((quiz, idx) => {
+                const options = Array.isArray(quiz.options) ? quiz.options : [];
+                const validOptions = options.map(opt => {
+                    if (typeof opt === 'string') return replaceSapaan(opt);
+                    if (opt && typeof opt === 'object' && opt.text) return replaceSapaan(opt.text);
+                    return String(opt);
+                });
+                
+                html += `<div class="quiz-audit-item">
+                    <div class="quiz-audit-question">${idx + 1}. ${replaceSapaan(quiz.question)}</div>
+                    <div class="quiz-audit-options">
+                        ${validOptions.map((option, optIdx) => `
+                            <div class="quiz-audit-option ${optIdx === quiz.correct ? 'correct' : ''}">
+                                ${String.fromCharCode(65 + optIdx)}. ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="quiz-audit-explanation">
+                        <strong>Explanation:</strong> ${replaceSapaan(quiz.explanation)}
+                    </div>
+                </div>`;
+            });
+            
+            html += '</div>';
+            content.innerHTML = html;
+            
+            // Hide navigation
+            document.getElementById('prev-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('complete-btn').style.display = 'none';
+        }
+        
+        function startQuiz() {
+            showingPreview = false;
+            currentQuestionIndex = 0;
+            renderQuestion();
+        }
+
+        function showWeeksView() {
+            document.getElementById('weeks-view').style.display = 'block';
+            document.getElementById('quiz-view').style.display = 'none';
+            updateStats();
+            renderWeeks();
+        }
+
+        function renderQuestion() {
+            const quiz = currentWeek.quizzes[currentQuestionIndex];
+            const isAnswered = answers[currentQuestionIndex] !== undefined;
+            
+            document.getElementById('current-question').textContent = currentQuestionIndex + 1;
+            document.getElementById('quiz-progress-bar').style.width = 
+                ((currentQuestionIndex + 1) / currentWeek.quizzes.length * 100) + '%';
+
+            const content = document.getElementById('quiz-content');
+            
+            // Ensure options is an array of strings
+            const options = Array.isArray(quiz.options) ? quiz.options : [];
+            const validOptions = options.map(opt => {
+                if (typeof opt === 'string') return replaceSapaan(opt);
+                if (opt && typeof opt === 'object' && opt.text) return replaceSapaan(opt.text);
+                return String(opt);
+            });
+            
+            content.innerHTML = `
+                <div class="quiz-question">
+                    <div class="question-number">Question ${currentQuestionIndex + 1}</div>
+                    <div class="question-text">${replaceSapaan(quiz.question)}</div>
+                    <div class="quiz-options">
+                        ${validOptions.map((option, idx) => {
+                            let className = 'quiz-option';
+                            if (isAnswered) {
+                                className += ' disabled';
+                                if (idx === answers[currentQuestionIndex]) {
+                                    className += idx === quiz.correct ? ' correct' : ' incorrect';
+                                }
+                                if (idx === quiz.correct) {
+                                    className += ' correct';
+                                }
+                            }
+                            return `
+                                <div class="${className}" onclick="selectAnswer(${idx})">
+                                    ${String.fromCharCode(65 + idx)}. ${option}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div class="explanation ${isAnswered ? 'show' : ''}">
+                        <div class="explanation-title">
+                            ${isAnswered && answers[currentQuestionIndex] === quiz.correct ? '✓ Correct!' : '✗ Incorrect'}
+                        </div>
+                        <div class="explanation-text">${replaceSapaan(quiz.explanation)}</div>
+                    </div>
+                </div>
+            `;
+
+            // Update navigation buttons
+            document.getElementById('prev-btn').style.display = 'block';
+            document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+            document.getElementById('next-btn').textContent = 'Next →';
+            document.getElementById('next-btn').style.display = 
+                currentQuestionIndex === currentWeek.quizzes.length - 1 ? 'none' : 'block';
+            document.getElementById('complete-btn').style.display = 
+                currentQuestionIndex === currentWeek.quizzes.length - 1 ? 'block' : 'none';
+        }
+
+        function selectAnswer(optionIndex) {
+            if (answers[currentQuestionIndex] !== undefined) return; // Already answered
+            
+            answers[currentQuestionIndex] = optionIndex;
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            if (showingPreview) {
+                startQuiz();
+                return;
+            }
+            
+            if (currentQuestionIndex < currentWeek.quizzes.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion();
+            }
+        }
+
+        function completeWeek() {
+            const totalQuestions = currentWeek.quizzes.length;
+            const answeredQuestions = Object.keys(answers).length;
+            
+            if (answeredQuestions < totalQuestions) {
+                alert(`Please answer all questions (${answeredQuestions}/${totalQuestions} answered)`);
+                return;
+            }
+
+            completedWeeks.add(currentWeek.week_number);
+            alert(`Week ${currentWeek.week_number} completed! 🎉`);
+            showWeeksView();
+        }
+
+        // Load course on page load
+        loadCourse();
+    </script>
+    
+    <!-- Load layout and initialize -->
+    <script src="/layout.js"></script>
+    <script>
+        document.getElementById('header-placeholder').innerHTML = renderHeader('financial-literacy');
+    </script>
+</body>
+</html>

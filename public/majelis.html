@@ -4,76 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Majelis - Amartha Dashboard</title>
-    <script src="/layout.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 24px; color: #333; margin-bottom: 10px; }
-        .nav { display: flex; gap: 15px; margin-top: 10px; }
-        .nav a { padding: 8px 16px; background: #f0f0f0; border-radius: 4px; text-decoration: none; color: #333; font-weight: 500; transition: all 0.2s; }
-        .nav a:hover { background: #e0e0e0; }
-        .nav a.active { background: #007bff; color: white; }
-        .admin-badge { background: #f0f0f0; padding: 8px 16px; border-radius: 4px; font-size: 14px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .card h2 { font-size: 18px; margin-bottom: 20px; color: #333; }
-        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
-        .btn-primary { background: #007bff; color: white; }
-        .btn-primary:hover { background: #0056b3; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-success:hover { background: #218838; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-danger:hover { background: #c82333; }
-        .btn-secondary { background: #6c757d; color: white; }
-        .btn-secondary:hover { background: #5a6268; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .majelis-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .majelis-card { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; }
-        .majelis-card h3 { font-size: 16px; margin-bottom: 10px; color: #333; font-weight: 600; }
-        .majelis-card p { font-size: 14px; color: #666; margin-bottom: 5px; }
-        .majelis-card .info-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; color: #666; }
-        .majelis-card .member-count { font-size: 12px; color: #28a745; font-weight: 600; margin: 10px 0 5px 0; }
-        .majelis-card .member-list { margin: 5px 0 10px 0; max-height: 150px; overflow-y: auto; }
-        .majelis-card .member-item-inline { font-size: 12px; color: #555; padding: 4px 0; border-bottom: 1px solid #eee; }
-        .majelis-card .member-item-inline:last-child { border-bottom: none; }
-        .majelis-card .member-name { font-weight: 500; color: #333; }
-        .majelis-card .member-details { color: #999; font-size: 11px; }
-        .majelis-card .no-members { font-size: 12px; color: #999; font-style: italic; }
-        .majelis-card .actions { margin-top: 15px; display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid #e0e0e0; padding-top: 10px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-        .modal.active { display: flex; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-        .modal-content h2 { margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        .form-group textarea { min-height: 80px; }
-        .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-        .member-list { max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; }
-        .member-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
-        .member-item:last-child { border-bottom: none; }
-        .loading { text-align: center; padding: 40px; color: #666; }
-        .suggestion-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
-        .suggestion-item:hover { background: #f0f0f0; }
-        .suggestion-item:last-child { border-bottom: none; }
-        .suggestion-item .name { font-weight: 500; color: #333; }
-        .suggestion-item .details { font-size: 12px; color: #666; margin-top: 2px; }
-    </style>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div>
-                <h1>🏦 Amartha Admin Dashboard</h1>
-                <div class="nav">
-                    <a href="/">👥 Users</a>
-                    <a href="/majelis" class="active">📅 Majelis</a>
-                    <a href="/business-types">🏪 Business Types</a>
-                </div>
-            </div>
-            <div class="admin-badge">Admin: <strong>Petugas Lapangan</strong></div>
-        </div>
+        <div id="header-placeholder"></div>
         
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -430,6 +365,12 @@
         // Load data on page load
         fetchUsers();
         fetchMajelis();
+    </script>
+    
+    <!-- Load layout and initialize -->
+    <script src="/layout.js"></script>
+    <script>
+        document.getElementById('header-placeholder').innerHTML = renderHeader('majelis');
     </script>
 </body>
 </html>

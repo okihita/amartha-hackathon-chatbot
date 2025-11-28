@@ -41,6 +41,15 @@ app.get('/business-types', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/business-types.html'));
 });
 
+// --- SERVE FINANCIAL LITERACY PAGE (before static middleware) ---
+app.get('/financial-literacy', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(__dirname, 'public/financial-literacy.html'));
+});
+
 // --- HEALTH CHECK ---
 app.get('/health', (req, res) => res.status(200).send('🤖 Akademi-AI (Modular) is Online!'));
 
@@ -269,6 +278,30 @@ app.get('/api/business-types', async (req, res) => {
   } catch (error) {
     console.error('Error fetching business types:', error);
     res.status(500).json({ error: 'Failed to fetch business types' });
+  }
+});
+
+// Get all Financial Literacy modules (RAG)
+app.get('/api/financial-literacy', async (req, res) => {
+  try {
+    const { Firestore } = require('@google-cloud/firestore');
+    const db = new Firestore({
+      projectId: process.env.GCP_PROJECT_ID || 'stellar-zoo-478021-v8',
+    });
+    
+    const snapshot = await db.collection('financial_literacy').get();
+    const modules = [];
+    snapshot.forEach(doc => {
+      modules.push({ id: doc.id, ...doc.data() });
+    });
+    
+    // Sort by module number if available
+    modules.sort((a, b) => (a.module_number || 999) - (b.module_number || 999));
+    
+    res.json(modules);
+  } catch (error) {
+    console.error('Error fetching financial literacy:', error);
+    res.status(500).json({ error: 'Failed to fetch financial literacy' });
   }
 });
 
