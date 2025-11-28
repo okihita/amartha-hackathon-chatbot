@@ -72,11 +72,15 @@ app.post('/webhook', async (req, res) => {
         // Send Reply
         await sendMessage(senderPhone, aiReply);
       } else if (message.type === 'image') {
-        console.log(`📷 Image received from ${senderPhone} (not supported)`);
-        await sendMessage(
-          senderPhone, 
-          "Maaf Bu, saat ini saya belum bisa memproses gambar. Silakan kirim pesan teks untuk pertanyaan Ibu. 😊"
-        );
+        console.log(`📷 Image received from ${senderPhone}`);
+        const imageId = message.image.id;
+        const caption = message.image.caption || '';
+        
+        // Process image with AI
+        const { analyzeImage } = require('./src/imageAnalyzer');
+        const aiReply = await analyzeImage(imageId, caption, senderPhone);
+        
+        await sendMessage(senderPhone, aiReply);
       } else if (message.type === 'audio' || message.type === 'voice') {
         console.log(`🎤 Audio received from ${senderPhone} (not supported)`);
         await sendMessage(
