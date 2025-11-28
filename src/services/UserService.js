@@ -79,7 +79,8 @@ class UserService {
       throw new Error('User not found');
     }
     return UserRepository.update(phoneNumber, { 
-      status: isVerified ? 'active' : 'pending'
+      status: isVerified ? 'active' : 'pending',
+      is_verified: isVerified
     });
   }
 
@@ -119,34 +120,28 @@ class UserService {
   }
 
   async createMockUsers() {
-    let count = 0;
-    for (const user of MOCK_USERS) {
+    const createUser = async (user) => {
       const existing = await UserRepository.findByPhone(user.phone);
-      if (!existing) {
-        await UserRepository.create(user.phone, user);
-        
-        // Add mock BI data for each user
-        for (const biData of MOCK_BI_DATA) {
-          // Add image URL for building and inventory types
-          let imageUrl = null;
-          if (biData.type === 'building') {
-            imageUrl = `https://picsum.photos/seed/building-${user.phone}/800/600`;
-          } else if (biData.type === 'inventory') {
-            imageUrl = `https://picsum.photos/seed/inventory-${user.phone}/800/600`;
-          }
-          
-          await BusinessIntelligenceRepository.save(
-            user.phone,
-            biData,
-            imageUrl,
-            `Mock ${biData.type} data for ${user.name}`
-          );
+      if (existing) return 0;
+      
+      await UserRepository.create(user.phone, { ...user, is_mock: true });
+      
+      // Create all BI data in parallel
+      const biPromises = MOCK_BI_DATA.map(biData => {
+        let imageUrl = null;
+        if (biData.type === 'building') {
+          imageUrl = `https://picsum.photos/seed/building-${user.phone}/800/600`;
+        } else if (biData.type === 'inventory') {
+          imageUrl = `https://picsum.photos/seed/inventory-${user.phone}/800/600`;
         }
-        
-        count++;
-      }
-    }
-    return count;
+        return BusinessIntelligenceRepository.save(user.phone, biData, imageUrl, `Mock ${biData.type} data for ${user.name}`);
+      });
+      await Promise.all(biPromises);
+      return 1;
+    };
+    
+    const results = await Promise.all(MOCK_USERS.map(createUser));
+    return results.reduce((a, b) => a + b, 0);
   }
 
   async createMockLoanData(phoneNumber) {

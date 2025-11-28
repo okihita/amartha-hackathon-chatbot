@@ -5,7 +5,7 @@ const QuizSessionRepository = require('../repositories/QuizSessionRepository');
 class QuizService {
   constructor() {
     this.QUESTIONS_PER_QUIZ = 4;
-    this.PASSING_SCORE = 70;
+    this.PASSING_SCORE = 100;
   }
 
   // Start or resume quiz for user

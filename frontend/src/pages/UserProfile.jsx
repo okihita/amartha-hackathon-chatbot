@@ -258,64 +258,72 @@ export default function UserProfile({ phone }) {
                     <span style="font-size: 12px; color: var(--color-neutral);">{new Date(bi.analyzed_at).toLocaleDateString('id-ID')}</span>
                   </div>
                   
-                  {/* Ledger Details */}
-                  {bi.type === 'ledger' && bi.data && (
-                    <div style="background: var(--color-success-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
-                      <p style="margin: 4px 0;"><strong>Record Type:</strong> {bi.data.record_type}</p>
-                      <p style="margin: 4px 0;"><strong>Daily Income:</strong> Rp {bi.data.daily_income_estimate?.toLocaleString('id-ID')}</p>
-                      <p style="margin: 4px 0;"><strong>Daily Expense:</strong> Rp {bi.data.daily_expense_estimate?.toLocaleString('id-ID')}</p>
-                      <p style="margin: 4px 0;"><strong>Daily Profit:</strong> Rp {bi.data.daily_profit_estimate?.toLocaleString('id-ID')}</p>
-                      <p style="margin: 4px 0;"><strong>Monthly Cashflow:</strong> Rp {bi.data.monthly_cashflow_estimate?.toLocaleString('id-ID')}</p>
-                      {bi.data.record_quality && <p style="margin: 4px 0;"><strong>Quality:</strong> {bi.data.record_quality}</p>}
-                    </div>
-                  )}
-                  
-                  {/* Inventory Details */}
-                  {bi.type === 'inventory' && bi.data && (
-                    <div style="background: var(--color-warning-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
-                      <p style="margin: 4px 0;"><strong>Total Items:</strong> {bi.data.total_items_count}</p>
-                      <p style="margin: 4px 0;"><strong>Inventory Value:</strong> Rp {bi.data.inventory_value_estimate?.toLocaleString('id-ID')}</p>
-                      <p style="margin: 4px 0;"><strong>Stock Level:</strong> {bi.data.stock_level}</p>
-                      {bi.data.turnover_indicator && <p style="margin: 4px 0;"><strong>Turnover:</strong> {bi.data.turnover_indicator}</p>}
-                      {bi.data.items && bi.data.items.length > 0 && (
-                        <div style="margin-top: 8px;">
-                          <strong>Sample Items:</strong>
-                          <ul style="margin: 4px 0; padding-left: 20px;">
-                            {bi.data.items.slice(0, 3).map((item, idx) => (
-                              <li key={idx}>{item.name} - {item.quantity_estimate} {item.unit}</li>
-                            ))}
-                          </ul>
+                  <div style="display: flex; gap: 16px; align-items: flex-start;">
+                    {/* Left: Image + Caption */}
+                    {bi.source?.image_url && (
+                      <div style="flex-shrink: 0;">
+                        <img src={bi.source.image_url} alt="BI" style="max-width: 200px; height: auto; object-fit: contain; border-radius: 8px;" />
+                        {bi.source?.caption && (
+                          <p style="font-size: 12px; color: var(--color-neutral); font-style: italic; margin: 8px 0 0 0; max-width: 200px;">"{bi.source.caption}"</p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Right: Data Details */}
+                    <div style="flex: 1;">
+                      {bi.type === 'ledger' && bi.data && (
+                        <div style="background: var(--color-success-bg); padding: 12px; border-radius: 8px;">
+                          <p style="margin: 4px 0;"><strong>Record Type:</strong> {bi.data.record_type}</p>
+                          <p style="margin: 4px 0;"><strong>Daily Income:</strong> Rp {bi.data.daily_income_estimate?.toLocaleString('id-ID')}</p>
+                          <p style="margin: 4px 0;"><strong>Daily Expense:</strong> Rp {bi.data.daily_expense_estimate?.toLocaleString('id-ID')}</p>
+                          <p style="margin: 4px 0;"><strong>Daily Profit:</strong> Rp {bi.data.daily_profit_estimate?.toLocaleString('id-ID')}</p>
+                          <p style="margin: 4px 0;"><strong>Monthly Cashflow:</strong> Rp {bi.data.monthly_cashflow_estimate?.toLocaleString('id-ID')}</p>
+                          {bi.data.record_quality && <p style="margin: 4px 0;"><strong>Quality:</strong> {bi.data.record_quality}</p>}
                         </div>
                       )}
+                      
+                      {bi.type === 'inventory' && bi.data && (
+                        <div style="background: var(--color-warning-bg); padding: 12px; border-radius: 8px;">
+                          <p style="margin: 4px 0;"><strong>Total Items:</strong> {bi.data.total_items_count}</p>
+                          <p style="margin: 4px 0;"><strong>Inventory Value:</strong> Rp {bi.data.inventory_value_estimate?.toLocaleString('id-ID')}</p>
+                          <p style="margin: 4px 0;"><strong>Stock Level:</strong> {bi.data.stock_level}</p>
+                          {bi.data.turnover_indicator && <p style="margin: 4px 0;"><strong>Turnover:</strong> {bi.data.turnover_indicator}</p>}
+                          {bi.data.items && bi.data.items.length > 0 && (
+                            <div style="margin-top: 8px;">
+                              <strong>Sample Items:</strong>
+                              <ul style="margin: 4px 0; padding-left: 20px;">
+                                {bi.data.items.slice(0, 3).map((item, idx) => (
+                                  <li key={idx}>{item.name} - {item.quantity_estimate} {item.unit}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {bi.type === 'building' && bi.data && (
+                        <div style="background: var(--color-primary-bg); padding: 12px; border-radius: 8px;">
+                          <p style="margin: 4px 0;"><strong>Type:</strong> {bi.data.building_type}</p>
+                          <p style="margin: 4px 0;"><strong>Condition:</strong> {bi.data.condition}</p>
+                          {bi.data.size_estimate && <p style="margin: 4px 0;"><strong>Size:</strong> {bi.data.size_estimate}</p>}
+                          <p style="margin: 4px 0;"><strong>Location:</strong> {bi.data.location_type}</p>
+                          {bi.data.visibility && <p style="margin: 4px 0;"><strong>Visibility:</strong> {bi.data.visibility}</p>}
+                          <p style="margin: 4px 0;"><strong>Estimated Value:</strong> Rp {bi.data.estimated_value?.toLocaleString('id-ID')}</p>
+                        </div>
+                      )}
+                      
+                      {bi.type === 'transaction' && bi.data && (
+                        <div style="background: var(--color-neutral-bg); padding: 12px; border-radius: 8px;">
+                          <p style="margin: 4px 0;"><strong>Transaction Count:</strong> {bi.data.transaction_count}</p>
+                          <p style="margin: 4px 0;"><strong>Total Amount:</strong> Rp {bi.data.total_amount?.toLocaleString('id-ID')}</p>
+                        </div>
+                      )}
+                      
+                      {!bi.source?.image_url && bi.source?.caption && (
+                        <p style="font-size: 14px; color: var(--color-neutral); font-style: italic; margin: 8px 0 0 0;">"{bi.source.caption}"</p>
+                      )}
                     </div>
-                  )}
-                  
-                  {/* Building Details */}
-                  {bi.type === 'building' && bi.data && (
-                    <div style="background: var(--color-primary-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
-                      <p style="margin: 4px 0;"><strong>Type:</strong> {bi.data.building_type}</p>
-                      <p style="margin: 4px 0;"><strong>Condition:</strong> {bi.data.condition}</p>
-                      {bi.data.size_estimate && <p style="margin: 4px 0;"><strong>Size:</strong> {bi.data.size_estimate}</p>}
-                      <p style="margin: 4px 0;"><strong>Location:</strong> {bi.data.location_type}</p>
-                      {bi.data.visibility && <p style="margin: 4px 0;"><strong>Visibility:</strong> {bi.data.visibility}</p>}
-                      <p style="margin: 4px 0;"><strong>Estimated Value:</strong> Rp {bi.data.estimated_value?.toLocaleString('id-ID')}</p>
-                    </div>
-                  )}
-                  
-                  {/* Transaction Details */}
-                  {bi.type === 'transaction' && bi.data && (
-                    <div style="background: var(--color-neutral-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
-                      <p style="margin: 4px 0;"><strong>Transaction Count:</strong> {bi.data.transaction_count}</p>
-                      <p style="margin: 4px 0;"><strong>Total Amount:</strong> Rp {bi.data.total_amount?.toLocaleString('id-ID')}</p>
-                    </div>
-                  )}
-                  
-                  {bi.source?.image_url && (
-                    <img src={bi.source.image_url} alt="BI" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;" />
-                  )}
-                  {bi.source?.caption && (
-                    <p style="font-size: 14px; color: var(--color-neutral); font-style: italic; margin: 8px 0 0 0;">"{bi.source.caption}"</p>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>

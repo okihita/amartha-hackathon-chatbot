@@ -6,7 +6,7 @@ class User {
       name: data.name,
       majelis_id: null,
       status: 'pending',
-      is_mock: false,
+      is_mock: data.is_mock || false,
       created_at: now,
       updated_at: now
     };

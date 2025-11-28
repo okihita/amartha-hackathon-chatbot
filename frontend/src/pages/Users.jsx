@@ -154,20 +154,28 @@ export default function Users() {
             <UsersIcon size={24} /> User Management ({users.length})
           </h2>
           <div style="display: flex; gap: 0.5rem;">
-            <button 
-              class="btn btn-primary" 
-              onClick={handlePopulateMockData}
-              disabled={processing === 'mock'}
-            >
-              <Dice5 size={16} /> Populate Mock Data
-            </button>
-            <button 
-              class="btn btn-danger" 
-              onClick={handleDeleteAllMock}
-              disabled={processing === 'delete-all'}
-            >
-              <Trash size={16} /> Delete All Mock
-            </button>
+            {(() => {
+              const mockCount = users.filter(u => u.is_mock).length;
+              return (
+                <>
+                  <button 
+                    class="btn btn-primary" 
+                    onClick={handlePopulateMockData}
+                    disabled={processing === 'mock' || mockCount > 0}
+                    title={mockCount > 0 ? 'Mock users already exist' : ''}
+                  >
+                    <Dice5 size={16} /> Populate Mock Data
+                  </button>
+                  <button 
+                    class="btn btn-danger" 
+                    onClick={handleDeleteAllMock}
+                    disabled={processing === 'delete-all' || mockCount === 0}
+                  >
+                    <Trash size={16} /> Delete All Mock {mockCount > 0 && `(${mockCount})`}
+                  </button>
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -202,8 +210,8 @@ export default function Users() {
                 <tr key={user.phone}>
                   <td><strong><a href={`/user-profile/${user.phone}`} class="user-link">{user.name}</a></strong></td>
                   <td>{user.phone}</td>
-                  <td>{user.business_type}</td>
-                  <td>{user.location}</td>
+                  <td>{user.business?.category || user.business_type || '-'}</td>
+                  <td>{user.business?.location || user.location || '-'}</td>
                   <td>
                     <span class={`status ${userMajelis ? 'verified' : 'unassigned'}`}>
                       {userMajelis ? <><UsersIcon size={14} style="display: inline; vertical-align: middle; margin-right: 4px;" />{userMajelis.name}</> : '—'}
