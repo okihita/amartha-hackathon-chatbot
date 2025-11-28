@@ -1,8 +1,10 @@
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import { Copy, Trash2, RefreshCw, Gamepad2, Smartphone, Users, Clapperboard, Shuffle, RotateCcw, List, CheckCircle, Route } from 'lucide-preact';
+import { Copy, Trash2, RefreshCw, Gamepad2, Smartphone, Users, Clapperboard, Shuffle, RotateCcw, List, Route, Bot } from 'lucide-preact';
 
 const API_BASE = '/api';
+const WA_NUMBER = '6281991262988';
+const WA_LINK = `https://wa.me/${WA_NUMBER}`;
 
 const PERSONAS = [
   { key: 'warung', name: 'Warung Sembako', icon: '🏪', desc: 'Maturity 3, 40% quiz' },
@@ -25,32 +27,46 @@ const SCENARIOS = [
 
 const JOURNEYS = [
   { title: 'New User Registration', steps: [
-    'Send /demo:reset to clear existing data',
-    'Send "Halo" → Bot asks for name, business, location',
+    'Send /demo:reset to clear data',
+    'Send "Halo" → Bot asks for info',
     'Reply: "Saya Dewi, jualan kue di Bandung"',
-    'Check Dashboard → User appears as "Pending"',
-    'Click Verify → Status changes to "Active"'
+    'Dashboard → User appears "Pending"',
+    'Click Verify → Status "Active"'
   ]},
-  { title: 'Quiz Flow', steps: [
-    'Send /demo:warung to get a persona',
-    'Send "kuis" → Bot sends intro + first question',
-    'Answer 4 questions via WhatsApp list',
-    'See score result after completion',
-    'Send "nilai" → See overall progress'
+  { title: 'Quiz Flow (Full)', steps: [
+    'Send /demo:warung (40% progress)',
+    'Send "kuis" → Get next incomplete week',
+    'Answer 4 questions via list',
+    'Score 100% to pass week',
+    'Send "nilai" → See progress'
+  ]},
+  { title: 'Quiz Flow (Single Week)', steps: [
+    'Send /demo:baru (0% progress)',
+    'Send "kuis" → Start Week 1',
+    'Answer all 4 correctly → Pass',
+    'Send "kuis" again → Week 2 starts',
+    'Repeat until Week 15 = Graduate'
   ]},
   { title: 'Image Analysis (BI)', steps: [
-    'Send /demo:makanan to get food business',
-    'Send photo of receipt/inventory with caption',
-    'Bot analyzes and extracts data',
-    'Check Dashboard → User Profile → BI section',
-    'New card appears with green "NEW" badge'
+    'Send /demo:makanan',
+    'Send photo with caption',
+    'Bot extracts data (type, value)',
+    'Dashboard → User Profile → BI',
+    'New card with "NEW" badge'
   ]},
-  { title: 'Profile & Majelis', steps: [
-    'Send /demo:sukses to get successful member',
-    'Send "cek data" → See full profile + loan',
-    'Send "jadwal" → See majelis schedule',
-    'Dashboard → Majelis → Click card',
-    'See members and attendance tracking'
+  { title: 'Profile & Loan Info', steps: [
+    'Send /demo:sukses',
+    'Send "cek data" → Full profile',
+    'See loan limit, balance, payments',
+    'Send "jadwal" → Majelis schedule',
+    'Dashboard shows same data'
+  ]},
+  { title: 'Majelis & Attendance', steps: [
+    'Send /demo:sukses (has majelis)',
+    'Dashboard → Majelis page',
+    'Click majelis card → Detail',
+    'See member list + attendance',
+    'Add attendance record'
   ]},
 ];
 
@@ -134,10 +150,18 @@ export default function Demo() {
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px', borderBottom: '2px solid #e0e0e0', paddingBottom: '16px' }}>
-        <h1 style={{ margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '24px' }}>
+        <h1 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '24px' }}>
           <Gamepad2 size={28} /> Demo Mode
         </h1>
-        <p style={{ color: '#666', margin: 0, fontSize: '14px' }}>Commands untuk hackathon judges. Kirim via WhatsApp ke chatbot.</p>
+        <a 
+          href={WA_LINK} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#25D366', color: '#fff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600, fontSize: '14px', marginBottom: '12px' }}
+        >
+          <Bot size={18} /> Chatbot: +62 819-9126-2988
+        </a>
+        <p style={{ color: '#666', margin: 0, fontSize: '14px' }}>Copy commands below and send to the chatbot via WhatsApp.</p>
       </div>
 
       {/* Quick Start */}
@@ -268,6 +292,7 @@ export default function Demo() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {demoUsers.map(u => {
                 const isNew = newUserIds.has(u.phone);
+                const formattedPhone = u.phone.replace(/^62/, '+62 ').replace(/(\d{3})(\d{4})(\d+)/, '$1-$2-$3');
                 return (
                   <div 
                     key={u.phone} 
@@ -285,7 +310,7 @@ export default function Demo() {
                   >
                     {isNew && <span style={{ background: '#4caf50', color: '#fff', padding: '1px 5px', borderRadius: '3px', fontSize: '9px', fontWeight: 600 }}>NEW</span>}
                     <span style={{ fontWeight: 500 }}>{u.name}</span>
-                    <span style={{ color: '#999' }}>{u.phone.slice(-4)}</span>
+                    <span style={{ color: '#666', fontFamily: 'monospace', fontSize: '11px' }}>{formattedPhone}</span>
                     <Trash2 
                       size={14} 
                       style={{ color: '#999', cursor: 'pointer', marginLeft: '4px' }} 

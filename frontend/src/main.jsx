@@ -11,6 +11,7 @@ import FinancialLiteracy from './pages/FinancialLiteracy';
 import UserProfile from './pages/UserProfile';
 import HowItWorks from './pages/HowItWorks';
 import Demo from './pages/Demo';
+import Secret from './pages/Secret';
 
 // Layout
 import Header from './components/Header';
@@ -27,6 +28,7 @@ function App() {
         <FinancialLiteracy path="/financial-literacy" />
         <HowItWorks path="/how-it-works" />
         <Demo path="/demo" />
+        <Secret path="/secret" />
         <UserProfile path="/user-profile/:phone" />
       </Router>
     </div>
