@@ -25,15 +25,11 @@ class User {
 
   static createBusiness(data) {
     const now = new Date().toISOString();
-    const maturityLevel = data.maturity_level || 1;
-    if (maturityLevel < 1 || maturityLevel > 5) {
-      throw new Error('maturity_level must be between 1 and 5');
-    }
     return {
       name: data.business_name || null,
       location: data.business_location || data.location || null,
-      category: data.category || data.business_type || null,
-      maturity_level: maturityLevel,
+      category: data.business_category || data.category || data.business_type || null,
+      maturity_level: 1, // Always start at level 1
       created_at: now,
       updated_at: now
     };

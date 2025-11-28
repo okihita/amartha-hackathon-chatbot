@@ -9,42 +9,49 @@ const DEMO_MAJELIS_ID = 'demo-majelis-sejahtera';
 const PERSONAS = {
   warung: {
     name: 'Siti Rahayu',
+    gender: 'female',
     business: { name: 'Warung Sembako Berkah', location: 'Cibinong, Bogor', category: 'Warung Sembako', maturity_level: 3 },
     loan: { limit: 5000000, used: 2000000, remaining: 3000000, next_payment_amount: 450000 },
     quiz_weeks: 6, // 40%
   },
   toko: {
     name: 'Dewi Lestari',
+    gender: 'female',
     business: { name: 'Toko Kelontong Makmur', location: 'Parung, Bogor', category: 'Toko Kelontong', maturity_level: 2 },
     loan: { limit: 3000000, used: 1500000, remaining: 1500000, next_payment_amount: 300000 },
     quiz_weeks: 3, // 20%
   },
   makanan: {
     name: 'Ratna Sari',
+    gender: 'female',
     business: { name: 'Dapur Bu Ratna', location: 'Depok', category: 'Usaha Makanan', maturity_level: 4 },
     loan: { limit: 8000000, used: 3000000, remaining: 5000000, next_payment_amount: 600000 },
     quiz_weeks: 9, // 60%
   },
   jahit: {
     name: 'Aminah',
+    gender: 'female',
     business: { name: 'Jahit Rapi Aminah', location: 'Cileungsi, Bogor', category: 'Jasa Jahit', maturity_level: 2 },
     loan: { limit: 2000000, used: 1000000, remaining: 1000000, next_payment_amount: 200000 },
     quiz_weeks: 2, // 13%
   },
   pertanian: {
-    name: 'Sumiati',
-    business: { name: 'Tani Subur Sumiati', location: 'Ciampea, Bogor', category: 'Pertanian', maturity_level: 3 },
+    name: 'Ahmad Sugianto',
+    gender: 'male',
+    business: { name: 'Tani Subur Sugianto', location: 'Ciampea, Bogor', category: 'Pertanian', maturity_level: 3 },
     loan: { limit: 6000000, used: 2500000, remaining: 3500000, next_payment_amount: 500000 },
     quiz_weeks: 8, // 53%
   },
   salon: {
     name: 'Yuni Kartika',
+    gender: 'female',
     business: { name: 'Salon Cantik Yuni', location: 'Cibubur', category: 'Salon & Kecantikan', maturity_level: 3 },
     loan: { limit: 4000000, used: 1500000, remaining: 2500000, next_payment_amount: 350000 },
     quiz_weeks: 5,
   },
   laundry: {
-    name: 'Rina Wati',
+    name: 'Budi Santoso',
+    gender: 'male',
     business: { name: 'Laundry Bersih Kilat', location: 'Bekasi', category: 'Jasa Laundry', maturity_level: 2 },
     loan: { limit: 3500000, used: 2000000, remaining: 1500000, next_payment_amount: 400000 },
     quiz_weeks: 4,
@@ -217,6 +224,15 @@ class DemoService {
 
     // Save main user doc
     await db.collection('users').doc(phone).set(userData);
+
+    // Save profile subcollection (with gender)
+    await db.collection('users').doc(phone).collection('profile').doc('data').set({
+      gender: persona.gender || 'female',
+      dob: null,
+      address: persona.business.location,
+      created_at: now,
+      updated_at: now,
+    });
 
     // Save business subcollection
     await db.collection('users').doc(phone).collection('business').doc('data').set({

@@ -104,16 +104,16 @@ class WebhookController {
 
       // Send feedback
       let feedback = result.correct 
-        ? `✅ Benar!\n\n${result.explanation || ''}\n\n📊 Progress: ${result.correct_count}/${result.total_asked} benar`
-        : `❌ Kurang tepat.\n\n${result.explanation || ''}\n\n📊 Progress: ${result.correct_count}/${result.total_asked} benar`;
+        ? `Benar.\n\n${result.explanation || ''}\n\nProgress: ${result.correct_count}/${result.total_asked}`
+        : `Kurang tepat.\n\n${result.explanation || ''}\n\nProgress: ${result.correct_count}/${result.total_asked}`;
 
       await sendMessage(phone, feedback);
 
       // Check if quiz completed
       if (result.completed) {
         const completionMsg = result.passed
-          ? `🎉 Selamat! Anda lulus minggu ini dengan nilai ${result.score}%!\n\nKetik "quiz" untuk lanjut ke minggu berikutnya.`
-          : `📚 Nilai Anda: ${result.score}%\n\nAnda perlu nilai 100% (4/4 benar) untuk lulus. Ketik "quiz" untuk mengulang.`;
+          ? `*Selamat!* Anda lulus minggu ini dengan nilai ${result.score}%.\n\nKetik "quiz" untuk lanjut ke minggu berikutnya.`
+          : `Nilai: ${result.score}%\n\nPerlu 100% (4/4 benar) untuk lulus. Ketik "quiz" untuk mengulang.`;
         
         await sendMessage(phone, completionMsg);
       } else if (result.next_question) {

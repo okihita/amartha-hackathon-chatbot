@@ -10,17 +10,27 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const FALLBACK_MESSAGE = "Maaf Bu, sinyal AI sedang gangguan. Mohon tanya ulang ya.";
 
 // ✨ TOOL DEFINITION
+const BUSINESS_CATEGORIES = [
+  'Warung Sembako', 'Toko Kelontong', 'Usaha Makanan', 'Jasa Jahit', 'Pertanian',
+  'Salon & Kecantikan', 'Jasa Laundry', 'Peternakan', 'Kerajinan Tangan', 'Toko Pakaian',
+  'Warung Makan', 'Jasa Ojek/Transportasi', 'Bengkel', 'Toko Bangunan', 'Usaha Minuman',
+  'Jasa Fotocopy/Printing', 'Toko Pulsa/Elektronik', 'Budidaya Ikan', 'Jasa Pijat/Refleksi',
+  'Toko Kosmetik', 'Usaha Kue/Roti', 'Jasa Cuci Motor/Mobil', 'Toko Mainan', 'Usaha Catering', 'Lainnya'
+];
+
 const registerUserTool = {
   name: "registerUser",
-  description: "Registers a new user with their name, business name, and location.",
+  description: "Registers a new user with their name, gender, business name, category, and location.",
   parameters: {
     type: "OBJECT",
     properties: {
-      name: { type: "STRING", description: "The user's name (e.g., Siti, Budi)" },
+      name: { type: "STRING", description: "The user's name without honorific (e.g., Siti, Budi, Ahmad)" },
+      gender: { type: "STRING", description: "User's gender: 'female' or 'male'. Infer from name or context." },
       business_name: { type: "STRING", description: "Name of business (e.g., Warung Sembako Siti, Toko Bakso Pak Budi)" },
+      business_category: { type: "STRING", description: `Business category. Must be one of: ${BUSINESS_CATEGORIES.join(', ')}` },
       business_location: { type: "STRING", description: "City or Village (e.g., Bogor, Ciseeng)" },
     },
-    required: ["name", "business_name", "business_location"],
+    required: ["name", "gender", "business_name", "business_category", "business_location"],
   },
 };
 
@@ -96,79 +106,80 @@ async function getGeminiResponse(userText, senderPhone) {
     // 📋 MENU COMMAND
     const menuTriggers = ['menu', 'bantuan', 'help', 'tolong', 'bantu', 'apa saja', 'bisa apa', 'halo', 'hi', 'hai'];
     if (menuTriggers.some(t => lowerText === t || lowerText.includes(t))) {
-      return `📋 *Menu Utama*
+      return `*Menu Utama*
 
 Ketik angka atau kata:
 
-1️⃣ *KUIS* - Mulai kuis belajar
-2️⃣ *NILAI* - Lihat hasil belajar saya
-3️⃣ *DATA SAYA* - Info profil & pinjaman
-4️⃣ *FOTO* - Kirim foto usaha
-5️⃣ *JADWAL* - Info pertemuan majelis
+1. *KUIS* - Mulai kuis belajar
+2. *NILAI* - Lihat hasil belajar
+3. *DATA SAYA* - Info profil & pinjaman
+4. *FOTO* - Kirim foto usaha
+5. *JADWAL* - Info pertemuan majelis
 
-Atau langsung tanya apa saja soal usaha! 😊`;
+Atau langsung tanya soal usaha Anda.`;
     }
     
     // 📅 JADWAL/MAJELIS COMMAND
     const jadwalTriggers = ['jadwal', 'majelis', 'pertemuan', 'kapan ketemu', 'ketemu kapan', 'kumpul'];
     if (jadwalTriggers.some(t => lowerText === t || lowerText.includes(t))) {
       if (!userProfile) {
-        return "Maaf Bu, Anda belum terdaftar. Silakan daftar dulu ya.";
+        return "Maaf, Anda belum terdaftar. Silakan daftar dulu ya.";
       }
+      const honorific = userProfile.profile?.gender === 'male' ? 'Pak' : 'Bu';
       if (!userProfile.majelis_name) {
-        return "Maaf Bu, Anda belum terdaftar di Majelis.\n\nHubungi petugas lapangan untuk didaftarkan ke Majelis ya.";
+        return `Maaf ${honorific}, Anda belum terdaftar di Majelis.\n\nHubungi petugas lapangan untuk didaftarkan ke Majelis ya.`;
       }
-      return `📅 *Jadwal Majelis*
+      return `*Jadwal Majelis*
 
-👥 Majelis: ${userProfile.majelis_name}
-📆 Hari: ${userProfile.majelis_day}
-🕐 Jam: ${userProfile.majelis_time || '-'}
-📍 Lokasi: ${userProfile.majelis_location || '-'}
+Majelis: ${userProfile.majelis_name}
+Hari: ${userProfile.majelis_day}
+Jam: ${userProfile.majelis_time || '-'}
+Lokasi: ${userProfile.majelis_location || '-'}
 
-Jangan lupa hadir ya Bu! 😊`;
+Jangan lupa hadir ya ${honorific}.`;
     }
     
     // 🐛 CEK DATA COMMAND
     const dataTriggers = ['debug', 'cek data', 'data saya', 'profil', 'info saya', 'lihat data', 'data', 'cek profil'];
     if (dataTriggers.some(t => lowerText === t || lowerText.includes(t))) {
       if (!userProfile) {
-        return "❌ *Data tidak ditemukan*\n\nAnda belum terdaftar di Amartha. Silakan daftar dulu ya.";
+        return "*Data tidak ditemukan*\n\nAnda belum terdaftar di Amartha. Silakan daftar dulu.";
       }
       
       const majelisInfo = userProfile.majelis_name 
         ? `${userProfile.majelis_name} (${userProfile.majelis_day}, ${userProfile.majelis_time || ''})`
-        : '❌ Belum terdaftar';
+        : 'Belum terdaftar';
       
       const currentDebt = userProfile.loan?.history?.length > 0
         ? userProfile.loan.history[userProfile.loan.history.length - 1].balance_after
         : 0;
       
       const loanInfo = userProfile.loan?.limit > 0
-        ? `\n\n💰 *INFORMASI PINJAMAN*\n` +
-          `• Limit Total: Rp ${userProfile.loan.limit.toLocaleString('id-ID')}\n` +
-          `• Sisa Limit: Rp ${userProfile.loan.remaining.toLocaleString('id-ID')}\n` +
-          `• Hutang Saat Ini: Rp ${currentDebt.toLocaleString('id-ID')}\n` +
-          `• Cicilan Berikutnya: ${userProfile.loan.next_payment_date ? new Date(userProfile.loan.next_payment_date).toLocaleDateString('id-ID') : '-'}\n` +
-          `• Jumlah Cicilan: Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
-        : '\n\n💰 *INFORMASI PINJAMAN*\n❌ Belum memiliki pinjaman aktif';
+        ? `\n\n*PINJAMAN*\n` +
+          `Limit: Rp ${userProfile.loan.limit.toLocaleString('id-ID')}\n` +
+          `Sisa Limit: Rp ${userProfile.loan.remaining.toLocaleString('id-ID')}\n` +
+          `Hutang: Rp ${currentDebt.toLocaleString('id-ID')}\n` +
+          `Cicilan: ${userProfile.loan.next_payment_date ? new Date(userProfile.loan.next_payment_date).toLocaleDateString('id-ID') : '-'} - Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
+        : '\n\n*PINJAMAN*\nBelum memiliki pinjaman aktif';
       
       const literacyInfo = userProfile.literacy 
         ? (() => {
             const weeks = Object.keys(userProfile.literacy).filter(k => k.startsWith('week_'));
             const completed = weeks.filter(w => userProfile.literacy[w]?.score >= 100).length;
             const percentage = Math.round((completed / 15) * 100);
-            return `\n\n📚 *LITERASI KEUANGAN*\n• Progress: ${completed}/15 minggu (${percentage}%)\n• Status: ${completed >= 15 ? '✅ Selesai' : '🔄 Sedang berjalan'}`;
+            return `\n\n*LITERASI*\nProgress: ${completed}/15 minggu (${percentage}%)`;
           })()
-        : '\n\n📚 *LITERASI KEUANGAN*\n❌ Belum memulai program';
+        : '\n\n*LITERASI*\nBelum memulai program';
       
-      return `✅ *PROFIL ANDA*\n\n` +
-             `👤 Nama: ${userProfile.name}\n` +
-             `📱 No. HP: ${userProfile.phone}\n` +
-             `🏪 Usaha: ${userProfile.business?.name || '-'}\n` +
-             `📍 Lokasi: ${userProfile.business?.location || '-'}\n` +
-             `⭐ Tingkat Usaha: ${userProfile.business?.maturity_level || 1}/5\n` +
-             `👥 Majelis: ${majelisInfo}\n` +
-             `✅ Status: ${userProfile.status === 'active' ? 'Terverifikasi' : 'Menunggu Verifikasi'}` +
+      return `*PROFIL ANDA*\n\n` +
+             `Nama: ${userProfile.name}\n` +
+             `No. HP: ${userProfile.phone}\n` +
+             `Usaha: ${userProfile.business?.name || '-'}\n` +
+             `Kategori: ${userProfile.business?.category || '-'}\n` +
+             `Lokasi: ${userProfile.business?.location || '-'}\n` +
+             `Tingkat: ${userProfile.business?.maturity_level || 1}/5\n` +
+             `Majelis: ${majelisInfo}\n` +
+             `Status: ${userProfile.status === 'active' ? 'Terverifikasi' : 'Menunggu Verifikasi'}` +
              loanInfo +
              literacyInfo;
     }
@@ -176,18 +187,17 @@ Jangan lupa hadir ya Bu! 😊`;
     // 💰 POPULATE LOAN COMMAND (for testing)
     if (lowerText === 'populate loan' || lowerText === 'isi pinjaman') {
       if (!userProfile) {
-        return "❌ Anda belum terdaftar.";
+        return "Anda belum terdaftar.";
       }
       const result = await UserService.createMockLoanData(senderPhone);
       if (result.error) {
-        return `❌ Gagal: ${result.error}`;
+        return `Gagal: ${result.error}`;
       }
-      return `✅ *Data pinjaman berhasil dibuat!*\n\n` +
-             `💰 Limit: Rp ${result.data.limit.toLocaleString('id-ID')}\n` +
-             `💳 Sisa Limit: Rp ${result.data.remaining.toLocaleString('id-ID')}\n` +
-             `📅 Cicilan Berikutnya: ${new Date(result.data.next_payment_date).toLocaleDateString('id-ID')}\n` +
-             `💵 Jumlah: Rp ${result.data.next_payment_amount.toLocaleString('id-ID')}\n\n` +
-             `Ketik "cek data" untuk melihat detail lengkap.`;
+      return `*Data pinjaman berhasil dibuat*\n\n` +
+             `Limit: Rp ${result.data.limit.toLocaleString('id-ID')}\n` +
+             `Sisa: Rp ${result.data.remaining.toLocaleString('id-ID')}\n` +
+             `Cicilan: ${new Date(result.data.next_payment_date).toLocaleDateString('id-ID')} - Rp ${result.data.next_payment_amount.toLocaleString('id-ID')}\n\n` +
+             `Ketik "cek data" untuk detail lengkap.`;
     }
     
     const ragContext = retrieveKnowledge(userText);
@@ -227,19 +237,25 @@ Jangan lupa hadir ya Bu! 😊`;
           `- Jumlah Cicilan: Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
         : '\n- Belum memiliki pinjaman aktif';
       
+      const honorific = userProfile.profile?.gender === 'male' ? 'Pak' : 'Bu';
+      
       systemPrompt = `
       PERAN: Akademi-AI, asisten bisnis ${userProfile.name} untuk program literasi keuangan Amartha.
+      SAPAAN: Gunakan "${honorific}" untuk menyapa user ini.
       CONTEXT: 
       - Nama: ${userProfile.name}
+      - Gender: ${userProfile.profile?.gender || 'unknown'}
       - Usaha: ${userProfile.business?.name || 'Belum diisi'}
+      - Kategori: ${userProfile.business?.category || 'Belum dikategorikan'}
       - Lokasi: ${userProfile.business?.location || 'Belum diisi'}
+      - Tingkat Usaha: ${userProfile.business?.maturity_level || 1}/5
       - Status: ${userProfile.status === 'active' ? "Terverifikasi" : "Belum Verifikasi (Limit Akses)"}
       - Majelis: ${majelisInfo}${loanContext}
       
       BATASAN TOPIK:
       - HANYA jawab tentang: literasi keuangan, manajemen usaha, Amartha, bisnis UMKM
       - TOLAK topik: politik, agama, gosip, hal pribadi, permintaan tidak pantas
-      - Jika topik di luar scope, jawab: "Maaf Bu, saya hanya bisa membantu literasi keuangan dan usaha. Ada yang bisa saya bantu terkait bisnis Anda?"
+      - Jika topik di luar scope, jawab: "Maaf ${honorific}, saya hanya bisa membantu literasi keuangan dan usaha. Ada yang bisa saya bantu terkait bisnis Anda?"
       
       KAMUS ISTILAH AMARTHA:
       ${ragContext}
@@ -248,8 +264,8 @@ Jangan lupa hadir ya Bu! 😊`;
       1. User SUDAH TERDAFTAR. JANGAN minta data nama/usaha/lokasi lagi.
       2. Jawab pertanyaan bisnis/keuangan dengan ramah dan informatif.
       3. Jika user bertanya soal "Kapan Majelis?" atau "Limit Pinjaman", dan status mereka "Belum Verifikasi",
-         jawab: "Maaf Bu, data Majelis harus diaktifkan oleh Petugas Lapangan (BP) dulu. Silakan hubungi petugas di pertemuan berikutnya."
-      4. Gunakan bahasa Indonesia yang sopan dan ramah.
+         jawab: "Maaf ${honorific}, data Majelis harus diaktifkan oleh Petugas Lapangan (BP) dulu. Silakan hubungi petugas di pertemuan berikutnya."
+      4. Gunakan bahasa Indonesia yang sopan dan ramah. Sapa user dengan "${honorific}".
       `;
     }
 
@@ -305,10 +321,9 @@ Jangan lupa hadir ya Bu! 😊`;
           const { sendMessage } = require('./whatsapp');
           
           // Send intro first
-          const intro = `📚 Quiz Minggu ${quizResult.weekInfo.week_number} dimulai!\n\n` +
+          const intro = `*Quiz Minggu ${quizResult.weekInfo.week_number}*\n\n` +
                  `Topik: ${quizResult.weekInfo.module_name}\n\n` +
-                 `Anda akan menjawab 4 pertanyaan. Setiap jawaban benar bernilai 25%. ` +
-                 `Nilai minimal lulus: 100%.`;
+                 `4 pertanyaan, nilai lulus 100% (4/4 benar).`;
           await sendMessage(senderPhone, intro);
           
           // Then send question
@@ -321,27 +336,27 @@ Jangan lupa hadir ya Bu! 😊`;
       if (name === "showProgress") {
         const progress = await QuizService.getProgress(senderPhone);
         
-        let message = `📊 Progress Literasi Keuangan Anda:\n\n`;
-        message += `✅ Selesai: ${progress.total_completed}/15 minggu (${progress.percentage}%)\n\n`;
+        let message = `*Progress Literasi Keuangan*\n\n`;
+        message += `Selesai: ${progress.total_completed}/15 minggu (${progress.percentage}%)\n`;
         
         if (progress.completed.length > 0) {
-          message += `🎯 Minggu yang Lulus:\n`;
+          message += `\nLulus:\n`;
           progress.completed.forEach(w => {
-            message += `• Minggu ${w.week}: ${w.score}%\n`;
+            message += `- Minggu ${w.week}: ${w.score}%\n`;
           });
         }
         
         if (progress.inProgress.length > 0) {
-          message += `\n📝 Dalam Progress:\n`;
+          message += `\nDalam Progress:\n`;
           progress.inProgress.forEach(w => {
-            message += `• Minggu ${w.week}: ${w.score}% (belum lulus)\n`;
+            message += `- Minggu ${w.week}: ${w.score}%\n`;
           });
         }
         
         if (progress.total_completed < 15) {
-          message += `\n💡 Ketik "quiz" untuk melanjutkan!`;
+          message += `\nKetik "quiz" untuk melanjutkan.`;
         } else {
-          message += `\n🎉 Selamat! Anda telah menyelesaikan semua minggu!`;
+          message += `\nSelamat! Semua minggu selesai.`;
         }
         
         return message;

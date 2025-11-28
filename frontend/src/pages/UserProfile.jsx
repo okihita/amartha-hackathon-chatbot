@@ -64,7 +64,7 @@ export default function UserProfile({ phone }) {
   const literacyProgress = () => {
     if (!data.literacy) return { completed: 0, total: 15, percentage: 0 };
     const weeks = Object.keys(data.literacy).filter(k => k.startsWith('week_'));
-    const completed = weeks.filter(w => data.literacy[w]?.score >= 70).length;
+    const completed = weeks.filter(w => data.literacy[w]?.score >= 100).length;
     return { completed, total: 15, percentage: Math.round((completed / 15) * 100) };
   };
 
@@ -126,8 +126,30 @@ export default function UserProfile({ phone }) {
             <div>
               <p><strong>Name:</strong> {data.business.name || '-'}</p>
               <p><strong>Location:</strong> {data.business.location || '-'}</p>
-              <p><strong>Category:</strong> {data.business.category || '-'}</p>
-              <p><strong>Maturity:</strong> {maturityStars(data.business.maturity_level)}</p>
+              <p><strong>Category:</strong> <span style="padding: 2px 8px; background: #e3f2fd; border-radius: 4px;">{data.business.category || '-'}</span></p>
+              <p><strong>Maturity Level:</strong> {maturityStars(data.business.maturity_level)} ({data.business.maturity_level}/5)</p>
+              
+              {/* Maturity Progress Bar */}
+              <div style="margin-top: 12px;">
+                <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+                  {[1,2,3,4,5].map(level => (
+                    <div 
+                      key={level}
+                      style={{
+                        flex: 1,
+                        height: '8px',
+                        borderRadius: '4px',
+                        background: level <= data.business.maturity_level ? '#4caf50' : '#e0e0e0'
+                      }}
+                    />
+                  ))}
+                </div>
+                <div style="font-size: 12px; color: #666;">
+                  {data.business.maturity_level < 5 
+                    ? `📈 Next: Level ${data.business.maturity_level + 1} - Tingkatkan omzet & pencatatan`
+                    : '🎉 Level maksimal tercapai!'}
+                </div>
+              </div>
             </div>
           ) : (
             <p style="color: var(--color-neutral);">No business data</p>
