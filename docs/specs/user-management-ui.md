@@ -16,6 +16,37 @@ Admin dashboard for managing UMKM members, including verification, majelis assig
 - Icon-only action buttons
 - Consistent alignment and spacing
 
+### User Feedback
+**Toast Notifications**: Non-intrusive feedback for successful operations.
+
+**Usage**:
+- Success messages (green): Mock data populated, users deleted
+- Error messages (red): Operation failures
+- Auto-dismiss after 3 seconds
+- Positioned top-right corner
+- Slide-in animation
+
+**Confirm Dialogs**: Professional modal dialogs for destructive actions.
+
+**Design**:
+- Centered modal with overlay
+- Warning icon (AlertTriangle) in yellow circle
+- Clear title and descriptive message
+- Two-button layout: Cancel (secondary) + Confirm (danger/primary)
+- Click outside to cancel
+
+**Usage**:
+- Delete user
+- Populate mock data
+- Delete all mock data
+- Any destructive or irreversible action
+
+**Avoid**:
+- ❌ Browser native `alert()` - ugly and unprofessional
+- ❌ Browser native `confirm()` - inconsistent styling
+- ✅ Use custom ConfirmDialog component for all confirmations
+- ✅ Use Toast for success/error feedback
+
 ### Icon System
 **Lucide Icons**: Professional SVG icon library for UI elements.
 

@@ -59,7 +59,7 @@ async function retrieveKnowledge(userText) {
   try {
     const { Firestore } = require('@google-cloud/firestore');
     const db = new Firestore({
-      projectId: process.env.GCP_PROJECT_ID || 'stellar-zoo-478021-v8',
+      projectId: process.env.GCP_PROJECT_ID,
     });
     
     const snapshot = await db.collection('financial_literacy').get();

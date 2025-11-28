@@ -293,7 +293,7 @@ app.get('/api/business-types', async (req, res) => {
   try {
     const { Firestore } = require('@google-cloud/firestore');
     const db = new Firestore({
-      projectId: process.env.GCP_PROJECT_ID || 'stellar-zoo-478021-v8',
+      projectId: process.env.GCP_PROJECT_ID,
     });
     
     const snapshot = await db.collection('business_classifications').get();
@@ -314,7 +314,7 @@ app.get('/api/financial-literacy', async (req, res) => {
   try {
     const { Firestore } = require('@google-cloud/firestore');
     const db = new Firestore({
-      projectId: process.env.GCP_PROJECT_ID || 'stellar-zoo-478021-v8',
+      projectId: process.env.GCP_PROJECT_ID,
     });
     
     const snapshot = await db.collection('financial_literacy').get();
@@ -395,6 +395,30 @@ app.delete('/api/superadmin/delete-all-mock', async (req, res) => {
   } catch (error) {
     console.error('Error deleting mock users:', error);
     res.status(500).json({ error: 'Failed to delete mock users' });
+  }
+});
+
+// Populate mock majelis
+app.post('/api/superadmin/populate-mock-majelis', async (req, res) => {
+  try {
+    const { createMockMajelis } = require('./src/db');
+    const count = await createMockMajelis();
+    res.json({ success: true, count });
+  } catch (error) {
+    console.error('Error populating mock majelis:', error);
+    res.status(500).json({ error: 'Failed to populate mock majelis' });
+  }
+});
+
+// Delete all mock majelis
+app.delete('/api/superadmin/delete-all-mock-majelis', async (req, res) => {
+  try {
+    const { deleteAllMockMajelis } = require('./src/db');
+    const count = await deleteAllMockMajelis();
+    res.json({ success: true, count });
+  } catch (error) {
+    console.error('Error deleting mock majelis:', error);
+    res.status(500).json({ error: 'Failed to delete mock majelis' });
   }
 });
 

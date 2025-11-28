@@ -170,10 +170,10 @@ TEST_URL=http://localhost:8080 ./tests/integration.test.sh
 
 ## 🌐 Live URLs
 
-- **Production**: https://whatsapp-bot-435783355893.asia-southeast2.run.app
-- **Dashboard**: https://whatsapp-bot-435783355893.asia-southeast2.run.app/
-- **Majelis**: https://whatsapp-bot-435783355893.asia-southeast2.run.app/majelis
-- **Business Types**: https://whatsapp-bot-435783355893.asia-southeast2.run.app/business-types
+- **Production**: Your Cloud Run URL will be displayed after deployment
+- **Dashboard**: `https://YOUR_SERVICE_URL/`
+- **Majelis**: `https://YOUR_SERVICE_URL/majelis`
+- **Business Types**: `https://YOUR_SERVICE_URL/business-types`
 
 ## 🤝 Contributing
 

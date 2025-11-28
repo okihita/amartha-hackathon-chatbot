@@ -14,7 +14,7 @@ const { google } = require('googleapis');
 const { Firestore } = require('@google-cloud/firestore');
 
 const db = new Firestore({
-  projectId: process.env.GCP_PROJECT_ID || 'stellar-zoo-478021-v8',
+  projectId: process.env.GCP_PROJECT_ID,
 });
 
 const FOLDER_ID = process.env.FINANCIAL_LITERACY_FOLDER_ID || '1_qBhLNCfdxkLVTro_jJACF6sm_rG9ZBt';

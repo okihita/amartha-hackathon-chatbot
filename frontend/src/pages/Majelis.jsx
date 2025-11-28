@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Plus, Edit2, Trash2, X, UserPlus, Calendar, MapPin, Users } from 'lucide-preact';
+import { Plus, Edit2, Trash2, X, UserPlus, Calendar, MapPin, Users as UsersIcon, Dice5, Trash } from 'lucide-preact';
+import Toast from '../components/Toast';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { useFeedback } from '../hooks/useFeedback';
+import { userApi, majelisApi, superadminApi } from '../services/api';
 
 export default function Majelis() {
   const [majelis, setMajelis] = useState([]);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -17,111 +20,186 @@ export default function Majelis() {
   const [addMemberModal, setAddMemberModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);
+  const [processing, setProcessing] = useState(null);
+  const { toast, confirmDialog, showToast, showConfirm, clearToast } = useFeedback();
 
   useEffect(() => {
     fetchData();
   }, []);
 
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    if (!searchQuery.trim() || !addMemberModal) {
       setFilteredUsers([]);
       return;
     }
+    
     const query = searchQuery.toLowerCase();
-    const verified = users.filter(u => u.is_verified === true);
-    const matches = verified.filter(u => 
+    const currentMajelis = majelis.find(m => m.id === addMemberModal);
+    const currentMembers = currentMajelis?.members || [];
+    
+    const available = users.filter(u => 
+      u.is_verified === true && 
+      !currentMembers.includes(u.phone) &&
+      !u.majelis_id
+    );
+    
+    const matches = available.filter(u => 
       u.name?.toLowerCase().includes(query) || 
       u.phone?.includes(query)
     ).slice(0, 5);
+    
     setFilteredUsers(matches);
-  }, [searchQuery, users]);
+  }, [searchQuery, users, addMemberModal, majelis]);
 
   const fetchData = async () => {
     try {
-      const [majelisRes, usersRes] = await Promise.all([
-        fetch('/api/majelis'),
-        fetch('/api/users')
+      const [majelisData, usersData] = await Promise.all([
+        majelisApi.getAll(),
+        userApi.getAll()
       ]);
-      setMajelis(await majelisRes.json());
-      setUsers(await usersRes.json());
+      setMajelis(majelisData);
+      setUsers(usersData);
     } catch (error) {
-      console.error('Failed to fetch data', error);
-    } finally {
-      setLoading(false);
+      showToast('Failed to fetch data', 'error');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = editingId ? `/api/majelis/${editingId}` : '/api/majelis';
-      const method = editingId ? 'PUT' : 'POST';
-      
-      await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      if (editingId) {
+        await majelisApi.update(editingId, formData);
+      } else {
+        await majelisApi.create(formData);
+      }
       
       setShowModal(false);
       setEditingId(null);
       setFormData({ name: '', description: '', schedule_day: '', schedule_time: '10:00', location: '' });
       fetchData();
+      showToast(`Majelis ${editingId ? 'updated' : 'created'} successfully`);
     } catch (error) {
-      alert('Failed to save majelis');
+      showToast(error.message, 'error');
     }
   };
 
   const handleDelete = async (id, name) => {
-    if (!confirm(`Delete ${name}?`)) return;
+    const confirmed = await showConfirm({
+      title: 'Delete Majelis',
+      message: `Are you sure you want to delete "${name}"? All member associations will be cleared.`
+    });
+    
+    if (!confirmed) return;
+    
     try {
-      await fetch(`/api/majelis/${id}`, { method: 'DELETE' });
+      await majelisApi.delete(id);
       fetchData();
+      showToast('Majelis deleted successfully');
     } catch (error) {
-      alert('Failed to delete majelis');
+      showToast(error.message, 'error');
     }
   };
 
   const handleAddMember = async (majelisId, phone) => {
     try {
-      const res = await fetch(`/api/majelis/${majelisId}/members`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone })
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err.error || 'Failed to add member');
-        return;
-      }
+      await majelisApi.addMember(majelisId, phone);
       setAddMemberModal(null);
       setSearchQuery('');
       fetchData();
+      showToast('Member added successfully');
     } catch (error) {
-      alert('Failed to add member');
+      showToast(error.message, 'error');
     }
   };
 
   const handleRemoveMember = async (majelisId, phone) => {
-    if (!confirm('Remove this member?')) return;
+    const user = users.find(u => u.phone === phone);
+    const confirmed = await showConfirm({
+      title: 'Remove Member',
+      message: `Remove ${user?.name || phone} from this majelis?`,
+      confirmText: 'Remove'
+    });
+    
+    if (!confirmed) return;
+    
     try {
-      await fetch(`/api/majelis/${majelisId}/members/${phone}`, { method: 'DELETE' });
+      await majelisApi.removeMember(majelisId, phone);
       fetchData();
+      showToast('Member removed successfully');
     } catch (error) {
-      alert('Failed to remove member');
+      showToast(error.message, 'error');
     }
   };
 
-  if (loading) return <div class="loading">Loading...</div>;
+  const handlePopulateMock = async () => {
+    const confirmed = await showConfirm({
+      title: 'Populate Mock Majelis',
+      message: 'This will create 3 mock majelis groups. Continue?',
+      confirmText: 'Populate',
+      type: 'primary'
+    });
+    
+    if (!confirmed) return;
+    
+    setProcessing('mock');
+    try {
+      await superadminApi.populateMockMajelis();
+      fetchData();
+      showToast('Mock majelis populated!');
+    } catch (error) {
+      showToast(error.message, 'error');
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleDeleteAllMock = async () => {
+    const confirmed = await showConfirm({
+      title: 'Delete All Mock Majelis',
+      message: 'This will permanently delete all mock majelis groups. Continue?',
+      confirmText: 'Delete All'
+    });
+    
+    if (!confirmed) return;
+    
+    setProcessing('delete-all');
+    try {
+      await superadminApi.deleteAllMockMajelis();
+      fetchData();
+      showToast('All mock majelis deleted!');
+    } catch (error) {
+      showToast(error.message, 'error');
+    } finally {
+      setProcessing(null);
+    }
+  };
 
   return (
     <>
       <div class="card">
         <div class="card-header-actions">
-          <h2>Majelis Groups</h2>
-          <button class="btn btn-primary" onClick={() => setShowModal(true)}>
-            <Plus size={16} /> Create Majelis
-          </button>
+          <h2 style="display: flex; align-items: center; gap: 8px;">
+            <UsersIcon size={24} /> Majelis Groups
+          </h2>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary" onClick={() => setShowModal(true)}>
+              <Plus size={16} /> Create Majelis
+            </button>
+            <button 
+              class="btn btn-secondary" 
+              onClick={handlePopulateMock}
+              disabled={processing === 'mock'}
+            >
+              <Dice5 size={16} /> Populate Mock
+            </button>
+            <button 
+              class="btn btn-danger" 
+              onClick={handleDeleteAllMock}
+              disabled={processing === 'delete-all'}
+            >
+              <Trash size={16} /> Delete All Mock
+            </button>
+          </div>
         </div>
         
         <div class="majelis-grid">
@@ -138,42 +216,51 @@ export default function Majelis() {
                     <span><MapPin size={14} /> {m.location || 'No location'}</span>
                   </div>
                   {m.description && <p class="majelis-description">{m.description}</p>}
-                  <div class="member-count"><Users size={14} /> {memberCount} member{memberCount !== 1 ? 's' : ''}</div>
-                  <div class="member-list">
+                  
+                  <div class="member-section">
+                    <div class="member-header">
+                      <span class="member-count"><UsersIcon size={14} /> {memberCount} member{memberCount !== 1 ? 's' : ''}</span>
+                      <button class="btn btn-primary btn-icon" onClick={() => setAddMemberModal(m.id)} title="Add member">
+                        <UserPlus size={14} />
+                      </button>
+                    </div>
+                    
                     {memberCount === 0 ? (
-                      <div class="no-members">No members yet</div>
+                      <div class="no-members">No members yet. Click + to add.</div>
                     ) : (
-                      m.members.map(phone => {
-                        const user = users.find(u => u.phone === phone);
-                        return (
-                          <div key={phone} class="member-item-inline">
-                            <span class="member-name">{user?.name || phone}</span>
-                            {user && <span class="member-details"> • {user.business_type}</span>}
-                            <button 
-                              class="btn-remove-member" 
-                              onClick={() => handleRemoveMember(m.id, phone)}
-                              title="Remove member"
-                            >
-                              <X size={14} />
-                            </button>
-                          </div>
-                        );
-                      })
+                      <div class="member-list">
+                        {m.members.map(phone => {
+                          const user = users.find(u => u.phone === phone);
+                          return (
+                            <div key={phone} class="member-item">
+                              <div class="member-info">
+                                <div class="member-name">{user?.name || phone}</div>
+                                {user && <div class="member-business">{user.business_type}</div>}
+                              </div>
+                              <button 
+                                class="btn-remove" 
+                                onClick={() => handleRemoveMember(m.id, phone)}
+                                title="Remove member"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
+                  
                   <div class="actions">
-                    <button class="btn btn-primary btn-sm" onClick={() => setAddMemberModal(m.id)}>
-                      <UserPlus size={14} /> Add Member
-                    </button>
                     <button class="btn btn-secondary" onClick={() => {
                       setEditingId(m.id);
                       setFormData(m);
                       setShowModal(true);
                     }}>
-                      <Edit2 size={14} /> Edit
+                      <Edit2 size={14} /> <span class="btn-text">Edit</span>
                     </button>
                     <button class="btn btn-danger" onClick={() => handleDelete(m.id, m.name)}>
-                      <Trash2 size={14} /> Delete
+                      <Trash2 size={14} /> <span class="btn-text">Delete</span>
                     </button>
                   </div>
                 </div>
@@ -294,6 +381,9 @@ export default function Majelis() {
           </div>
         </div>
       )}
+      
+      {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
+      {confirmDialog && <ConfirmDialog {...confirmDialog} />}
     </>
   );
 }

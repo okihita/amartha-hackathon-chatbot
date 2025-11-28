@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { User, TrendingUp, Briefcase, Search } from 'lucide-preact';
 import { route } from 'preact-router';
 
 export default function UserProfile({ phone }) {
@@ -74,7 +75,9 @@ export default function UserProfile({ phone }) {
 
       <div class="profile-grid">
         <div class="card">
-          <h2>👤 Personal Information</h2>
+          <h2 style="display: flex; align-items: center; gap: 8px;">
+            <User size={20} /> Personal Information
+          </h2>
           <div class="profile-row">
             <span class="profile-label">Name</span>
             <span class="profile-value">{user.name}</span>
@@ -106,7 +109,9 @@ export default function UserProfile({ phone }) {
         </div>
 
         <div class="card">
-          <h2>📊 Credit Score</h2>
+          <h2 style="display: flex; align-items: center; gap: 8px;">
+            <TrendingUp size={20} /> Credit Score
+          </h2>
           {hasCredit ? (
             <>
               <div class="score-display">
@@ -134,7 +139,9 @@ export default function UserProfile({ phone }) {
 
         {hasCredit && (
           <div class="card full-width">
-            <h2>💼 Business Metrics</h2>
+            <h2 style="display: flex; align-items: center; gap: 8px;">
+              <Briefcase size={20} /> Business Metrics
+            </h2>
             <div class="metric-grid">
               <div class="metric-item">
                 <div class="metric-value">{cm.business_health_score || 0}</div>
@@ -179,7 +186,9 @@ export default function UserProfile({ phone }) {
 
       {biData.length > 0 && (
         <div class="card">
-          <h2>🔍 Business Intelligence Analysis</h2>
+          <h2 style="display: flex; align-items: center; gap: 8px;">
+            <Search size={20} /> Business Intelligence Analysis
+          </h2>
           {biData.map((bi, index) => (
             <div key={bi.id || index} class="bi-card">
               <div class="bi-header">

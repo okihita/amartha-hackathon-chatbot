@@ -2,7 +2,7 @@ const { Firestore } = require('@google-cloud/firestore');
 
 // Initialize Firestore
 const db = new Firestore({
-  projectId: process.env.GCP_PROJECT_ID || 'stellar-zoo-478021-v8',
+  projectId: process.env.GCP_PROJECT_ID,
 });
 
 const USERS_COLLECTION = 'users';
@@ -198,8 +198,23 @@ async function deleteMajelis(majelisId) {
     
     if (!doc.exists) return false;
     
-    await majelisRef.delete();
-    console.log(`🗑️ Majelis deleted: ${majelisId}`);
+    const majelisData = doc.data();
+    const members = majelisData.members || [];
+    
+    // Clear majelis association from all members
+    const batch = db.batch();
+    for (const phone of members) {
+      const userRef = db.collection(USERS_COLLECTION).doc(phone);
+      batch.update(userRef, {
+        majelis_id: null
+      });
+    }
+    
+    // Delete the majelis
+    batch.delete(majelisRef);
+    await batch.commit();
+    
+    console.log(`🗑️ Majelis deleted: ${majelisId}, cleared ${members.length} member associations`);
     return true;
   } catch (error) {
     console.error('Error deleting majelis:', error);
@@ -236,12 +251,9 @@ async function addMemberToMajelis(majelisId, phoneNumber) {
         updated_at: new Date().toISOString()
       });
       
-      // Update user's majelis info (name, day, id)
-      const majelisData = doc.data();
+      // Update user's majelis info (only ID)
       await updateUserMajelis(phoneNumber, {
-        majelis_id: majelisId,
-        majelis_name: majelisData.name,
-        majelis_day: majelisData.schedule_day
+        majelis_id: majelisId
       });
       
       console.log(`➕ Added ${phoneNumber} to Majelis ${majelisId}`);
@@ -273,9 +285,7 @@ async function removeMemberFromMajelis(majelisId, phoneNumber) {
     
     // Reset user's majelis info
     await updateUserMajelis(phoneNumber, {
-      majelis_id: null,
-      majelis_name: null,
-      majelis_day: 'BELUM VERIFIKASI (Hubungi Petugas)'
+      majelis_id: null
     });
     
     console.log(`➖ Removed ${phoneNumber} from Majelis ${majelisId}`);
@@ -643,8 +653,7 @@ async function createMockUsers() {
         status: 'pending',
         is_mock: true,
         registered_at: new Date().toISOString(),
-        majelis_id: null,
-        majelis_name: null
+        majelis_id: null
       });
       count++;
     }
@@ -668,6 +677,45 @@ async function deleteAllMockUsers() {
   return snapshot.size;
 }
 
+// Create mock majelis for testing
+async function createMockMajelis() {
+  const mockMajelis = [
+    { name: 'Majelis Sejahtera', description: 'Kelompok UMKM Jakarta Selatan', schedule_day: 'Senin', schedule_time: '10:00', location: 'Balai Desa Kebayoran' },
+    { name: 'Majelis Berkah', description: 'Kelompok UMKM Bandung', schedule_day: 'Selasa', schedule_time: '14:00', location: 'Gedung Serbaguna Dago' },
+    { name: 'Majelis Mandiri', description: 'Kelompok UMKM Surabaya', schedule_day: 'Rabu', schedule_time: '09:00', location: 'Balai RW 05' },
+  ];
+
+  let count = 0;
+  for (const majelis of mockMajelis) {
+    const majelisRef = db.collection('majelis').doc();
+    await majelisRef.set({
+      ...majelis,
+      members: [],
+      is_mock: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+    count++;
+  }
+  
+  console.log(`✅ Created ${count} mock majelis`);
+  return count;
+}
+
+// Delete all mock majelis
+async function deleteAllMockMajelis() {
+  const snapshot = await db.collection('majelis').where('is_mock', '==', true).get();
+  
+  const batch = db.batch();
+  snapshot.docs.forEach(doc => {
+    batch.delete(doc.ref);
+  });
+  
+  await batch.commit();
+  console.log(`🗑️ Deleted ${snapshot.size} mock majelis`);
+  return snapshot.size;
+}
+
 module.exports = { 
   getUserContext, 
   registerNewUser, 
@@ -687,5 +735,7 @@ module.exports = {
   updateUserCreditScore,
   updateUserBusinessProfile,
   createMockUsers,
-  deleteAllMockUsers
+  deleteAllMockUsers,
+  createMockMajelis,
+  deleteAllMockMajelis
 };

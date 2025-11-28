@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-BASE_URL="${TEST_URL:-https://whatsapp-bot-435783355893.asia-southeast2.run.app}"
+BASE_URL="${TEST_URL:-http://localhost:8080}"
 VERBOSE="${VERBOSE:-false}"
 
 # Colors

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { Briefcase } from 'lucide-preact';
 
 const BUSINESS_ICONS = {
   'warung sembako': '🏪', 'kelontong': '🏪', 'warung makan': '🍽️',
@@ -78,7 +79,9 @@ export default function BusinessTypes() {
   return (
     <>
       <div class="card">
-        <h2>📚 Business Classifications & Maturity Levels</h2>
+        <h2 style="display: flex; align-items: center; gap: 8px;">
+          <Briefcase size={20} /> Business Classifications & Maturity Levels
+        </h2>
         <div class="business-grid">
           {businessTypes.map(bt => {
             const categoryNum = bt.category_number ? `Kategori ${bt.category_number}` : 'Mikro';

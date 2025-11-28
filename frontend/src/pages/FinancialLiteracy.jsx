@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { BookOpen } from 'lucide-preact';
 
 const BUSINESS_ICONS = {
   'warung sembako': '🏪', 'kelontong': '🏪', 'warung makan': '🍽️',
@@ -91,7 +92,9 @@ export default function FinancialLiteracy() {
   return (
     <>
       <div class="card">
-        <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>📚 Financial Literacy Course - 15 Weeks</h2>
+        <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <BookOpen size={20} /> Financial Literacy Course - 15 Weeks
+        </h2>
       </div>
 
       {modules.map(moduleNum => {

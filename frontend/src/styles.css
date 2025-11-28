@@ -109,6 +109,9 @@ body {
     transition: all 0.2s;
     border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .nav a:hover {
@@ -983,14 +986,8 @@ textarea:focus {
     border-radius: 12px;
     border: 1px solid #e0e0e0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: all var(--transition-fast, 0.2s);
     display: flex;
     flex-direction: column;
-}
-
-.majelis-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
 }
 
 .majelis-card h3 {
@@ -1021,70 +1018,89 @@ textarea:focus {
     gap: 4px;
 }
 
-.majelis-card .member-count {
-    font-size: 14px;
-    color: var(--color-success, #28a745);
-    font-weight: 600;
-    margin: var(--spacing-md, 12px) 0 var(--spacing-sm, 8px) 0;
+.majelis-card .member-section {
+    margin: 16px 0;
+}
+
+.majelis-card .member-header {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.majelis-card .member-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
 }
 
 .majelis-card .member-list {
-    margin: var(--spacing-sm, 8px) 0 var(--spacing-md, 12px) 0;
-    max-height: 200px;
-    overflow-y: auto;
-    background: #f9f9f9;
-    padding: var(--spacing-sm, 8px);
-    border-radius: 6px;
-    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.majelis-card .member-item-inline {
-    font-size: 13px;
-    color: #555;
-    padding: var(--spacing-sm, 8px);
-    border-bottom: 1px solid #eee;
-    transition: background-color var(--transition-fast, 0.2s);
+.majelis-card .member-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 10px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    transition: background-color 0.2s;
 }
 
-.majelis-card .member-item-inline:hover {
-    background-color: white;
+.majelis-card .member-item:hover {
+    background: #e9ecef;
 }
 
-.majelis-card .member-item-inline:last-child {
-    border-bottom: none;
+.majelis-card .member-info {
+    flex: 1;
+    min-width: 0;
 }
 
 .majelis-card .member-name {
+    font-size: 14px;
     font-weight: 600;
     color: #333;
+    margin-bottom: 2px;
 }
 
-.majelis-card .member-details {
-    color: #999;
-    font-size: 11px;
+.majelis-card .member-business {
+    font-size: 12px;
+    color: #666;
 }
 
-.btn-remove-member {
+.majelis-card .btn-remove {
     background: none;
     border: none;
     color: #999;
-    font-size: 20px;
     cursor: pointer;
-    padding: 0 8px;
-    line-height: 1;
-    transition: color 0.2s;
+    padding: 4px;
     display: inline-flex;
     align-items: center;
+    border-radius: 4px;
+    transition: all 0.2s;
 }
 
-.btn-remove-member:hover {
-    color: #e74c3c;
+.majelis-card .btn-remove:hover {
+    background: #fff;
+    color: #dc3545;
+}
+
+.majelis-card .no-members {
+    padding: 20px;
+    text-align: center;
+    color: #999;
+    font-size: 13px;
+    background: #f8f9fa;
+    border-radius: 6px;
 }
 
 .info-row {
@@ -1103,6 +1119,96 @@ textarea:focus {
     display: inline-flex;
     align-items: center;
     gap: 4px;
+}
+
+/* Toast notifications */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease-out;
+    z-index: 10000;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast-success {
+    background: #28a745;
+    color: white;
+}
+
+.toast-error {
+    background: #dc3545;
+    color: white;
+}
+
+.toast-info {
+    background: #17a2b8;
+    color: white;
+}
+
+/* Confirm Dialog */
+.confirm-dialog {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 440px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.confirm-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    background: #fff3cd;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #856404;
+}
+
+.confirm-dialog h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.confirm-dialog p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.confirm-actions .btn {
+    min-width: 100px;
 }
 
 .btn-sm {
@@ -1171,8 +1277,28 @@ textarea:focus {
     padding-top: var(--spacing-md, 12px);
     display: flex;
     gap: var(--spacing-sm, 8px);
-    flex-wrap: wrap;
     border-top: 1px solid #e0e0e0;
+}
+
+.majelis-card .actions .btn {
+    flex: 1;
+    min-width: 100px;
+    justify-content: center;
+}
+
+.majelis-card .actions .btn-text {
+    display: inline;
+}
+
+@media (max-width: 900px) {
+    .majelis-card .actions .btn-text {
+        display: none;
+    }
+    
+    .majelis-card .actions .btn {
+        min-width: 44px;
+        padding: 8px;
+    }
 }
 
 .member-list {

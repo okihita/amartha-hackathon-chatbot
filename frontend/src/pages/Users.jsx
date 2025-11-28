@@ -1,28 +1,34 @@
 import { useState, useEffect } from 'preact/hooks';
 import { route } from 'preact-router';
-import { Check, X, Trash2, Dice5, Trash } from 'lucide-preact';
+import { Check, Trash2, Dice5, Trash, Users as UsersIcon } from 'lucide-preact';
+import Toast from '../components/Toast';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { useFeedback } from '../hooks/useFeedback';
+import { userApi, majelisApi, superadminApi } from '../services/api';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [majelis, setMajelis] = useState([]);
   const [processing, setProcessing] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const { toast, confirmDialog, showToast, showConfirm, clearToast } = useFeedback();
 
   useEffect(() => {
-    fetchUsers();
+    fetchData();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchData = async () => {
     try {
-      const res = await fetch('/api/users');
-      const data = await res.json();
-      setUsers(data);
+      const [usersData, majelisData] = await Promise.all([
+        userApi.getAll(),
+        majelisApi.getAll()
+      ]);
+      setUsers(usersData);
+      setMajelis(majelisData);
     } catch (error) {
-      console.error('Failed to fetch users', error);
-    } finally {
-      setLoading(false);
+      showToast('Failed to fetch data', 'error');
     }
   };
 
@@ -37,8 +43,18 @@ export default function Users() {
   const sortedUsers = [...users].sort((a, b) => {
     if (!sortConfig.key) return 0;
     
-    const aVal = a[sortConfig.key] || '';
-    const bVal = b[sortConfig.key] || '';
+    let aVal, bVal;
+    
+    // Special handling for majelis_name - lookup from majelis array
+    if (sortConfig.key === 'majelis_name') {
+      const aMajelis = a.majelis_id ? majelis.find(m => m.id === a.majelis_id) : null;
+      const bMajelis = b.majelis_id ? majelis.find(m => m.id === b.majelis_id) : null;
+      aVal = aMajelis?.name || '';
+      bVal = bMajelis?.name || '';
+    } else {
+      aVal = a[sortConfig.key] || '';
+      bVal = b[sortConfig.key] || '';
+    }
     
     if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
     if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -48,54 +64,53 @@ export default function Users() {
   const handleVerify = async (phone, status) => {
     setProcessing(phone);
     try {
-      await fetch('/api/users/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, status })
-      });
-      await fetchUsers();
+      await userApi.verify(phone, status);
+      await fetchData();
+      showToast('User verified successfully');
     } catch (error) {
-      console.error('Verification failed', error);
-      alert('Verification failed. Please try again.');
+      showToast(error.message, 'error');
     } finally {
       setProcessing(null);
     }
   };
 
   const handleDelete = async (phone, name) => {
-    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
-
+    const confirmed = await showConfirm({
+      title: 'Delete User',
+      message: `Are you sure you want to delete ${name}? This action cannot be undone.`
+    });
+    
+    if (!confirmed) return;
+    
     setProcessing(phone);
     try {
-      const res = await fetch(`/api/users/${phone}`, { method: 'DELETE' });
-      if (res.ok) {
-        await fetchUsers();
-      } else {
-        alert('Failed to delete user. Please try again.');
-      }
+      await userApi.delete(phone);
+      await fetchData();
+      showToast('User deleted successfully');
     } catch (error) {
-      console.error('Delete failed', error);
-      alert('Delete failed. Please try again.');
+      showToast(error.message, 'error');
     } finally {
       setProcessing(null);
     }
   };
 
   const handlePopulateMockData = async () => {
-    if (!confirm('Populate database with mock users?')) return;
+    const confirmed = await showConfirm({
+      title: 'Populate Mock Data',
+      message: 'This will create 8 mock users in the database. Continue?',
+      confirmText: 'Populate',
+      type: 'primary'
+    });
+    
+    if (!confirmed) return;
     
     setProcessing('mock');
     try {
-      const res = await fetch('/api/superadmin/populate-mock', { method: 'POST' });
-      if (res.ok) {
-        alert('Mock data populated successfully!');
-        await fetchUsers();
-      } else {
-        alert('Failed to populate mock data.');
-      }
+      await superadminApi.populateMockUsers();
+      await fetchData();
+      showToast('Mock data populated successfully!');
     } catch (error) {
-      console.error('Mock population failed', error);
-      alert('Failed to populate mock data.');
+      showToast(error.message, 'error');
     } finally {
       setProcessing(null);
     }
@@ -115,16 +130,11 @@ export default function Users() {
     setProcessing('delete-all');
     setShowDeleteModal(false);
     try {
-      const res = await fetch('/api/superadmin/delete-all-mock', { method: 'DELETE' });
-      if (res.ok) {
-        alert('All mock users deleted successfully!');
-        await fetchUsers();
-      } else {
-        alert('Failed to delete mock users.');
-      }
+      await superadminApi.deleteAllMockUsers();
+      await fetchData();
+      showToast('All mock users deleted successfully!');
     } catch (error) {
-      console.error('Delete all failed', error);
-      alert('Failed to delete mock users.');
+      showToast(error.message, 'error');
     } finally {
       setProcessing(null);
       setDeleteConfirmText('');
@@ -136,15 +146,13 @@ export default function Users() {
     return sortConfig.direction === 'asc' ? '↑' : '↓';
   };
 
-  if (loading) {
-    return <div class="loading">Loading...</div>;
-  }
-
   return (
     <>
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h2 style="margin: 0;">User Management ({users.length})</h2>
+          <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+            <UsersIcon size={24} /> User Management ({users.length})
+          </h2>
           <div style="display: flex; gap: 0.5rem;">
             <button 
               class="btn btn-primary" 
@@ -189,7 +197,7 @@ export default function Users() {
           </thead>
           <tbody>
             {sortedUsers.map(user => {
-              const isAssigned = user.majelis_name !== null;
+              const userMajelis = user.majelis_id ? majelis.find(m => m.id === user.majelis_id) : null;
               return (
                 <tr key={user.phone}>
                   <td><strong><a href={`/user-profile/${user.phone}`} class="user-link">{user.name}</a></strong></td>
@@ -197,8 +205,8 @@ export default function Users() {
                   <td>{user.business_type}</td>
                   <td>{user.location}</td>
                   <td>
-                    <span class={`status ${isAssigned ? 'verified' : 'unassigned'}`}>
-                      {isAssigned ? `📅 ${user.majelis_name}` : '—'}
+                    <span class={`status ${userMajelis ? 'verified' : 'unassigned'}`}>
+                      {userMajelis ? <><UsersIcon size={14} style="display: inline; vertical-align: middle; margin-right: 4px;" />{userMajelis.name}</> : '—'}
                     </span>
                   </td>
                   <td>
@@ -215,14 +223,6 @@ export default function Users() {
                         title="Verify user"
                       >
                         <Check size={16} />
-                      </button>
-                      <button
-                        class="btn btn-icon btn-danger"
-                        onClick={() => handleVerify(user.phone, false)}
-                        disabled={processing === user.phone || user.is_verified === true}
-                        title="Reject user"
-                      >
-                        <X size={16} />
                       </button>
                       <button
                         class="btn btn-icon btn-secondary"
@@ -269,6 +269,9 @@ export default function Users() {
           </div>
         </div>
       )}
+      
+      {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
+      {confirmDialog && <ConfirmDialog {...confirmDialog} />}
     </>
   );
 }

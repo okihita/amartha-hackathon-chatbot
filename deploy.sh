@@ -1,7 +1,16 @@
 #!/bin/bash
 set -e
 
-PROJECT_ID="stellar-zoo-478021-v8"
+# Get project ID from gcloud config
+PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
+if [ -z "$PROJECT_ID" ]; then
+  echo "❌ Error: No GCP project configured. Run: gcloud config set project YOUR_PROJECT_ID"
+  exit 1
+fi
+
+# Get project number for Cloud Run URL
+PROJECT_NUMBER=$(gcloud projects describe ${PROJECT_ID} --format='value(projectNumber)')
+
 REGION="asia-southeast2"
 SERVICE_NAME="whatsapp-bot"
 IMAGE_NAME="asia-southeast2-docker.pkg.dev/${PROJECT_ID}/whatsapp-bot/app:latest"
@@ -27,4 +36,4 @@ gcloud run deploy ${SERVICE_NAME} \
   --quiet
 
 echo "✅ Deployment complete!"
-echo "🌐 URL: https://${SERVICE_NAME}-435783355893.${REGION}.run.app"
+echo "🌐 URL: https://${SERVICE_NAME}-${PROJECT_NUMBER}.${REGION}.run.app"
