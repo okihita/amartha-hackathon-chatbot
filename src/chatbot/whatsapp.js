@@ -93,6 +93,32 @@ async function sendMessageWithVoice(to, text) {
   }
 }
 
+// Strip formatting for clean TTS
+function stripFormatting(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')  // **bold**
+    .replace(/\*(.*?)\*/g, '$1')       // *italic*
+    .replace(/_(.*?)_/g, '$1')         // _underline_
+    .replace(/~(.*?)~/g, '$1')         // ~strikethrough~
+    .replace(/```[\s\S]*?```/g, '')    // code blocks
+    .replace(/`(.*?)`/g, '$1')         // inline code
+    .replace(/^[\•\-\*]\s/gm, '')      // bullet points
+    .replace(/^\d+\.\s/gm, '')         // numbered lists
+    .replace(/\n{3,}/g, '\n\n')        // excessive newlines
+    .trim();
+}
+
+async function sendVoiceOnly(to, text) {
+  const cleanText = stripFormatting(text);
+  const audioUrl = await generateVoice(cleanText);
+  if (audioUrl) {
+    await sendAudio(to, audioUrl);
+  } else {
+    // Fallback to text if TTS fails
+    await sendMessage(to, text);
+  }
+}
+
 // Send interactive list message (for quiz questions)
 async function sendListMessage(to, bodyText, buttonText, options) {
   try {
@@ -136,4 +162,4 @@ async function sendQuizQuestion(to, question, questionNumber, totalQuestions) {
   return sendListMessage(to, bodyText, '📝 Pilih Jawaban', options);
 }
 
-module.exports = { sendMessage, sendAudio, sendMessageWithVoice, generateVoice, sendListMessage, sendQuizQuestion, GRAPH_API_VERSION };
+module.exports = { sendMessage, sendAudio, sendMessageWithVoice, sendVoiceOnly, generateVoice, sendListMessage, sendQuizQuestion, GRAPH_API_VERSION };
