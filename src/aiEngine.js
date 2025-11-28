@@ -96,6 +96,31 @@ async function getGeminiResponse(userText, senderPhone) {
           `💵 Jumlah Cicilan: Rp ${userProfile.next_payment_amount.toLocaleString('id-ID')}`
         : '';
       
+      // Business profile / credit metrics info
+      let businessInfo = '';
+      if (userProfile.credit_score && userProfile.credit_metrics) {
+        const cm = userProfile.credit_metrics;
+        const creditScore = userProfile.credit_score;
+        
+        // Risk level emoji
+        let riskEmoji = '🔴';
+        if (cm.risk_level === 'rendah') riskEmoji = '🟢';
+        else if (cm.risk_level === 'sedang') riskEmoji = '🟡';
+        
+        businessInfo = `\n\n📊 *Profil Bisnis & Kredit:*\n` +
+          `⭐ Skor Kredit: ${creditScore}/100\n` +
+          `${riskEmoji} Risiko: ${cm.risk_level || 'N/A'}\n` +
+          `💼 Kesehatan Bisnis: ${cm.business_health_score || 0}/100\n` +
+          `🏢 Skor Aset: ${cm.asset_score || 0}/100\n` +
+          `💸 Skor Cashflow: ${cm.cashflow_score || 0}/100\n` +
+          `📈 Potensi Pertumbuhan: ${cm.growth_potential || 0}/100\n` +
+          `💰 Total Aset: Rp ${(cm.total_asset_value || 0).toLocaleString('id-ID')}\n` +
+          `📦 Nilai Inventori: Rp ${(cm.total_inventory_value || 0).toLocaleString('id-ID')}\n` +
+          `💵 Est. Cashflow Bulanan: Rp ${(cm.estimated_monthly_cashflow || 0).toLocaleString('id-ID')}\n` +
+          `🎯 Rekomendasi Pinjaman: Rp ${(cm.recommended_loan_amount || 0).toLocaleString('id-ID')}\n` +
+          `📸 Foto Dianalisis: ${cm.data_points || 0} gambar`;
+      }
+      
       return `📊 *Data Profil Anda:*\n\n` +
              `👤 Nama: ${userProfile.name}\n` +
              `🏪 Usaha: ${userProfile.business_type}\n` +
@@ -104,7 +129,8 @@ async function getGeminiResponse(userText, senderPhone) {
              `📚 Modul: ${userProfile.current_module}\n` +
              `📊 Literasi: ${userProfile.literacy_score}\n` +
              `✅ Status: ${userProfile.is_verified ? 'Terverifikasi' : 'Belum Verifikasi'}` +
-             loanInfo;
+             loanInfo +
+             businessInfo;
     }
     
     // 💰 POPULATE LOAN COMMAND (for testing)

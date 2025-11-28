@@ -16,15 +16,6 @@ const visionModel = genAI.getGenerativeModel({
   }
 });
 
-// Model for user-friendly responses
-const chatModel = genAI.getGenerativeModel({ 
-  model: "gemini-2.0-flash-exp",
-  generationConfig: { 
-    maxOutputTokens: 1000, 
-    temperature: 0.4
-  }
-});
-
 async function analyzeImage(imageId, caption, senderPhone) {
   try {
     const userProfile = await getUserContext(senderPhone);
