@@ -59,7 +59,7 @@ export default function UserProfile({ phone }) {
     inactive: 'var(--color-neutral)'
   };
 
-  const maturityStars = (level) => '⭐'.repeat(level) + '☆'.repeat(5 - level);
+  const maturityStars = (level) => '★'.repeat(level) + '☆'.repeat(5 - level);
 
   const literacyProgress = () => {
     if (!data.literacy) return { completed: 0, total: 15, percentage: 0 };
@@ -146,8 +146,8 @@ export default function UserProfile({ phone }) {
                 </div>
                 <div style="font-size: 12px; color: #666;">
                   {data.business.maturity_level < 5 
-                    ? `📈 Next: Level ${data.business.maturity_level + 1} - Tingkatkan omzet & pencatatan`
-                    : '🎉 Level maksimal tercapai!'}
+                    ? `Next: Level ${data.business.maturity_level + 1} - Tingkatkan omzet & pencatatan`
+                    : 'Level maksimal tercapai'}
                 </div>
               </div>
             </div>

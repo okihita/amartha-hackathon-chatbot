@@ -52,13 +52,13 @@ class WebhookController {
           pendingImages.set(phone, message.image.id);
           // Auto-expire after 5 minutes
           setTimeout(() => pendingImages.delete(phone), 5 * 60 * 1000);
-          await sendMessage(phone, "📸 Gambar diterima!\n\nMohon jelaskan foto ini ya Bu. Contoh:\n• \"Ini foto warung saya\"\n• \"Stok barang dagangan\"\n• \"Catatan penjualan hari ini\"\n\nBalas dengan deskripsi agar saya bisa menganalisis dengan tepat. 😊");
+          await sendMessage(phone, "Gambar diterima.\n\nMohon jelaskan foto ini. Contoh:\n- \"Ini foto warung saya\"\n- \"Stok barang dagangan\"\n- \"Catatan penjualan hari ini\"\n\nBalas dengan deskripsi agar saya bisa menganalisis dengan tepat.");
         } else {
           await sendMessage(phone, await analyzeImage(message.image.id, caption, phone));
         }
       },
       audio: async () => {
-        await sendMessage(phone, "Maaf Bu, saat ini saya belum bisa memproses pesan suara. Silakan kirim pesan teks. 😊");
+        await sendMessage(phone, "Maaf, saat ini saya belum bisa memproses pesan suara. Silakan kirim pesan teks.");
       },
       interactive: async () => {
         await this.handleInteractiveMessage(message, phone);
@@ -68,7 +68,7 @@ class WebhookController {
 
     try {
       const handler = handlers[message.type] || (async () => {
-        await sendMessage(phone, "Maaf Bu, saya hanya bisa memproses pesan teks. 😊");
+        await sendMessage(phone, "Maaf, saya hanya bisa memproses pesan teks.");
       });
       await handler();
     } catch (error) {

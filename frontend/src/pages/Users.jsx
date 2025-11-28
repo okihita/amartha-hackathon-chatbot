@@ -260,7 +260,7 @@ export default function Users() {
       {showDeleteModal && (
         <div class="modal-overlay" onClick={() => setShowDeleteModal(false)}>
           <div class="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>⚠️ Delete All Mock Users</h3>
+            <h3><Trash2 size={18} style={{marginRight: '8px', color: '#dc3545'}} />Delete All Mock Users</h3>
             <p>This will permanently delete all mock users from the database.</p>
             <p><strong>Type "delete" to confirm:</strong></p>
             <input 

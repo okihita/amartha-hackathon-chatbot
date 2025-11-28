@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { BookOpen } from 'lucide-preact';
+import { BookOpen, FileText, Lightbulb, CheckCircle } from 'lucide-preact';
 
 const BUSINESS_ICONS = {
   'warung sembako': '🏪', 'kelontong': '🏪', 'warung makan': '🍽️',
@@ -182,8 +182,8 @@ export default function FinancialLiteracy() {
             <div style={{ padding: '16px' }}>
               {/* Bank Soal - Compact Table */}
               <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '10px', color: '#212529', borderBottom: '2px solid #0d6efd', paddingBottom: '5px', display: 'inline-block' }}>
-                  📝 Bank Soal ({selectedWeek.bank_soal?.length || 0})
+                <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '10px', color: '#212529', borderBottom: '2px solid #0d6efd', paddingBottom: '5px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <FileText size={16} /> Bank Soal ({selectedWeek.bank_soal?.length || 0})
                 </h3>
 
                 <div style={{ border: '1px solid #dee2e6', borderRadius: '6px', overflow: 'hidden' }}>
@@ -214,8 +214,8 @@ export default function FinancialLiteracy() {
                             );
                           })}
                           {quiz.explanation && (
-                            <div style={{ marginTop: '6px', padding: '6px 8px', background: '#fff3cd', borderLeft: '3px solid #ffc107', fontSize: '11px', color: '#664d03' }}>
-                              <strong>💡</strong> {replacePlaceholder(quiz.explanation)}
+                            <div style={{ marginTop: '6px', padding: '6px 8px', background: '#fff3cd', borderLeft: '3px solid #ffc107', fontSize: '11px', color: '#664d03', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+                              <Lightbulb size={12} style={{flexShrink: 0, marginTop: '1px'}} /> {replacePlaceholder(quiz.explanation)}
                             </div>
                           )}
                         </div>
@@ -228,8 +228,8 @@ export default function FinancialLiteracy() {
               {/* Indikator Kelulusan */}
               {selectedWeek.indikator_kelulusan && selectedWeek.indikator_kelulusan.length > 0 && (
                 <div style={{ marginBottom: '20px' }}>
-                  <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '10px', color: '#212529', borderBottom: '2px solid #198754', paddingBottom: '5px', display: 'inline-block' }}>
-                    ✅ Indikator Kelulusan
+                  <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '10px', color: '#212529', borderBottom: '2px solid #198754', paddingBottom: '5px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <CheckCircle size={16} /> Indikator Kelulusan
                   </h3>
                   <div style={{ border: '1px solid #dee2e6', borderRadius: '6px', padding: '10px 14px', background: '#f8f9fa' }}>
                     {selectedWeek.indikator_kelulusan.map((item, i) => (

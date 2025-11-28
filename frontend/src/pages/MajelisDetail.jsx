@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import { Calendar, MapPin, Clock, Users, UserCheck, UserX, ChevronLeft, Plus, Save } from 'lucide-preact';
+import { Calendar, MapPin, Clock, Users, UserCheck, UserX, ChevronLeft, Plus, Save, FileText } from 'lucide-preact';
 
 const API_BASE = '/api';
 
@@ -149,7 +149,7 @@ export default function MajelisDetail({ id }) {
       {/* Attendance History */}
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h2 style="margin: 0;">📅 Riwayat Kehadiran</h2>
+          <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;"><Calendar size={20} /> Riwayat Kehadiran</h2>
           <button 
             onClick={() => setShowAddWeek(true)}
             style="padding: 8px 16px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;"
@@ -208,8 +208,8 @@ export default function MajelisDetail({ id }) {
                   </div>
                   
                   {week.notes && (
-                    <div style="font-size: 13px; color: #666; font-style: italic;">
-                      📝 {week.notes}
+                    <div style="font-size: 13px; color: #666; font-style: italic; display: flex; align-items: center; gap: 4px;">
+                      <FileText size={12} /> {week.notes}
                     </div>
                   )}
                 </div>

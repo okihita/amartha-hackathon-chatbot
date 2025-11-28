@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import { Copy, Trash2, RefreshCw, User, Phone } from 'lucide-preact';
+import { Copy, Trash2, RefreshCw, User, Phone, Gamepad2, Smartphone, Users, Clapperboard, Shuffle, RotateCcw, List } from 'lucide-preact';
 
 const API_BASE = '/api';
 
@@ -66,13 +66,13 @@ export default function Demo() {
   return (
     <div style="padding: 20px;">
       <div class="card" style="margin-bottom: 20px;">
-        <h1 style="margin: 0 0 8px 0;">🎮 Demo Mode</h1>
+        <h1 style="margin: 0 0 8px 0; display: flex; align-items: center; gap: 8px;"><Gamepad2 size={28} /> Demo Mode</h1>
         <p style="color: #666; margin: 0;">Commands untuk hackathon judges. Kirim via WhatsApp ke chatbot.</p>
       </div>
 
       {/* How to Use */}
       <div class="card" style="margin-bottom: 20px; background: #fff3e0;">
-        <h2 style="margin: 0 0 12px 0;">📱 Cara Pakai</h2>
+        <h2 style="margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;"><Smartphone size={20} /> Cara Pakai</h2>
         <ol style="margin: 0; padding-left: 20px; line-height: 1.8;">
           <li>Buka WhatsApp, chat ke nomor bot</li>
           <li>Copy command di bawah, kirim ke chat</li>
@@ -84,7 +84,7 @@ export default function Demo() {
 
       {/* Persona Commands */}
       <div class="card" style="margin-bottom: 20px;">
-        <h2 style="margin: 0 0 16px 0;">👤 Persona</h2>
+        <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;"><Users size={20} /> Persona</h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
           {PERSONAS.map(p => (
             <div 
@@ -107,7 +107,7 @@ export default function Demo() {
 
       {/* Scenario Commands */}
       <div class="card" style="margin-bottom: 20px;">
-        <h2 style="margin: 0 0 16px 0;">🎬 Skenario</h2>
+        <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;"><Clapperboard size={20} /> Skenario</h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
           {SCENARIOS.map(s => (
             <div 
@@ -130,7 +130,7 @@ export default function Demo() {
 
       {/* Combination Examples */}
       <div class="card" style="margin-bottom: 20px;">
-        <h2 style="margin: 0 0 16px 0;">🔀 Kombinasi (Persona + Skenario)</h2>
+        <h2 style="margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;"><Shuffle size={20} /> Kombinasi (Persona + Skenario)</h2>
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
           {['/demo:warung+krisis', '/demo:random+lulus', '/demo:makanan+fraud', '/demo:toko+baru'].map(cmd => (
             <button 
@@ -155,7 +155,7 @@ export default function Demo() {
 
       {/* Reset Command */}
       <div class="card" style="margin-bottom: 20px; background: #ffebee;">
-        <h2 style="margin: 0 0 12px 0;">🗑️ Reset</h2>
+        <h2 style="margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;"><RotateCcw size={20} /> Reset</h2>
         <p style="margin: 0 0 12px 0; color: #666;">Hapus semua data demo dari nomor Anda:</p>
         <button 
           onClick={() => copyCommand('/demo:reset')}
@@ -177,7 +177,7 @@ export default function Demo() {
       {/* Demo Users List */}
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h2 style="margin: 0;">📋 Demo Users Created</h2>
+          <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;"><List size={20} /> Demo Users Created</h2>
           <button onClick={fetchDemoUsers} style="padding: 8px 16px; cursor: pointer; border: 1px solid #ddd; border-radius: 4px; background: #fff;">
             <RefreshCw size={16} /> Refresh
           </button>

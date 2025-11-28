@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Briefcase } from 'lucide-preact';
+import { Briefcase, Package, TrendingUp, Target, AlertTriangle, Zap, BarChart3 } from 'lucide-preact';
 
 const BUSINESS_ICONS = {
   'warung sembako': '🏪', 'kelontong': '🏪', 'warung makan': '🍽️',
@@ -66,7 +66,7 @@ export default function BusinessTypes() {
     return (
       <div class="card">
         <div class="empty-state">
-          <div class="empty-state-icon">📦</div>
+          <div class="empty-state-icon"><Package size={48} color="#6c757d" /></div>
           <h3>No Business Types Found</h3>
           <p>Business classifications haven't been imported yet.</p>
         </div>
@@ -183,8 +183,8 @@ export default function BusinessTypes() {
                 </div>
               )}
 
-              <h3 style={{ fontSize: '18px', marginBottom: '16px', color: '#333', borderBottom: '2px solid #f0f0f0', paddingBottom: '8px' }}>
-                📈 Maturity Levels & Roadmap
+              <h3 style={{ fontSize: '18px', marginBottom: '16px', color: '#333', borderBottom: '2px solid #f0f0f0', paddingBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TrendingUp size={20} /> Maturity Levels & Roadmap
               </h3>
 
               {(selectedBusiness.maturity_levels || []).sort((a, b) => a.level - b.level).map((level, idx) => (
@@ -196,7 +196,7 @@ export default function BusinessTypes() {
 
                   {level.character?.length > 0 && (
                     <div style={{ marginBottom: '16px' }}>
-                      <h4 style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>🔍 Karakteristik</h4>
+                      <h4 style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>Karakteristik</h4>
                       <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: '#555' }}>
                         {level.character.map((c, i) => <li key={i}>{c}</li>)}
                       </ul>
@@ -205,11 +205,11 @@ export default function BusinessTypes() {
 
                   {(level.swot?.strengths?.length > 0 || level.swot?.weaknesses?.length > 0 || level.swot?.opportunities?.length > 0 || level.swot?.threats?.length > 0) && (
                     <div style={{ marginBottom: '16px' }}>
-                      <h4 style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>📊 SWOT Analysis</h4>
+                      <h4 style={{ fontSize: '14px', color: '#666', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}><BarChart3 size={14} /> SWOT Analysis</h4>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         {level.swot?.strengths?.length > 0 && (
                           <div style={{ background: '#e3f2fd', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #2196f3' }}>
-                            <strong style={{ color: '#1976d2', display: 'block', marginBottom: '6px', fontSize: '13px' }}>💪 Strengths</strong>
+                            <strong style={{ color: '#1976d2', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', fontSize: '13px' }}><Zap size={12} /> Strengths</strong>
                             <ul style={{ margin: 0, paddingLeft: '15px', fontSize: '12px' }}>
                               {level.swot.strengths.map((s, i) => <li key={i}>{s}</li>)}
                             </ul>
@@ -217,7 +217,7 @@ export default function BusinessTypes() {
                         )}
                         {level.swot?.weaknesses?.length > 0 && (
                           <div style={{ background: '#ffebee', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #f44336' }}>
-                            <strong style={{ color: '#c62828', display: 'block', marginBottom: '6px', fontSize: '13px' }}>⚠️ Weaknesses</strong>
+                            <strong style={{ color: '#c62828', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', fontSize: '13px' }}><AlertTriangle size={12} /> Weaknesses</strong>
                             <ul style={{ margin: 0, paddingLeft: '15px', fontSize: '12px' }}>
                               {level.swot.weaknesses.map((s, i) => <li key={i}>{s}</li>)}
                             </ul>
@@ -225,7 +225,7 @@ export default function BusinessTypes() {
                         )}
                         {level.swot?.opportunities?.length > 0 && (
                           <div style={{ background: '#e8f5e9', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #4caf50' }}>
-                            <strong style={{ color: '#2e7d32', display: 'block', marginBottom: '6px', fontSize: '13px' }}>🎯 Opportunities</strong>
+                            <strong style={{ color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', fontSize: '13px' }}><Target size={12} /> Opportunities</strong>
                             <ul style={{ margin: 0, paddingLeft: '15px', fontSize: '12px' }}>
                               {level.swot.opportunities.map((s, i) => <li key={i}>{s}</li>)}
                             </ul>
@@ -233,7 +233,7 @@ export default function BusinessTypes() {
                         )}
                         {level.swot?.threats?.length > 0 && (
                           <div style={{ background: '#fff8e1', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #ff9800' }}>
-                            <strong style={{ color: '#e65100', display: 'block', marginBottom: '6px', fontSize: '13px' }}>⚡ Threats</strong>
+                            <strong style={{ color: '#e65100', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', fontSize: '13px' }}><AlertTriangle size={12} /> Threats</strong>
                             <ul style={{ margin: 0, paddingLeft: '15px', fontSize: '12px' }}>
                               {level.swot.threats.map((s, i) => <li key={i}>{s}</li>)}
                             </ul>
@@ -245,7 +245,7 @@ export default function BusinessTypes() {
 
                   {(level.roadmap?.description || level.roadmap?.kpis?.length > 0) && (
                     <div style={{ background: 'white', padding: '15px', borderRadius: '8px', border: '1px dashed #ccc' }}>
-                      <h4 style={{ fontSize: '14px', color: '#333', marginBottom: '8px' }}>🚀 How to Level Up</h4>
+                      <h4 style={{ fontSize: '14px', color: '#333', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}><TrendingUp size={14} /> How to Level Up</h4>
                       {level.roadmap?.description && <p style={{ fontSize: '13px', color: '#555', marginBottom: '10px', fontStyle: 'italic' }}>{level.roadmap.description}</p>}
                       {level.roadmap?.kpis?.length > 0 && (
                         <div>
