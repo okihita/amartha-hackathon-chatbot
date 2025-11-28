@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Majelis - Amartha Dashboard</title>
+    <script src="/layout.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; color: #333; margin-bottom: 10px; }
+        .nav { display: flex; gap: 15px; margin-top: 10px; }
+        .nav a { padding: 8px 16px; background: #f0f0f0; border-radius: 4px; text-decoration: none; color: #333; font-weight: 500; transition: all 0.2s; }
+        .nav a:hover { background: #e0e0e0; }
+        .nav a.active { background: #007bff; color: white; }
+        .admin-badge { background: #f0f0f0; padding: 8px 16px; border-radius: 4px; font-size: 14px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .card h2 { font-size: 18px; margin-bottom: 20px; color: #333; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .majelis-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .majelis-card { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; }
+        .majelis-card h3 { font-size: 16px; margin-bottom: 10px; color: #333; }
+        .majelis-card p { font-size: 14px; color: #666; margin-bottom: 5px; }
+        .majelis-card .members { font-size: 12px; color: #999; margin-top: 10px; }
+        .majelis-card .actions { margin-top: 15px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-content h2 { margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .form-group textarea { min-height: 80px; }
+        .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .member-list { max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; }
+        .member-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+        .member-item:last-child { border-bottom: none; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🏦 Amartha Admin Dashboard</h1>
+                <div class="nav">
+                    <a href="/">👥 Users</a>
+                    <a href="/majelis" class="active">📅 Majelis</a>
+                </div>
+            </div>
+            <div class="admin-badge">Admin: <strong>Petugas Lapangan</strong></div>
+        </div>
+        
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Majelis Groups</h2>
+                <button class="btn btn-primary" onclick="openCreateModal()">+ Create Majelis</button>
+            </div>
+            
+            <div id="loading" class="loading">Loading...</div>
+            <div id="majelisGrid" class="majelis-grid" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="majelisModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Create Majelis</h2>
+            <form id="majelisForm">
+                <input type="hidden" id="majelisId">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="majelisName" required placeholder="e.g., Majelis Sragen A">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="majelisDescription" placeholder="Optional description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Schedule Day *</label>
+                    <select id="majelisDay" required>
+                        <option value="">Select day</option>
+                        <option value="Senin">Senin</option>
+                        <option value="Selasa">Selasa</option>
+                        <option value="Rabu">Rabu</option>
+                        <option value="Kamis">Kamis</option>
+                        <option value="Jumat">Jumat</option>
+                        <option value="Sabtu">Sabtu</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Schedule Time</label>
+                    <input type="time" id="majelisTime" value="10:00">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="majelisLocation" placeholder="e.g., Balai Desa Sragen">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Members Modal -->
+    <div id="membersModal" class="modal">
+        <div class="modal-content">
+            <h2>Manage Members</h2>
+            <p id="membersModalTitle" style="color: #666; margin-bottom: 20px;"></p>
+            
+            <div class="form-group">
+                <label>Add Member (Phone Number)</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="newMemberPhone" placeholder="628xxx">
+                    <button class="btn btn-success" onclick="addMember()">Add</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Current Members</label>
+                <div id="memberList" class="member-list"></div>
+            </div>
+            
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="closeMembersModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMajelisId = null;
+        let allUsers = [];
+
+        async function fetchMajelis() {
+            try {
+                const res = await fetch('/api/majelis');
+                const majelis = await res.json();
+                renderMajelis(majelis);
+            } catch (error) {
+                console.error('Failed to fetch majelis', error);
+                document.getElementById('loading').textContent = 'Error loading majelis';
+            }
+        }
+
+        async function fetchUsers() {
+            try {
+                const res = await fetch('/api/users');
+                allUsers = await res.json();
+            } catch (error) {
+                console.error('Failed to fetch users', error);
+            }
+        }
+
+        function renderMajelis(majelis) {
+            const grid = document.getElementById('majelisGrid');
+            const loading = document.getElementById('loading');
+            
+            loading.style.display = 'none';
+            grid.style.display = 'grid';
+            
+            if (majelis.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No majelis yet. Create one!</p>';
+                return;
+            }
+            
+            grid.innerHTML = majelis.map(m => `
+                <div class="majelis-card">
+                    <h3>${m.name}</h3>
+                    <p>📅 ${m.schedule_day} at ${m.schedule_time}</p>
+                    <p>📍 ${m.location || 'No location set'}</p>
+                    <p style="font-size: 13px; color: #666; margin-top: 10px;">${m.description || 'No description'}</p>
+                    <div class="members">👥 ${m.members?.length || 0} members</div>
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="openMembersModal('${m.id}', '${m.name}')">Members</button>
+                        <button class="btn btn-secondary" onclick="openEditModal('${m.id}')">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteMajelis('${m.id}', '${m.name}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCreateModal() {
+            document.getElementById('modalTitle').textContent = 'Create Majelis';
+            document.getElementById('majelisForm').reset();
+            document.getElementById('majelisId').value = '';
+            document.getElementById('majelisModal').classList.add('active');
+        }
+
+        async function openEditModal(id) {
+            try {
+                const res = await fetch(`/api/majelis/${id}`);
+                const majelis = await res.json();
+                
+                document.getElementById('modalTitle').textContent = 'Edit Majelis';
+                document.getElementById('majelisId').value = id;
+                document.getElementById('majelisName').value = majelis.name;
+                document.getElementById('majelisDescription').value = majelis.description || '';
+                document.getElementById('majelisDay').value = majelis.schedule_day;
+                document.getElementById('majelisTime').value = majelis.schedule_time;
+                document.getElementById('majelisLocation').value = majelis.location || '';
+                document.getElementById('majelisModal').classList.add('active');
+            } catch (error) {
+                alert('Failed to load majelis');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('majelisModal').classList.remove('active');
+        }
+
+        document.getElementById('majelisForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('majelisId').value;
+            const data = {
+                name: document.getElementById('majelisName').value,
+                description: document.getElementById('majelisDescription').value,
+                schedule_day: document.getElementById('majelisDay').value,
+                schedule_time: document.getElementById('majelisTime').value,
+                location: document.getElementById('majelisLocation').value,
+            };
+            
+            try {
+                if (id) {
+                    await fetch(`/api/majelis/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    await fetch('/api/majelis', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+                closeModal();
+                await fetchMajelis();
+            } catch (error) {
+                alert('Failed to save majelis');
+            }
+        });
+
+        async function deleteMajelis(id, name) {
+            if (!confirm(`Delete ${name}?`)) return;
+            
+            try {
+                await fetch(`/api/majelis/${id}`, { method: 'DELETE' });
+                await fetchMajelis();
+            } catch (error) {
+                alert('Failed to delete majelis');
+            }
+        }
+
+        async function openMembersModal(id, name) {
+            currentMajelisId = id;
+            document.getElementById('membersModalTitle').textContent = name;
+            document.getElementById('membersModal').classList.add('active');
+            await loadMembers(id);
+        }
+
+        function closeMembersModal() {
+            document.getElementById('membersModal').classList.remove('active');
+            currentMajelisId = null;
+        }
+
+        async function loadMembers(id) {
+            try {
+                const res = await fetch(`/api/majelis/${id}`);
+                const majelis = await res.json();
+                
+                const memberList = document.getElementById('memberList');
+                if (!majelis.members || majelis.members.length === 0) {
+                    memberList.innerHTML = '<p style="text-align: center; color: #999;">No members yet</p>';
+                    return;
+                }
+                
+                memberList.innerHTML = majelis.members.map(phone => {
+                    const user = allUsers.find(u => u.phone === phone);
+                    const name = user ? user.name : phone;
+                    return `
+                        <div class="member-item">
+                            <span>${name} (${phone})</span>
+                            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="removeMember('${phone}')">Remove</button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load members', error);
+            }
+        }
+
+        async function addMember() {
+            const phone = document.getElementById('newMemberPhone').value.trim();
+            if (!phone) {
+                alert('Please enter a phone number');
+                return;
+            }
+            
+            try {
+                await fetch(`/api/majelis/${currentMajelisId}/members`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                document.getElementById('newMemberPhone').value = '';
+                await loadMembers(currentMajelisId);
+                await fetchMajelis();
+            } catch (error) {
+                alert('Failed to add member');
+            }
+        }
+
+        async function removeMember(phone) {
+            if (!confirm(`Remove ${phone} from this majelis?`)) return;
+            
+            try {
+                await fetch(`/api/majelis/${currentMajelisId}/members/${phone}`, {
+                    method: 'DELETE'
+                });
+                await loadMembers(currentMajelisId);
+                await fetchMajelis();
+            } catch (error) {
+                alert('Failed to remove member');
+            }
+        }
+
+        // Load data on page load
+        fetchUsers();
+        fetchMajelis();
+    </script>
+</body>
+</html>

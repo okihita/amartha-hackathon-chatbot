@@ -26,6 +26,11 @@ app.use(cors()); // Enable CORS for Dashboard
 // --- SERVE STATIC DASHBOARD ---
 app.use(express.static(path.join(__dirname, 'public')));
 
+// --- SERVE HTML PAGES WITHOUT EXTENSION ---
+app.get('/majelis', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/majelis'));
+});
+
 // --- HEALTH CHECK ---
 app.get('/health', (req, res) => res.status(200).send('🤖 Akademi-AI (Modular) is Online!'));
 
