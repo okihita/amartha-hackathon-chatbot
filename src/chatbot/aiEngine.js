@@ -18,16 +18,18 @@ const BUSINESS_CATEGORIES = [
   'Toko Kosmetik', 'Usaha Kue/Roti', 'Jasa Cuci Motor/Mobil', 'Toko Mainan', 'Usaha Catering', 'Lainnya'
 ];
 
+const BUSINESS_CATEGORIES_NUMBERED = BUSINESS_CATEGORIES.map((c, i) => `${i + 1}. ${c}`).join('\n');
+
 const registerUserTool = {
   name: "registerUser",
-  description: "Registers a new user with their name, gender, business name, category, and location.",
+  description: "Registers a new user with their name, gender, business name, category, and location. Only call this when business_category matches one of the allowed categories.",
   parameters: {
     type: "OBJECT",
     properties: {
       name: { type: "STRING", description: "The user's name without honorific (e.g., Siti, Budi, Ahmad)" },
       gender: { type: "STRING", description: "User's gender: 'female' or 'male'. Infer from name or context." },
       business_name: { type: "STRING", description: "Name of business (e.g., Warung Sembako Siti, Toko Bakso Pak Budi)" },
-      business_category: { type: "STRING", description: `Business category. Must be one of: ${BUSINESS_CATEGORIES.join(', ')}` },
+      business_category: { type: "STRING", description: `Business category. MUST be EXACTLY one of these 25 options: ${BUSINESS_CATEGORIES.join(', ')}. If user's business doesn't fit, use 'Lainnya'.` },
       business_location: { type: "STRING", description: "City or Village (e.g., Bogor, Ciseeng)" },
     },
     required: ["name", "gender", "business_name", "business_category", "business_location"],
@@ -211,17 +213,27 @@ Jangan lupa hadir ya ${honorific}.`;
       PERAN: Akademi-AI, asisten pendaftaran Amartha untuk program literasi keuangan UMKM.
       TUGAS: Kamu sedang berbicara dengan pengguna BARU (belum terdaftar).
       
-      BATASAN TOPIK:
-      - HANYA jawab tentang: pendaftaran Amartha, literasi keuangan, UMKM, bisnis
-      - TOLAK topik: politik, agama, gosip, hal pribadi, permintaan tidak pantas
-      - Jika topik di luar scope, jawab: "Maaf Bu, saya hanya bisa membantu pendaftaran dan literasi keuangan Amartha. Ada yang bisa saya bantu terkait usaha Anda?"
+      JIKA USER MENYAPA (halo, hi, hello, test, ping, tes, dll):
+      Balas dengan menu:
+      "*Selamat datang di Akademi-AI Amartha!*
+      
+      Saya bisa membantu Anda:
+      1. *DAFTAR* - Daftar program literasi keuangan
+      2. *INFO* - Informasi tentang Amartha
+      
+      Untuk mendaftar, silakan berikan: Nama, Jenis Usaha, dan Lokasi.
+      Contoh: Nama saya Siti, usaha warung sembako di Bogor"
       
       INSTRUKSI PENDAFTARAN:
-      1. Jika user BELUM memberikan data, minta: Nama, Jenis Usaha, dan Lokasi.
-         Contoh: "Untuk mendaftar, mohon berikan: Nama, Jenis Usaha, dan Lokasi. Contoh: Nama saya Siti, usaha warung sembako di Bogor"
-      2. Jika user SUDAH memberikan Nama DAN Jenis Usaha DAN Lokasi, WAJIB panggil tool 'registerUser'.
-      3. JANGAN minta konfirmasi lagi. LANGSUNG PANGGIL TOOL.
-      4. Setelah tool dipanggil, ucapkan terima kasih dan beritahu menunggu verifikasi petugas.
+      1. Jika user BELUM memberikan data lengkap, minta: Nama, Jenis Usaha, dan Lokasi.
+      2. Jika user memberikan jenis usaha yang TIDAK ADA di daftar kategori, tanyakan ulang dengan menampilkan daftar kategori dalam format bernomor.
+      3. Jika user SUDAH memberikan Nama DAN Jenis Usaha (yang valid) DAN Lokasi, WAJIB panggil tool 'registerUser'.
+      4. JANGAN minta konfirmasi lagi. LANGSUNG PANGGIL TOOL.
+      
+      DAFTAR KATEGORI USAHA (jika perlu ditampilkan):
+${BUSINESS_CATEGORIES_NUMBERED}
+      
+      Jika usaha user tidak cocok dengan kategori manapun, gunakan "Lainnya".
       `;
     } else {
       // 🔵 EXISTING USER FLOW
