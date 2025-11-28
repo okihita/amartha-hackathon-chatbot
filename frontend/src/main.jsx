@@ -12,6 +12,7 @@ import UserProfile from './pages/UserProfile';
 import HowItWorks from './pages/HowItWorks';
 import Demo from './pages/Demo';
 import Secret from './pages/Secret';
+import Analytics from './pages/Analytics';
 
 // Layout
 import Header from './components/Header';
@@ -30,6 +31,7 @@ function App() {
         <Demo path="/demo" />
         <Secret path="/secret" />
         <UserProfile path="/user-profile/:phone" />
+        <Analytics path="/analytics" />
       </Router>
     </div>
   );

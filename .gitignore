@@ -8,3 +8,7 @@ npm-debug.log*
 .gcloudignore
 service-account-key.json
 server.pid
+
+# Hackathon dataset (large files)
+docs/dataset/
+*.csv

@@ -28,6 +28,7 @@ const userRoutes = require('./src/routes/userRoutes');
 const majelisRoutes = require('./src/routes/majelisRoutes');
 const superadminRoutes = require('./src/routes/superadminRoutes');
 const ragRoutes = require('./src/routes/ragRoutes');
+const analyticsRoutes = require('./src/routes/analyticsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -75,7 +76,7 @@ app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // Frontend SPA routes
-const dashboardRoutes = ['/', '/majelis', '/majelis/:id', '/business-types', '/financial-literacy', '/how-it-works', '/demo', '/secret', '/user-profile/:phone'];
+const dashboardRoutes = ['/', '/majelis', '/majelis/:id', '/business-types', '/financial-literacy', '/how-it-works', '/demo', '/secret', '/user-profile/:phone', '/analytics'];
 dashboardRoutes.forEach(route => {
   app.get(route, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -91,5 +92,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/majelis', majelisRoutes);
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api', ragRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 app.listen(PORT, () => console.log(`🚀 Server listening on ${PORT}`));

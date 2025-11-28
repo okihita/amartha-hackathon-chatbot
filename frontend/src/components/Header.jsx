@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Users, UsersRound, Briefcase, BookOpen, HelpCircle, Gamepad2 } from 'lucide-preact';
+import { Users, UsersRound, Briefcase, BookOpen, HelpCircle, Gamepad2, BarChart3 } from 'lucide-preact';
 
 export default function Header() {
   const [currentPath, setCurrentPath] = useState('');
@@ -51,6 +51,14 @@ export default function Header() {
               onClick={(e) => handleNavClick(e, '/majelis')}
             >
               <UsersRound size={16} /> Majelis
+            </a>
+            <a
+              href="/analytics"
+              class={currentPath === '/analytics' ? 'active' : ''}
+              onClick={(e) => handleNavClick(e, '/analytics')}
+              style="background: linear-gradient(135deg, rgba(249, 207, 121, 0.2) 0%, rgba(249, 207, 121, 0.1) 100%); border: 1px solid rgba(249, 207, 121, 0.3);"
+            >
+              <BarChart3 size={16} /> Analytics ✨
             </a>
             <a
               href="/business-types"
