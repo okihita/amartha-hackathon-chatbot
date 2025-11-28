@@ -23,31 +23,15 @@ const MY_VERIFY_TOKEN = process.env.MY_VERIFY_TOKEN;
 app.use(bodyParser.json());
 app.use(cors()); // Enable CORS for Dashboard
 
-// --- SERVE MAJELIS PAGE (before static middleware) ---
-app.get('/majelis', (req, res) => {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.sendFile(path.join(__dirname, 'public/majelis.html'));
-});
-
-// --- SERVE BUSINESS TYPES PAGE (before static middleware) ---
-app.get('/business-types', (req, res) => {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.sendFile(path.join(__dirname, 'public/business-types.html'));
-});
-
-// --- SERVE FINANCIAL LITERACY PAGE (before static middleware) ---
-app.get('/financial-literacy', (req, res) => {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.sendFile(path.join(__dirname, 'public/financial-literacy.html'));
+// --- SERVE FRONTEND (SPA) ---
+// Serve the Vite-built frontend for all dashboard routes
+const dashboardRoutes = ['/', '/majelis', '/business-types', '/financial-literacy', '/user-profile/:phone'];
+dashboardRoutes.forEach(route => {
+  app.get(route, (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.sendFile(path.join(__dirname, 'public/frontend/index.html'));
+  });
 });
 
 // --- HEALTH CHECK ---
