@@ -18,6 +18,8 @@ class User {
       dob: data.dob || null,
       gender: data.gender || null,
       address: data.address || null,
+      home_lat: data.home_lat || null,
+      home_lng: data.home_lng || null,
       created_at: now,
       updated_at: now
     };
@@ -43,6 +45,8 @@ class User {
     return {
       name: data.business_name || null,
       location: data.business_location || data.location || null,
+      business_lat: data.business_lat || null,
+      business_lng: data.business_lng || null,
       category_id: categoryId,
       category: categoryName,
       maturity_level: 1, // Always start at level 1

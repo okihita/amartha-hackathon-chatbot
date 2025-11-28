@@ -1,5 +1,5 @@
 const { getGeminiResponse } = require('../chatbot/aiEngine');
-const { sendMessage, sendQuizQuestion } = require('../chatbot/whatsapp');
+const { sendMessage, sendMessageWithVoice, sendQuizQuestion } = require('../chatbot/whatsapp');
 const { analyzeImage } = require('../chatbot/imageAnalyzer');
 const { transcribeVoiceNote } = require('../chatbot/voiceParser');
 const QuizService = require('../services/QuizService');
@@ -93,7 +93,7 @@ class WebhookController {
           await sendMessage(phone, await analyzeImage(imageId, text, phone));
         } else {
           const response = await getGeminiResponse(text, phone);
-          if (response) await sendMessage(phone, response);
+          if (response) await sendMessageWithVoice(phone, response);
         }
       },
       interactive: async () => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Building2, Users, UsersRound, Briefcase, BookOpen, UserCircle, HelpCircle, Gamepad2 } from 'lucide-preact';
+import { Users, UsersRound, Briefcase, BookOpen, HelpCircle, Gamepad2 } from 'lucide-preact';
 
 export default function Header() {
   const [currentPath, setCurrentPath] = useState('');
@@ -33,8 +33,9 @@ export default function Header() {
     <div class="header">
       <div class="header-content">
         <div>
-          <h1 style="display: flex; align-items: center; gap: 10px;">
-            <Building2 size={28} /> Amartha Admin Dashboard
+          <h1 style="display: flex; align-items: center; gap: 12px;">
+            <img src="/assets/logo.png" alt="Amartha" style="height: 36px; width: auto;" />
+            Admin Dashboard
           </h1>
           <div class="nav">
             <a
@@ -76,14 +77,13 @@ export default function Header() {
               href="/demo"
               class={currentPath === '/demo' ? 'active' : ''}
               onClick={(e) => handleNavClick(e, '/demo')}
-              style="background: #ff9800; color: white; border-radius: 4px;"
             >
               <Gamepad2 size={16} /> Demo
             </a>
           </div>
         </div>
-        <div class="admin-badge" style="display: flex; align-items: center; gap: 6px;">
-          <UserCircle size={18} /> Admin: <strong>Petugas Lapangan</strong>
+        <div class="admin-badge">
+          <span>👤</span> Admin: <strong>Petugas Lapangan</strong>
         </div>
       </div>
     </div>

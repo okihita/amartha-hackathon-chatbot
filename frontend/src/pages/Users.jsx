@@ -9,6 +9,7 @@ import { userApi, majelisApi, superadminApi } from '../services/api';
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [majelis, setMajelis] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -20,6 +21,7 @@ export default function Users() {
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const [usersData, majelisData] = await Promise.all([
         userApi.getAll(),
@@ -30,6 +32,7 @@ export default function Users() {
     } catch (error) {
       showToast('Failed to fetch data', 'error');
     }
+    setLoading(false);
   };
 
   const handleSort = (key) => {
@@ -158,14 +161,16 @@ export default function Users() {
               const mockCount = users.filter(u => u.is_mock).length;
               return (
                 <>
-                  <button 
-                    class="btn btn-primary" 
-                    onClick={handlePopulateMockData}
-                    disabled={processing === 'mock' || mockCount > 0}
-                    title={mockCount > 0 ? 'Mock users already exist' : ''}
-                  >
-                    <Dice5 size={16} /> Populate Mock Data
-                  </button>
+                  {!loading && (
+                    <button 
+                      class="btn btn-primary" 
+                      onClick={handlePopulateMockData}
+                      disabled={processing === 'mock' || mockCount > 0}
+                      title={mockCount > 0 ? 'Mock users already exist' : ''}
+                    >
+                      <Dice5 size={16} /> Populate Mock Data
+                    </button>
+                  )}
                   <button 
                     class="btn btn-danger" 
                     onClick={handleDeleteAllMock}

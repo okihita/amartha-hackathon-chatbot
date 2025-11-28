@@ -72,6 +72,7 @@ app.get('/api/events/:phone', (req, res) => {
 
 // Static assets
 app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // Frontend SPA routes
 const dashboardRoutes = ['/', '/majelis', '/majelis/:id', '/business-types', '/financial-literacy', '/how-it-works', '/demo', '/secret', '/user-profile/:phone'];

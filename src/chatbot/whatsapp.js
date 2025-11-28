@@ -1,8 +1,15 @@
 const axios = require('axios');
+const textToSpeech = require('@google-cloud/text-to-speech');
+const { Storage } = require('@google-cloud/storage');
 
 const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
+const GCS_BUCKET = process.env.GCS_BUCKET;
 const GRAPH_API_VERSION = 'v24.0';
+
+// Initialize TTS and Storage clients
+const ttsClient = new textToSpeech.TextToSpeechClient();
+const storage = new Storage();
 
 async function sendMessage(to, text) {
   try {
@@ -23,6 +30,66 @@ async function sendMessage(to, text) {
     );
   } catch (error) {
     console.error('❌ Send Failed:', error.message);
+  }
+}
+
+async function sendAudio(to, audioUrl) {
+  try {
+    await axios.post(
+      `https://graph.facebook.com/${GRAPH_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
+      {
+        messaging_product: 'whatsapp',
+        to,
+        type: 'audio',
+        audio: { link: audioUrl }
+      },
+      { headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` } }
+    );
+  } catch (error) {
+    console.error('❌ Audio Send Failed:', error.message);
+  }
+}
+
+async function generateVoice(text) {
+  if (!GCS_BUCKET) {
+    console.warn('⚠️ GCS_BUCKET not set, skipping voice generation');
+    return null;
+  }
+  
+  try {
+    const ttsText = text.length > 500 ? text.substring(0, 500) + '...' : text;
+    
+    const [response] = await ttsClient.synthesizeSpeech({
+      input: { text: ttsText },
+      voice: { languageCode: 'id-ID', name: 'id-ID-Wavenet-D' }, // Female voice, warmer tone
+      audioConfig: { 
+        audioEncoding: 'OGG_OPUS',
+        speakingRate: 1.15, // Slightly faster (0.25-4.0, default 1.0)
+        pitch: 1.0, // Natural pitch (-20 to 20)
+      },
+    });
+
+    const filename = `voice/${Date.now()}.ogg`;
+    const bucket = storage.bucket(GCS_BUCKET);
+    const file = bucket.file(filename);
+    
+    await file.save(response.audioContent, { contentType: 'audio/ogg' });
+
+    return `https://storage.googleapis.com/${GCS_BUCKET}/${filename}`;
+  } catch (error) {
+    console.error('❌ TTS Failed:', error.message);
+    return null;
+  }
+}
+
+async function sendMessageWithVoice(to, text) {
+  // Send text first, wait for completion
+  await sendMessage(to, text);
+  
+  // Then generate and send audio
+  const audioUrl = await generateVoice(text);
+  if (audioUrl) {
+    await sendAudio(to, audioUrl);
   }
 }
 
@@ -69,4 +136,4 @@ async function sendQuizQuestion(to, question, questionNumber, totalQuestions) {
   return sendListMessage(to, bodyText, '📝 Pilih Jawaban', options);
 }
 
-module.exports = { sendMessage, sendListMessage, sendQuizQuestion, GRAPH_API_VERSION };
+module.exports = { sendMessage, sendAudio, sendMessageWithVoice, generateVoice, sendListMessage, sendQuizQuestion, GRAPH_API_VERSION };
