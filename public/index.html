@@ -241,7 +241,10 @@
             
             // Business profile section with credit metrics
             let businessProfileSection = '';
-            if (user.credit_metrics) {
+            console.log('User credit_metrics:', user.credit_metrics); // Debug
+            console.log('User credit_score:', user.credit_score); // Debug
+            
+            if (user.credit_metrics && user.credit_score) {
                 const cm = user.credit_metrics;
                 const creditScore = user.credit_score || 0;
                 
@@ -313,6 +316,23 @@
                             <span class="profile-label">Last Updated</span>
                             <span class="profile-value">${cm.last_updated ? new Date(cm.last_updated).toLocaleDateString('id-ID') : 'N/A'}</span>
                         </div>
+                    </div>
+                `;
+            } else {
+                // Show placeholder if no business intelligence data yet
+                businessProfileSection = `
+                    <div class="profile-section">
+                        <h3>📊 Business Profile</h3>
+                        <p style="color: #999; font-size: 13px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                            📸 No business data yet. User needs to send photos of their business (building, inventory) via WhatsApp for AI analysis.
+                        </p>
+                        <p style="color: #666; font-size: 12px; margin-top: 10px;">
+                            Once analyzed, this section will show:
+                            <br>• Credit score and risk assessment
+                            <br>• Asset and inventory values
+                            <br>• Cashflow estimates
+                            <br>• Loan recommendations
+                        </p>
                     </div>
                 `;
             }

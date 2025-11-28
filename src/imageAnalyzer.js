@@ -199,10 +199,12 @@ async function extractBusinessIntelligence(imagePart, userProfile, caption) {
 async function generateUserResponse(structuredData, userProfile) {
   // If not relevant, return polite rejection
   if (!structuredData.is_relevant || structuredData.category === 'irrelevant') {
-    return `Maaf Bu ${userProfile.name}, gambar ini sepertinya bukan foto bisnis. 😊
+    return `❌ *Gambar Tidak Disimpan*
+
+Maaf Bu ${userProfile.name}, gambar ini sepertinya bukan foto bisnis. �
 
 Saya bisa membantu menganalisis:
-📸 Foto toko/warung Ibu
+� Fotoo toko/warung Ibu
 📦 Foto stok barang/inventori
 📒 Foto buku kas atau nota
 
@@ -218,7 +220,14 @@ Silakan kirim foto bisnis Ibu untuk analisis yang lebih bermanfaat!`;
   
   const categoryLabel = categoryLabels[structuredData.category] || '📊 Analisis Bisnis';
   
-  let response = `✅ *${categoryLabel} - Teranalisis!*\n\n`;
+  // Determine if image was stored
+  const isImageStored = ['building', 'inventory'].includes(structuredData.category);
+  const storageStatus = isImageStored 
+    ? '✅ *Foto disimpan di profil bisnis Ibu*' 
+    : '📊 *Data keuangan dianalisis (foto tidak disimpan)*';
+  
+  let response = `✅ *${categoryLabel} - Teranalisis!*\n`;
+  response += `${storageStatus}\n\n`;
   response += `👤 ${userProfile.name} (${userProfile.business_type})\n\n`;
   
   // Add insights
@@ -252,12 +261,16 @@ Silakan kirim foto bisnis Ibu untuk analisis yang lebih bermanfaat!`;
     response += `\n`;
   }
   
-  // Add profile update notification for verified users
-  if (userProfile.is_verified && ['building', 'inventory'].includes(structuredData.category)) {
-    response += `\n✨ *Profil bisnis Ibu telah diperbarui dengan data aset dan prediksi cashflow!*\n`;
+  // Add storage info
+  if (isImageStored) {
+    response += `📸 *Foto Ibu sudah tersimpan!*\n`;
+    response += `Petugas lapangan bisa melihat foto ini di dashboard.\n\n`;
+  } else {
+    response += `📊 *Data keuangan Ibu sudah dianalisis!*\n`;
+    response += `Informasi ini membantu perhitungan kredit Ibu.\n\n`;
   }
   
-  response += `\n📸 Kirim foto bisnis lainnya untuk analisis lebih lengkap!`;
+  response += `📸 Kirim foto bisnis lainnya untuk analisis lebih lengkap!`;
   
   return response;
 }
