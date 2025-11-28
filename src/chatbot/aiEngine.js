@@ -7,7 +7,7 @@ const { retrieveKnowledge } = require('./knowledge');
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-const FALLBACK_MESSAGE = "Maaf Ibu, sinyal AI sedang gangguan. Mohon tanya ulang ya.";
+const FALLBACK_MESSAGE = "Maaf Bu, sinyal AI sedang gangguan. Mohon tanya ulang ya.";
 
 // ✨ TOOL DEFINITION
 const registerUserTool = {
@@ -16,7 +16,7 @@ const registerUserTool = {
   parameters: {
     type: "OBJECT",
     properties: {
-      name: { type: "STRING", description: "The user's name (e.g., Ibu Siti)" },
+      name: { type: "STRING", description: "The user's name (e.g., Siti, Budi)" },
       business_name: { type: "STRING", description: "Name of business (e.g., Warung Sembako Siti, Toko Bakso Pak Budi)" },
       business_location: { type: "STRING", description: "City or Village (e.g., Bogor, Ciseeng)" },
     },
@@ -113,10 +113,10 @@ Atau langsung tanya apa saja soal usaha! 😊`;
     const jadwalTriggers = ['jadwal', 'majelis', 'pertemuan', 'kapan ketemu', 'ketemu kapan', 'kumpul'];
     if (jadwalTriggers.some(t => lowerText === t || lowerText.includes(t))) {
       if (!userProfile) {
-        return "Maaf Bu, Ibu belum terdaftar. Silakan daftar dulu ya.";
+        return "Maaf Bu, Anda belum terdaftar. Silakan daftar dulu ya.";
       }
       if (!userProfile.majelis_name) {
-        return "Maaf Bu, Ibu belum terdaftar di Majelis.\n\nHubungi petugas lapangan untuk didaftarkan ke Majelis ya.";
+        return "Maaf Bu, Anda belum terdaftar di Majelis.\n\nHubungi petugas lapangan untuk didaftarkan ke Majelis ya.";
       }
       return `📅 *Jadwal Majelis*
 
@@ -132,7 +132,7 @@ Jangan lupa hadir ya Bu! 😊`;
     const dataTriggers = ['debug', 'cek data', 'data saya', 'profil', 'info saya', 'lihat data', 'data', 'cek profil'];
     if (dataTriggers.some(t => lowerText === t || lowerText.includes(t))) {
       if (!userProfile) {
-        return "❌ *Data tidak ditemukan*\n\nIbu belum terdaftar di Amartha. Silakan daftar dulu ya.";
+        return "❌ *Data tidak ditemukan*\n\nAnda belum terdaftar di Amartha. Silakan daftar dulu ya.";
       }
       
       const majelisInfo = userProfile.majelis_name 
@@ -204,11 +204,11 @@ Jangan lupa hadir ya Bu! 😊`;
       BATASAN TOPIK:
       - HANYA jawab tentang: pendaftaran Amartha, literasi keuangan, UMKM, bisnis
       - TOLAK topik: politik, agama, gosip, hal pribadi, permintaan tidak pantas
-      - Jika topik di luar scope, jawab: "Maaf Bu, saya hanya bisa membantu pendaftaran dan literasi keuangan Amartha. Ada yang bisa saya bantu terkait usaha Ibu?"
+      - Jika topik di luar scope, jawab: "Maaf Bu, saya hanya bisa membantu pendaftaran dan literasi keuangan Amartha. Ada yang bisa saya bantu terkait usaha Anda?"
       
       INSTRUKSI PENDAFTARAN:
       1. Jika user BELUM memberikan data, minta: Nama, Jenis Usaha, dan Lokasi.
-         Contoh: "Untuk mendaftar, mohon berikan: Nama Ibu, Jenis Usaha, dan Lokasi. Contoh: Nama saya Ibu Siti, usaha warung sembako di Bogor"
+         Contoh: "Untuk mendaftar, mohon berikan: Nama, Jenis Usaha, dan Lokasi. Contoh: Nama saya Siti, usaha warung sembako di Bogor"
       2. Jika user SUDAH memberikan Nama DAN Jenis Usaha DAN Lokasi, WAJIB panggil tool 'registerUser'.
       3. JANGAN minta konfirmasi lagi. LANGSUNG PANGGIL TOOL.
       4. Setelah tool dipanggil, ucapkan terima kasih dan beritahu menunggu verifikasi petugas.
@@ -228,7 +228,7 @@ Jangan lupa hadir ya Bu! 😊`;
         : '\n- Belum memiliki pinjaman aktif';
       
       systemPrompt = `
-      PERAN: Akademi-AI, asisten bisnis Ibu ${userProfile.name} untuk program literasi keuangan Amartha.
+      PERAN: Akademi-AI, asisten bisnis ${userProfile.name} untuk program literasi keuangan Amartha.
       CONTEXT: 
       - Nama: ${userProfile.name}
       - Usaha: ${userProfile.business?.name || 'Belum diisi'}
@@ -239,7 +239,7 @@ Jangan lupa hadir ya Bu! 😊`;
       BATASAN TOPIK:
       - HANYA jawab tentang: literasi keuangan, manajemen usaha, Amartha, bisnis UMKM
       - TOLAK topik: politik, agama, gosip, hal pribadi, permintaan tidak pantas
-      - Jika topik di luar scope, jawab: "Maaf Bu, saya hanya bisa membantu literasi keuangan dan usaha. Ada yang bisa saya bantu terkait bisnis Ibu?"
+      - Jika topik di luar scope, jawab: "Maaf Bu, saya hanya bisa membantu literasi keuangan dan usaha. Ada yang bisa saya bantu terkait bisnis Anda?"
       
       KAMUS ISTILAH AMARTHA:
       ${ragContext}

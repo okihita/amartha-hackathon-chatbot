@@ -210,12 +210,17 @@ export default function Majelis() {
               const memberCount = m.members?.length || 0;
               return (
                 <div key={m.id} class="majelis-card">
-                  <h3>{m.name}</h3>
-                  <div class="info-row">
-                    <span><Calendar size={14} /> {m.schedule_day} {m.schedule_time}</span>
-                    <span><MapPin size={14} /> {m.location || 'No location'}</span>
-                  </div>
-                  {m.description && <p class="majelis-description">{m.description}</p>}
+                  <a href={`/majelis/${m.id}`} style="text-decoration: none; color: inherit;">
+                    <h3 style="display: flex; align-items: center; gap: 8px;">
+                      {m.name}
+                      {m.is_mock && <span style="padding: 2px 6px; background: #9e9e9e; color: white; border-radius: 4px; font-size: 10px;">MOCK</span>}
+                    </h3>
+                    <div class="info-row">
+                      <span><Calendar size={14} /> {m.schedule_day} {m.schedule_time}</span>
+                      <span><MapPin size={14} /> {m.location || 'No location'}</span>
+                    </div>
+                    {m.description && <p class="majelis-description">{m.description}</p>}
+                  </a>
                   
                   <div class="member-section">
                     <div class="member-header">
@@ -363,7 +368,7 @@ export default function Majelis() {
                       onClick={() => handleAddMember(addMemberModal, user.phone)}
                     >
                       <div class="autocomplete-name">{user.name}</div>
-                      <div class="autocomplete-details">{user.phone} • {user.business_type}</div>
+                      <div class="autocomplete-details">{user.phone} • {user.business?.category || user.business_type || '-'}</div>
                     </div>
                   ))}
                 </div>
@@ -372,6 +377,46 @@ export default function Majelis() {
                 <div class="autocomplete-empty">No verified users found</div>
               )}
             </div>
+            
+            {/* Show eligible members when not searching */}
+            {!searchQuery && (() => {
+              const currentMajelis = majelis.find(m => m.id === addMemberModal);
+              const currentMembers = currentMajelis?.members || [];
+              const eligible = users.filter(u => 
+                u.status === 'active' && 
+                !currentMembers.includes(u.phone) &&
+                !u.majelis_id
+              ).slice(0, 10);
+              
+              return eligible.length > 0 ? (
+                <div style="margin-top: 16px;">
+                  <label style="font-size: 12px; color: #666; margin-bottom: 8px; display: block;">
+                    Eligible members ({eligible.length}{users.filter(u => u.status === 'active' && !currentMembers.includes(u.phone) && !u.majelis_id).length > 10 ? '+' : ''})
+                  </label>
+                  <div class="autocomplete-results" style="position: static; max-height: 250px;">
+                    {eligible.map(user => (
+                      <div 
+                        key={user.phone} 
+                        class="autocomplete-item"
+                        onClick={() => handleAddMember(addMemberModal, user.phone)}
+                      >
+                        <div class="autocomplete-name">
+                          {user.name}
+                          {user.is_demo && <span style="margin-left: 4px; padding: 1px 4px; background: #ff9800; color: white; border-radius: 3px; font-size: 9px;">DEMO</span>}
+                        </div>
+                        <div class="autocomplete-details">{user.phone} • {user.business?.category || user.business_type || '-'}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style="margin-top: 16px; color: #666; font-size: 13px; text-align: center;">
+                  No eligible members available.<br/>
+                  <span style="font-size: 11px;">(Must be verified & not in another majelis)</span>
+                </div>
+              );
+            })()}
+            
             <div class="form-actions">
               <button type="button" class="btn btn-secondary" onClick={() => {
                 setAddMemberModal(null);

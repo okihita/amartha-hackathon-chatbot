@@ -9,6 +9,12 @@ cp .env.example .env
 npm start
 ```
 
+## Important Conventions
+
+- **Names:** Store without honorifics (e.g., "Siti Rahayu" not "Ibu Siti Rahayu")
+- **Greetings:** Use "Bu" in conversational messages only
+- **Quiz:** 100% passing score (4/4 correct)
+
 ## Deployment
 
 ```bash
