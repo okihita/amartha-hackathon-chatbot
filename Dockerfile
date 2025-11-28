@@ -13,5 +13,8 @@ RUN npm install --production
 # Copy the rest of your code
 COPY . .
 
+# Expose port (Cloud Run will set PORT env var)
+EXPOSE 8080
+
 # Start the app
 CMD ["node", "index.js"]
