@@ -42,10 +42,6 @@ export default function FinancialLiteracy() {
     }
   };
 
-  const handleReimport = () => {
-    alert('To reimport quizzes, run locally:\n\nnode scripts/import-financial-literacy.js\n\nThen click Refresh below.');
-  };
-
   const handleRefresh = async () => {
     localStorage.removeItem('financialLiteracy');
     setLoading(true);
@@ -79,14 +75,9 @@ export default function FinancialLiteracy() {
           <h2 style={{ margin: 0, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <BookOpen size={18} /> 15 Weeks
           </h2>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button onClick={handleReimport} title="Show reimport instructions" style={{ padding: '6px 10px', background: '#fff', border: '1px solid #dee2e6', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-              <RefreshCw size={14} />
-            </button>
-            <button onClick={handleRefresh} title="Refresh from database" style={{ padding: '6px 10px', background: '#fff', border: '1px solid #dee2e6', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
-              Refresh
-            </button>
-          </div>
+          <button onClick={handleRefresh} title="Refresh from database" style={{ padding: '6px 10px', background: '#fff', border: '1px solid #dee2e6', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <RefreshCw size={14} /> Refresh
+          </button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {Object.keys(groupedByModule).sort((a,b) => a-b).map(moduleNum => (
