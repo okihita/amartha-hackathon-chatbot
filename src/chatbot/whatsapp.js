@@ -33,6 +33,42 @@ async function sendMessage(to, text) {
   }
 }
 
+// Show "typing..." indicator to user while processing
+async function sendTypingIndicator(to) {
+  try {
+    await axios.post(
+      `https://graph.facebook.com/${GRAPH_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
+      {
+        messaging_product: 'whatsapp',
+        to: to,
+        recipient_type: 'individual',
+        type: 'reaction',
+        reaction: { message_id: '', emoji: '⏳' }
+      },
+      { headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` } }
+    );
+  } catch {
+    // Silently fail - typing indicator is optional UX enhancement
+  }
+}
+
+// Mark message as read (shows blue checkmarks)
+async function markAsRead(messageId) {
+  try {
+    await axios.post(
+      `https://graph.facebook.com/${GRAPH_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
+      {
+        messaging_product: 'whatsapp',
+        status: 'read',
+        message_id: messageId
+      },
+      { headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` } }
+    );
+  } catch {
+    // Silently fail
+  }
+}
+
 async function sendAudio(to, audioUrl) {
   try {
     await axios.post(
@@ -162,4 +198,4 @@ async function sendQuizQuestion(to, question, questionNumber, totalQuestions) {
   return sendListMessage(to, bodyText, '📝 Pilih Jawaban', options);
 }
 
-module.exports = { sendMessage, sendAudio, sendMessageWithVoice, sendVoiceOnly, generateVoice, sendListMessage, sendQuizQuestion, GRAPH_API_VERSION };
+module.exports = { sendMessage, sendAudio, sendMessageWithVoice, sendVoiceOnly, generateVoice, sendListMessage, sendQuizQuestion, sendTypingIndicator, markAsRead, GRAPH_API_VERSION };

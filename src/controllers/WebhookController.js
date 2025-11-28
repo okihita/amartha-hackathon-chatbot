@@ -1,5 +1,5 @@
 const { getGeminiResponse } = require('../chatbot/aiEngine');
-const { sendMessage, sendVoiceOnly, sendQuizQuestion } = require('../chatbot/whatsapp');
+const { sendMessage, sendVoiceOnly, sendQuizQuestion, markAsRead } = require('../chatbot/whatsapp');
 const { analyzeImage } = require('../chatbot/imageAnalyzer');
 const { transcribeVoiceNote } = require('../chatbot/voiceParser');
 const QuizService = require('../services/QuizService');
@@ -19,6 +19,11 @@ class WebhookController {
     if (!message) return res.sendStatus(200);
 
     const phone = message.from;
+    const messageId = message.id;
+    
+    // Mark message as read immediately (shows blue checkmarks)
+    markAsRead(messageId);
+    
     const handlers = {
       text: async () => {
         const text = message.text.body.trim();
@@ -53,7 +58,7 @@ class WebhookController {
           pendingImages.set(phone, message.image.id);
           // Auto-expire after 5 minutes
           setTimeout(() => pendingImages.delete(phone), 5 * 60 * 1000);
-          await sendMessage(phone, "Gambar diterima.\n\nMohon jelaskan foto ini. Contoh:\n- \"Ini foto warung saya\"\n- \"Stok barang dagangan\"\n- \"Catatan penjualan hari ini\"\n\nBalas dengan deskripsi agar saya bisa menganalisis dengan tepat.");
+          await sendMessage(phone, "📷 Foto diterima!\n\nIni foto apa? Balas singkat:\n_\"warung saya\"_ atau _\"stok barang\"_ atau _\"catatan kas\"_");
         } else {
           await sendMessage(phone, await analyzeImage(message.image.id, caption, phone));
         }

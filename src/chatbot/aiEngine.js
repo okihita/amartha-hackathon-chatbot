@@ -103,51 +103,50 @@ async function getGeminiResponse(userText, senderPhone) {
     const menuTriggers = ['menu', 'bantuan', 'help', 'tolong', 'bantu', 'apa saja', 'bisa apa', 'halo', 'hi', 'hai', 'hello', 'test', 'ping', 'tes'];
     if (menuTriggers.some(t => lowerText === t || lowerText.includes(t))) {
       if (!userProfile) {
-        // NEW USER - Welcome & registration prompt
-        return `*Selamat datang di Akademi-AI Amartha!*
+        // NEW USER - Welcome & registration prompt (shorter, friendlier)
+        return `👋 *Halo! Selamat datang di Akademi-AI Amartha*
 
-Saya asisten digital untuk program literasi keuangan UMKM.
+Saya asisten digital untuk UMKM.
 
-Untuk mendaftar, silakan berikan:
+Untuk daftar, ceritakan:
 • Nama Anda
-• Jenis usaha
-• Lokasi usaha
+• Usaha apa
+• Di mana
 
-Contoh: "Nama saya Siti, usaha warung sembako di Bogor"`;
+Contoh: _"Saya Siti, jualan sembako di Bogor"_`;
       }
-      // EXISTING USER - Full menu
+      // EXISTING USER - Full menu (with emojis)
       const honorific = userProfile.profile?.gender === 'male' ? 'Pak' : 'Bu';
-      return `*Menu Utama*
+      return `👋 *Halo ${honorific} ${userProfile.name}!*
 
-Halo ${honorific} ${userProfile.name}! Ketik:
+Ketik angka atau kata:
 
-1. *KUIS* - Mulai kuis belajar
-2. *NILAI* - Lihat hasil belajar
-3. *DATA SAYA* - Info profil & pinjaman
-4. *FOTO* - Kirim foto usaha
-5. *JADWAL* - Info pertemuan majelis
+1️⃣ *KUIS* - Belajar keuangan
+2️⃣ *NILAI* - Lihat progress
+3️⃣ *DATA* - Info profil
+4️⃣ *FOTO* - Analisis usaha
+5️⃣ *JADWAL* - Info majelis
 
-Atau langsung tanya soal usaha Anda.`;
+Atau langsung tanya apa saja! 💬`;
     }
     
     // 📅 JADWAL/MAJELIS COMMAND
     const jadwalTriggers = ['jadwal', 'majelis', 'pertemuan', 'kapan ketemu', 'ketemu kapan', 'kumpul'];
     if (jadwalTriggers.some(t => lowerText === t || lowerText.includes(t))) {
       if (!userProfile) {
-        return "Maaf, Anda belum terdaftar. Silakan daftar dulu ya.";
+        return "⚠️ Anda belum terdaftar. Ketik *halo* untuk daftar.";
       }
       const honorific = userProfile.profile?.gender === 'male' ? 'Pak' : 'Bu';
       if (!userProfile.majelis_name) {
-        return `Maaf ${honorific}, Anda belum terdaftar di Majelis.\n\nHubungi petugas lapangan untuk didaftarkan ke Majelis ya.`;
+        return `⚠️ ${honorific} belum terdaftar di Majelis.\n\nHubungi petugas lapangan ya.`;
       }
-      return `*Jadwal Majelis*
+      return `📅 *Jadwal Majelis*
 
-Majelis: ${userProfile.majelis_name}
-Hari: ${userProfile.majelis_day}
-Jam: ${userProfile.majelis_time || '-'}
-Lokasi: ${userProfile.majelis_location || '-'}
+👥 ${userProfile.majelis_name}
+🗓️ ${userProfile.majelis_day}, ${userProfile.majelis_time || '-'}
+📍 ${userProfile.majelis_location || '-'}
 
-Jangan lupa hadir ya ${honorific}.`;
+Sampai ketemu ${honorific}! 👋`;
     }
     
     // 🐛 CEK DATA COMMAND
