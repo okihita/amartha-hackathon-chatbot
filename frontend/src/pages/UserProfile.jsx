@@ -404,6 +404,12 @@ export default function UserProfile({ phone }) {
 
   const progress = literacyProgress();
 
+  // Calculate BI summary
+  const bi = data.business_intelligence || [];
+  const latestBuilding = bi.filter(b => b.type === 'building').sort((a,b) => new Date(b.analyzed_at) - new Date(a.analyzed_at))[0];
+  const latestInventory = bi.filter(b => b.type === 'inventory').sort((a,b) => new Date(b.analyzed_at) - new Date(a.analyzed_at))[0];
+  const latestLedger = bi.filter(b => b.type === 'ledger').sort((a,b) => new Date(b.analyzed_at) - new Date(a.analyzed_at))[0];
+
   return (
     <div>
       {/* Back Button */}
@@ -411,318 +417,323 @@ export default function UserProfile({ phone }) {
         <ArrowLeft size={18} /> Back to Users
       </button>
 
-      {/* Profile Header */}
-      <div class="card" style="margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
-          <div style="display: flex; gap: 20px; align-items: center;">
-            <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #63297A 0%, #7E3D99 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 700;">
-              {data.name?.charAt(0)?.toUpperCase()}
+      {/* Executive Summary Header */}
+      <div class="card" style="margin-bottom: 24px; padding: 0; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #1F2937 0%, #374151 100%); padding: 24px; color: white;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+            <div style="display: flex; gap: 20px; align-items: center;">
+              <div style="width: 72px; height: 72px; border-radius: 16px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 700; border: 2px solid rgba(255,255,255,0.2);">
+                {data.name?.charAt(0)?.toUpperCase()}
+              </div>
+              <div>
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.7; margin-bottom: 4px;">Borrower Profile</div>
+                <h1 style="margin: 0 0 4px 0; font-size: 26px; font-weight: 700;">{data.name}</h1>
+                <div style="display: flex; gap: 16px; font-size: 13px; opacity: 0.85;">
+                  <span style="display: flex; align-items: center; gap: 4px;"><Phone size={14} /> {data.phone}</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><Calendar size={14} /> Member since {formatDate(data.created_at)}</span>
+                </div>
+              </div>
+            </div>
+            <div style={`padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; ${data.status === 'active' ? 'background: #10B981; color: white;' : 'background: #F59E0B; color: white;'}`}>
+              {data.status}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats Row */}
+        <div style="padding: 20px 24px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; border-bottom: 1px solid #E5E7EB;">
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 800; color: #63297A;">{formatCurrency(data.loan?.limit || 0).replace('Rp ', '')}</div>
+            <div style="font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px;">Loan Limit</div>
+          </div>
+          <div style="text-align: center;">
+            <div style={`font-size: 24px; font-weight: 800; ${currentDebt > 0 ? 'color: #DC2626;' : 'color: #10B981;'}`}>{formatCurrency(currentDebt).replace('Rp ', '')}</div>
+            <div style="font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px;">Outstanding</div>
+          </div>
+          <div style="text-align: center;">
+            <div style={`font-size: 24px; font-weight: 800; ${progress.percentage >= 70 ? 'color: #10B981;' : progress.percentage >= 40 ? 'color: #F59E0B;' : 'color: #EF4444;'}`}>{progress.percentage}%</div>
+            <div style="font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px;">Literacy</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 800; color: #2563EB;">{data.business?.maturity_level || 0}<span style="font-size: 14px; color: #9CA3AF;">/5</span></div>
+            <div style="font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px;">Biz Level</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 800; color: #7C3AED;">{bi.length}</div>
+            <div style="font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px;">BI Records</div>
+          </div>
+        </div>
+
+        {/* Profile Details Grid */}
+        <div style="padding: 20px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #6B7280; margin-bottom: 8px;">Personal</div>
+            <div style="font-size: 13px; color: #374151;">
+              <div style="margin-bottom: 4px;"><span style="color: #9CA3AF;">Gender:</span> {data.profile?.gender || '-'}</div>
+              <div style="margin-bottom: 4px;"><span style="color: #9CA3AF;">DOB:</span> {data.profile?.dob ? formatDate(data.profile.dob) : '-'}</div>
+              <div><span style="color: #9CA3AF;">Address:</span> {data.profile?.address || '-'}</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #6B7280; margin-bottom: 8px;">Business</div>
+            <div style="font-size: 13px; color: #374151;">
+              <div style="margin-bottom: 4px;"><span style="color: #9CA3AF;">Name:</span> {data.business?.name || '-'}</div>
+              <div style="margin-bottom: 4px;"><span style="color: #9CA3AF;">Category:</span> {data.business?.category || '-'}</div>
+              <div><span style="color: #9CA3AF;">Location:</span> {data.business?.location || '-'}</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #6B7280; margin-bottom: 8px;">Majelis</div>
+            {data.majelis ? (
+              <div style="font-size: 13px; color: #374151;">
+                <div style="margin-bottom: 4px;"><span style="color: #9CA3AF;">Group:</span> {data.majelis.name}</div>
+                <div style="margin-bottom: 4px;"><span style="color: #9CA3AF;">Schedule:</span> {data.majelis.schedule_day}, {data.majelis.schedule_time}</div>
+                <div><span style="color: #9CA3AF;">Members:</span> {data.majelis.member_count}</div>
+              </div>
+            ) : <div style="font-size: 13px; color: #9CA3AF;">Not assigned</div>}
+          </div>
+        </div>
+      </div>
+
+      {/* Section 1: Loan & Payment Status */}
+      <div class="card" style="margin-bottom: 24px; padding: 0; overflow: hidden;">
+        <div style="padding: 16px 24px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; background: #63297A; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <CreditCard size={16} style="color: white;" />
+          </div>
+          <div>
+            <div style="font-size: 15px; font-weight: 600; color: #1F2937;">Loan & Payment Status</div>
+            <div style="font-size: 12px; color: #6B7280;">Current loan position and transaction history</div>
+          </div>
+        </div>
+
+        {data.loan && data.loan.limit > 0 ? (
+          <>
+            {/* Loan Summary */}
+            <div style="padding: 20px 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; background: #F9FAFB;">
+              <div>
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin-bottom: 4px;">Credit Limit</div>
+                <div style="font-size: 20px; font-weight: 700; color: #1F2937;">{formatCurrency(data.loan.limit)}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin-bottom: 4px;">Outstanding Balance</div>
+                <div style={`font-size: 20px; font-weight: 700; ${currentDebt > 0 ? 'color: #DC2626;' : 'color: #10B981;'}`}>{formatCurrency(currentDebt)}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin-bottom: 4px;">Available Credit</div>
+                <div style="font-size: 20px; font-weight: 700; color: #10B981;">{formatCurrency(data.loan.remaining || (data.loan.limit - currentDebt))}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin-bottom: 4px;">Utilization</div>
+                <div style="font-size: 20px; font-weight: 700; color: #63297A;">{data.loan.limit > 0 ? Math.round((currentDebt / data.loan.limit) * 100) : 0}%</div>
+              </div>
+            </div>
+
+            {/* Next Payment Alert */}
+            {data.loan.next_payment_date && (
+              <div style="padding: 16px 24px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <Clock size={20} style="color: #92400E;" />
+                  <div>
+                    <div style="font-size: 13px; font-weight: 600; color: #92400E;">Next Payment Due</div>
+                    <div style="font-size: 12px; color: #A16207;">{formatDate(data.loan.next_payment_date)}</div>
+                  </div>
+                </div>
+                <div style="font-size: 20px; font-weight: 800; color: #92400E;">{formatCurrency(data.loan.next_payment_amount)}</div>
+              </div>
+            )}
+
+            {/* Transaction History */}
+            {data.loan.history?.length > 0 && (
+              <div style="padding: 20px 24px;">
+                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin-bottom: 12px;">Transaction History</div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid #E5E7EB;">
+                      <th style="text-align: left; padding: 10px 0; font-weight: 600; color: #374151;">Date</th>
+                      <th style="text-align: left; padding: 10px 0; font-weight: 600; color: #374151;">Type</th>
+                      <th style="text-align: left; padding: 10px 0; font-weight: 600; color: #374151;">Description</th>
+                      <th style="text-align: right; padding: 10px 0; font-weight: 600; color: #374151;">Amount</th>
+                      <th style="text-align: right; padding: 10px 0; font-weight: 600; color: #374151;">Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.loan.history.map((txn, i) => (
+                      <tr key={txn.id} style={`border-bottom: 1px solid #F3F4F6; ${i === data.loan.history.length - 1 ? 'background: #F0FDF4;' : ''}`}>
+                        <td style="padding: 12px 0; color: #6B7280;">{formatDate(txn.date)}</td>
+                        <td style="padding: 12px 0;">
+                          <span style={`padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; ${txn.type === 'disbursement' ? 'background: #DBEAFE; color: #1E40AF;' : 'background: #D1FAE5; color: #065F46;'}`}>
+                            {txn.type.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style="padding: 12px 0; color: #374151;">{txn.description || '-'}</td>
+                        <td style={`padding: 12px 0; text-align: right; font-weight: 600; ${txn.type === 'disbursement' ? 'color: #DC2626;' : 'color: #10B981;'}`}>
+                          {txn.type === 'disbursement' ? '-' : '+'}{formatCurrency(txn.amount)}
+                        </td>
+                        <td style="padding: 12px 0; text-align: right; font-weight: 700; color: #1F2937;">{formatCurrency(txn.balance_after)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        ) : (
+          <div style="padding: 40px; text-align: center; color: #6B7280;">
+            <CreditCard size={32} style="color: #D1D5DB; margin-bottom: 12px;" />
+            <div>No active loan</div>
+          </div>
+        )}
+      </div>
+
+      {/* Section 2: Business Intelligence */}
+      <div class="card" style="margin-bottom: 24px; padding: 0; overflow: hidden;">
+        <div style="padding: 16px 24px; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 32px; height: 32px; background: #2563EB; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <BarChart3 size={16} style="color: white;" />
             </div>
             <div>
-              <h1 style="margin: 0 0 4px 0; font-size: 26px; color: #1F2937;">{data.name}</h1>
-              <div style="display: flex; gap: 16px; color: #6B7280; font-size: 14px; flex-wrap: wrap;">
-                <span style="display: flex; align-items: center; gap: 4px;"><Phone size={14} /> {data.phone}</span>
-                <span style="display: flex; align-items: center; gap: 4px;"><Calendar size={14} /> Joined {formatDate(data.created_at)}</span>
-              </div>
+              <div style="font-size: 15px; font-weight: 600; color: #1F2937;">Business Intelligence</div>
+              <div style="font-size: 12px; color: #6B7280;">AI-analyzed business assets, inventory, and financials</div>
             </div>
-          </div>
-          <span style={`padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; ${data.status === 'active' ? 'background: #D1FAE5; color: #065F46;' : 'background: #FEF3C7; color: #92400E;'}`}>
-            {data.status?.toUpperCase()}
-          </span>
-        </div>
-      </div>
-
-      {/* Stats Row */}
-      <div class="stats-grid" style="margin-bottom: 24px;">
-        <div class="stat-card">
-          <div class="stat-value">{formatCurrency(data.loan?.limit || 0)}</div>
-          <div class="stat-label">Loan Limit</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">{formatCurrency(currentDebt)}</div>
-          <div class="stat-label">Current Debt</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">{progress.percentage}%</div>
-          <div class="stat-label">Literacy Progress</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">{data.business?.maturity_level || 0}/5</div>
-          <div class="stat-label">Business Level</div>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px;">
-        {/* Personal & Business Info */}
-        <div class="card">
-          <h2><User size={20} /> Personal Info</h2>
-          <div style="display: grid; gap: 12px;">
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
-              <span style="color: #6B7280;">Gender</span>
-              <span style="font-weight: 500;">{data.profile?.gender || '-'}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
-              <span style="color: #6B7280;">Date of Birth</span>
-              <span style="font-weight: 500;">{data.profile?.dob ? formatDate(data.profile.dob) : '-'}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-              <span style="color: #6B7280;">Address</span>
-              <span style="font-weight: 500; text-align: right; max-width: 200px;">{data.profile?.address || '-'}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2><Building2 size={20} /> Business Info</h2>
-          {data.business ? (
-            <div style="display: grid; gap: 12px;">
-              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
-                <span style="color: #6B7280;">Business Name</span>
-                <span style="font-weight: 500;">{data.business.name || '-'}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
-                <span style="color: #6B7280;">Category</span>
-                <span style="background: #EDE9FE; color: #5B21B6; padding: 2px 10px; border-radius: 4px; font-size: 13px;">{data.business.category || '-'}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
-                <span style="color: #6B7280;">Location</span>
-                <span style="font-weight: 500;">{data.business.location || '-'}</span>
-              </div>
-              <div style="padding: 8px 0;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                  <span style="color: #6B7280;">Maturity Level</span>
-                  <span style="font-weight: 600;">{data.business.maturity_level}/5</span>
-                </div>
-                <div style="display: flex; gap: 4px;">
-                  {[1,2,3,4,5].map(level => (
-                    <div key={level} style={`flex: 1; height: 6px; border-radius: 3px; background: ${level <= data.business.maturity_level ? '#63297A' : '#E5E7EB'};`} />
-                  ))}
-                </div>
-              </div>
-              {businessKPIs && data.business.maturity_level < 5 && (
-                <div style="margin-top: 8px; padding: 12px; background: #F5F3FF; border-radius: 8px;">
-                  <div style="font-size: 13px; font-weight: 600; color: #5B21B6; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                    <Target size={14} /> Next Level Goals
-                  </div>
-                  <ul style="margin: 0; padding-left: 16px; font-size: 13px; color: #444;">
-                    {businessKPIs.kpis.slice(0, 3).map((kpi, i) => <li key={i} style="margin-bottom: 2px;">{kpi}</li>)}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ) : <p style="color: #6B7280;">No business data</p>}
-        </div>
-
-        {/* Majelis */}
-        <div class="card">
-          <h2><UsersIcon size={20} /> Majelis</h2>
-          {data.majelis ? (
-            <div style="display: grid; gap: 12px;">
-              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
-                <span style="color: #6B7280;">Group Name</span>
-                <span style="font-weight: 500;">{data.majelis.name}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
-                <span style="color: #6B7280;">Schedule</span>
-                <span style="font-weight: 500;">{data.majelis.schedule_day}, {data.majelis.schedule_time}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
-                <span style="color: #6B7280;">Location</span>
-                <span style="font-weight: 500;">{data.majelis.location}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                <span style="color: #6B7280;">Members</span>
-                <span style="font-weight: 500;">{data.majelis.member_count} people</span>
-              </div>
-            </div>
-          ) : <p style="color: #6B7280;">Not assigned to any majelis</p>}
-        </div>
-
-        {/* Literacy Progress */}
-        <div class="card">
-          <h2><BookOpen size={20} /> Literacy Progress</h2>
-          <div style="margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="font-size: 14px; color: #6B7280;">{progress.completed} of {progress.total} weeks</span>
-              <span style="font-size: 14px; font-weight: 600;">{progress.percentage}%</span>
-            </div>
-            <div style="width: 100%; background: #E5E7EB; border-radius: 4px; height: 8px;">
-              <div style={`background: #63297A; height: 8px; border-radius: 4px; width: ${progress.percentage}%; transition: width 0.3s;`}></div>
-            </div>
-          </div>
-          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
-            {Array.from({ length: 15 }, (_, i) => {
-              const weekKey = `week_${String(i + 1).padStart(2, '0')}`;
-              const score = data.literacy?.[weekKey]?.score || 0;
-              const bg = score >= 100 ? '#10B981' : score > 0 ? '#F59E0B' : '#E5E7EB';
-              const color = score > 0 ? 'white' : '#9CA3AF';
-              return (
-                <div key={weekKey} style={`background: ${bg}; color: ${color}; text-align: center; padding: 6px; border-radius: 4px; font-size: 12px; font-weight: 600;`} title={`Week ${i + 1}: ${score}%`}>
-                  {i + 1}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Loan Section */}
-      {data.loan && data.loan.limit > 0 && (
-        <div class="card" style="margin-top: 24px;">
-          <h2><CreditCard size={20} /> Loan & Transactions</h2>
-          {data.loan.next_payment_date && (
-            <div style="background: #FEF3C7; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-              <span style="color: #92400E; font-weight: 500;">Next Payment: {formatDate(data.loan.next_payment_date)}</span>
-              <span style="color: #92400E; font-weight: 700;">{formatCurrency(data.loan.next_payment_amount)}</span>
-            </div>
-          )}
-          {data.loan.history?.length > 0 && (
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th style="text-align: right;">Amount</th>
-                  <th style="text-align: right;">Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.loan.history.map(txn => (
-                  <tr key={txn.id}>
-                    <td>{formatDate(txn.date)}</td>
-                    <td>
-                      <span style={`padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; ${txn.type === 'disbursement' ? 'background: #DBEAFE; color: #1E40AF;' : 'background: #D1FAE5; color: #065F46;'}`}>
-                        {txn.type}
-                      </span>
-                    </td>
-                    <td style="color: #6B7280;">{txn.description || '-'}</td>
-                    <td style="text-align: right;">{formatCurrency(txn.amount)}</td>
-                    <td style="text-align: right; font-weight: 600;">{formatCurrency(txn.balance_after)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
-
-      {/* Business Intelligence */}
-      <div style="margin-top: 32px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 4px; height: 32px; background: linear-gradient(180deg, #63297A 0%, #F9CF79 100%); border-radius: 2px;" />
-            <h2 style="margin: 0; font-size: 22px; color: #1F2937;">Business Intelligence</h2>
           </div>
           <div style="display: flex; gap: 6px;">
             {['all', 'building', 'inventory', 'ledger'].map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)} style={`padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; border: none; cursor: pointer; ${activeTab === tab ? 'background: #63297A; color: white;' : 'background: #F3F4F6; color: #6B7280;'}`}>
+              <button key={tab} onClick={() => setActiveTab(tab)} style={`padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; border: none; cursor: pointer; ${activeTab === tab ? 'background: #2563EB; color: white;' : 'background: #F3F4F6; color: #6B7280;'}`}>
                 {tab === 'all' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </div>
         </div>
 
-        {/* BI Summary Cards */}
-        {data.business_intelligence?.length > 0 && (
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
-            {(() => {
-              const bi = data.business_intelligence;
-              const latestBuilding = bi.filter(b => b.type === 'building').sort((a,b) => new Date(b.analyzed_at) - new Date(a.analyzed_at))[0];
-              const latestInventory = bi.filter(b => b.type === 'inventory').sort((a,b) => new Date(b.analyzed_at) - new Date(a.analyzed_at))[0];
-              const latestLedger = bi.filter(b => b.type === 'ledger').sort((a,b) => new Date(b.analyzed_at) - new Date(a.analyzed_at))[0];
-              return (
-                <>
-                  <div style="background: linear-gradient(135deg, #EDE9FE 0%, #F5F3FF 100%); padding: 16px; border-radius: 12px;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                      <Building2 size={16} style="color: #7C3AED;" />
-                      <span style="font-size: 12px; color: #6B7280;">Asset Value</span>
-                    </div>
-                    <div style="font-size: 22px; font-weight: 700; color: #1F2937;">{latestBuilding?.data?.estimated_value ? formatCurrency(latestBuilding.data.estimated_value) : '-'}</div>
-                    {latestBuilding?.data?.condition && <div style="font-size: 11px; color: #6B7280; margin-top: 4px;">{latestBuilding.data.building_type} • {latestBuilding.data.condition}</div>}
-                  </div>
-                  <div style="background: linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 100%); padding: 16px; border-radius: 12px;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                      <Package size={16} style="color: #2563EB;" />
-                      <span style="font-size: 12px; color: #6B7280;">Inventory Value</span>
-                    </div>
-                    <div style="font-size: 22px; font-weight: 700; color: #1F2937;">{latestInventory?.data?.inventory_value_estimate ? formatCurrency(latestInventory.data.inventory_value_estimate) : '-'}</div>
-                    {latestInventory?.data?.total_items_count && <div style="font-size: 11px; color: #6B7280; margin-top: 4px;">{latestInventory.data.total_items_count} items • {latestInventory.data.stock_level} stock</div>}
-                  </div>
-                  <div style="background: linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 100%); padding: 16px; border-radius: 12px;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                      <TrendingUp size={16} style="color: #059669;" />
-                      <span style="font-size: 12px; color: #6B7280;">Monthly Cashflow</span>
-                    </div>
-                    <div style="font-size: 22px; font-weight: 700; color: #1F2937;">{latestLedger?.data?.monthly_cashflow_estimate ? formatCurrency(latestLedger.data.monthly_cashflow_estimate) : '-'}</div>
-                    {latestLedger?.data?.daily_income_estimate && <div style="font-size: 11px; color: #6B7280; margin-top: 4px;">{formatCurrency(latestLedger.data.daily_income_estimate)}/day income</div>}
-                  </div>
-                </>
-              );
-            })()}
+        {/* BI Summary */}
+        {bi.length > 0 ? (
+          <>
+            <div style="padding: 20px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; background: #F9FAFB;">
+              <div style="padding: 16px; background: white; border-radius: 10px; border: 1px solid #E5E7EB;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                  <Building2 size={16} style="color: #7C3AED;" />
+                  <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280;">Asset Valuation</span>
+                </div>
+                <div style="font-size: 22px; font-weight: 700; color: #1F2937;">{latestBuilding?.data?.estimated_value ? formatCurrency(latestBuilding.data.estimated_value) : '-'}</div>
+                {latestBuilding?.data?.condition && <div style="font-size: 11px; color: #6B7280; margin-top: 4px;">{latestBuilding.data.building_type} • {latestBuilding.data.condition}</div>}
+              </div>
+              <div style="padding: 16px; background: white; border-radius: 10px; border: 1px solid #E5E7EB;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                  <Package size={16} style="color: #2563EB;" />
+                  <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280;">Inventory Value</span>
+                </div>
+                <div style="font-size: 22px; font-weight: 700; color: #1F2937;">{latestInventory?.data?.inventory_value_estimate ? formatCurrency(latestInventory.data.inventory_value_estimate) : '-'}</div>
+                {latestInventory?.data?.total_items_count && <div style="font-size: 11px; color: #6B7280; margin-top: 4px;">{latestInventory.data.total_items_count} items • {latestInventory.data.stock_level} stock</div>}
+              </div>
+              <div style="padding: 16px; background: white; border-radius: 10px; border: 1px solid #E5E7EB;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                  <TrendingUp size={16} style="color: #059669;" />
+                  <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280;">Monthly Cashflow</span>
+                </div>
+                <div style="font-size: 22px; font-weight: 700; color: #1F2937;">{latestLedger?.data?.monthly_cashflow_estimate ? formatCurrency(latestLedger.data.monthly_cashflow_estimate) : '-'}</div>
+                {latestLedger?.data?.daily_income_estimate && <div style="font-size: 11px; color: #6B7280; margin-top: 4px;">{formatCurrency(latestLedger.data.daily_income_estimate)}/day income</div>}
+              </div>
+            </div>
+
+            {/* BI Items */}
+            <div style="padding: 20px 24px;">
+              <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin-bottom: 12px;">Analysis Records ({filteredBI?.length || 0})</div>
+              {filteredBI?.length > 0 ? (
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
+                  {filteredBI.map(item => {
+                    const typeConfig = { building: { icon: Building2, color: '#7C3AED' }, inventory: { icon: Package, color: '#2563EB' }, ledger: { icon: FileText, color: '#059669' } };
+                    const config = typeConfig[item.type] || typeConfig.building;
+                    const Icon = config.icon;
+                    return (
+                      <div key={item.id} style={`background: #FAFAFA; border: 1px solid ${newBiIds.has(item.id) ? '#10B981' : '#E5E7EB'}; border-radius: 8px; overflow: hidden;`}>
+                        {item.source?.image_url && <img src={item.source.image_url} alt="" style="width: 100%; height: 100px; object-fit: cover;" />}
+                        <div style="padding: 12px;">
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div style={`display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; background: ${config.color}15; font-size: 10px; font-weight: 600; color: ${config.color}; text-transform: uppercase;`}>
+                              <Icon size={10} /> {item.type}
+                            </div>
+                            <span style="font-size: 10px; color: #9CA3AF;">{formatDateTime(item.analyzed_at)}</span>
+                          </div>
+                          {item.data && (
+                            <div style="font-size: 12px; color: #374151;">
+                              {item.type === 'building' && <><strong>{formatCurrency(item.data.estimated_value)}</strong> • {item.data.condition}</>}
+                              {item.type === 'inventory' && <><strong>{formatCurrency(item.data.inventory_value_estimate)}</strong> • {item.data.total_items_count} items</>}
+                              {item.type === 'ledger' && <><strong>{formatCurrency(item.data.monthly_cashflow_estimate)}</strong>/mo</>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : <div style="text-align: center; padding: 20px; color: #9CA3AF;">No records in this category</div>}
+            </div>
+          </>
+        ) : (
+          <div style="padding: 40px; text-align: center; color: #6B7280;">
+            <BarChart3 size={32} style="color: #D1D5DB; margin-bottom: 12px;" />
+            <div>No business intelligence data yet</div>
+            <div style="font-size: 12px; color: #9CA3AF; margin-top: 4px;">User can upload photos via WhatsApp for AI analysis</div>
           </div>
         )}
-
-        {/* BI Items Grid */}
-        {filteredBI?.length > 0 ? (
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
-            {filteredBI.map(bi => {
-              const typeConfig = {
-                building: { icon: Building2, color: '#7C3AED', bg: '#F5F3FF' },
-                inventory: { icon: Package, color: '#2563EB', bg: '#EFF6FF' },
-                ledger: { icon: FileText, color: '#059669', bg: '#ECFDF5' },
-              };
-              const config = typeConfig[bi.type] || typeConfig.building;
-              const Icon = config.icon;
-              return (
-                <div key={bi.id} style={`background: white; border: 1px solid ${newBiIds.has(bi.id) ? '#10B981' : '#E5E7EB'}; border-radius: 10px; overflow: hidden; ${newBiIds.has(bi.id) ? 'box-shadow: 0 0 0 2px #D1FAE5;' : ''}`}>
-                  {bi.source?.image_url && (
-                    <div style="position: relative;">
-                      <img src={bi.source.image_url} alt="" style="width: 100%; height: 120px; object-fit: cover;" />
-                      <div style={`position: absolute; top: 8px; left: 8px; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; background: ${config.bg}; font-size: 11px; font-weight: 600; color: ${config.color};`}>
-                        <Icon size={12} /> {bi.type}
-                      </div>
-                      {newBiIds.has(bi.id) && <span style="position: absolute; top: 8px; right: 8px; background: #10B981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;">NEW</span>}
-                    </div>
-                  )}
-                  <div style="padding: 12px;">
-                    {!bi.source?.image_url && (
-                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                        <div style={`display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; background: ${config.bg}; font-size: 11px; font-weight: 600; color: ${config.color};`}>
-                          <Icon size={12} /> {bi.type}
-                        </div>
-                        {newBiIds.has(bi.id) && <span style="background: #10B981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;">NEW</span>}
-                      </div>
-                    )}
-                    {bi.data && (
-                      <div style="display: grid; gap: 4px; font-size: 13px;">
-                        {bi.type === 'building' && <>
-                          <div style="display: flex; justify-content: space-between;"><span style="color: #6B7280;">Value</span><span style="font-weight: 600;">{formatCurrency(bi.data.estimated_value)}</span></div>
-                          <div style="display: flex; justify-content: space-between;"><span style="color: #6B7280;">Type</span><span>{bi.data.building_type}</span></div>
-                          <div style="display: flex; justify-content: space-between;"><span style="color: #6B7280;">Condition</span><span style={`padding: 1px 6px; border-radius: 3px; font-size: 11px; ${bi.data.condition === 'Good' || bi.data.condition === 'Excellent' ? 'background: #D1FAE5; color: #065F46;' : 'background: #FEF3C7; color: #92400E;'}`}>{bi.data.condition}</span></div>
-                        </>}
-                        {bi.type === 'inventory' && <>
-                          <div style="display: flex; justify-content: space-between;"><span style="color: #6B7280;">Value</span><span style="font-weight: 600;">{formatCurrency(bi.data.inventory_value_estimate)}</span></div>
-                          <div style="display: flex; justify-content: space-between;"><span style="color: #6B7280;">Items</span><span>{bi.data.total_items_count}</span></div>
-                          <div style="display: flex; justify-content: space-between;"><span style="color: #6B7280;">Stock</span><span style={`padding: 1px 6px; border-radius: 3px; font-size: 11px; ${bi.data.stock_level === 'High' || bi.data.stock_level === 'Medium' ? 'background: #D1FAE5; color: #065F46;' : 'background: #FEE2E2; color: #991B1B;'}`}>{bi.data.stock_level}</span></div>
-                        </>}
-                        {bi.type === 'ledger' && <>
-                          <div style="display: flex; justify-content: space-between;"><span style="color: #6B7280;">Cashflow/mo</span><span style="font-weight: 600;">{formatCurrency(bi.data.monthly_cashflow_estimate)}</span></div>
-                          <div style="display: flex; justify-content: space-between;"><span style="color: #6B7280;">Income/day</span><span style="color: #059669;">{formatCurrency(bi.data.daily_income_estimate)}</span></div>
-                          <div style="display: flex; justify-content: space-between;"><span style="color: #6B7280;">Expense/day</span><span style="color: #DC2626;">{formatCurrency(bi.data.daily_expense_estimate)}</span></div>
-                        </>}
-                      </div>
-                    )}
-                    <div style="font-size: 10px; color: #9CA3AF; margin-top: 8px; text-align: right;">{formatDateTime(bi.analyzed_at)}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : <div class="card" style="text-align: center; padding: 40px; color: #6B7280;">No business intelligence data yet</div>}
       </div>
 
-      {/* Credit Score Dashboard */}
+      {/* Section 3: Financial Literacy Progress */}
+      <div class="card" style="margin-bottom: 24px; padding: 0; overflow: hidden;">
+        <div style="padding: 16px 24px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; background: #10B981; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <BookOpen size={16} style="color: white;" />
+          </div>
+          <div>
+            <div style="font-size: 15px; font-weight: 600; color: #1F2937;">Financial Literacy Program</div>
+            <div style="font-size: 12px; color: #6B7280;">15-week educational curriculum progress</div>
+          </div>
+        </div>
+
+        <div style="padding: 20px 24px;">
+          {/* Progress Overview */}
+          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 32px; align-items: center; margin-bottom: 24px;">
+            <div style="text-align: center;">
+              <div style="position: relative; width: 120px; height: 120px; margin: 0 auto;">
+                <svg viewBox="0 0 120 120" style="transform: rotate(-90deg);">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#E5E7EB" stroke-width="10" />
+                  <circle cx="60" cy="60" r="50" fill="none" stroke={progress.percentage >= 70 ? '#10B981' : progress.percentage >= 40 ? '#F59E0B' : '#EF4444'} stroke-width="10" stroke-dasharray={`${progress.percentage * 3.14} 314`} stroke-linecap="round" />
+                </svg>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                  <div style={`font-size: 28px; font-weight: 800; color: ${progress.percentage >= 70 ? '#10B981' : progress.percentage >= 40 ? '#F59E0B' : '#EF4444'};`}>{progress.percentage}%</div>
+                </div>
+              </div>
+              <div style="margin-top: 8px; font-size: 13px; color: #6B7280;">{progress.completed} of {progress.total} completed</div>
+            </div>
+
+            <div>
+              <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin-bottom: 12px;">Weekly Modules</div>
+              <div style="display: grid; grid-template-columns: repeat(15, 1fr); gap: 4px;">
+                {Array.from({ length: 15 }, (_, i) => {
+                  const weekKey = `week_${String(i + 1).padStart(2, '0')}`;
+                  const weekData = data.literacy?.[weekKey];
+                  const score = weekData?.score || 0;
+                  const bg = score >= 100 ? '#10B981' : score > 0 ? '#F59E0B' : '#E5E7EB';
+                  return (
+                    <div key={weekKey} style={`aspect-ratio: 1; border-radius: 4px; background: ${bg}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: ${score > 0 ? 'white' : '#9CA3AF'};`} title={`Week ${i + 1}: ${score}%`}>
+                      {i + 1}
+                    </div>
+                  );
+                })}
+              </div>
+              <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 11px; color: #6B7280;">
+                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #10B981;" /> Completed</span>
+                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #F59E0B;" /> In Progress</span>
+                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #E5E7EB;" /> Not Started</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 4: Credit Risk Assessment */}
       <CreditScoreDashboard userData={data} />
     </div>
   );
