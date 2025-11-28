@@ -160,6 +160,7 @@ Required:
 
 Optional:
 - `PORT` - Server port (default: 8080)
+- `NODE_ENV` - Environment (production/development)
 - `FINANCIAL_LITERACY_FOLDER_ID` - Google Drive folder
 - `BUSINESS_TYPES_FOLDER_ID` - Google Drive folder
 
@@ -230,11 +231,10 @@ Closes #123
 
 ## Resources
 
-- **Specs**: `.kiro/specs/amartha-chatbot/`
-- **Standards**: `.kiro/steering/`
+- **Specs**: `docs/specs/`
 - **Scripts**: `scripts/README.md`
-- **Changelog**: `CHANGELOG.md`
+- **Architecture**: `docs/ARCHITECTURE.md`
 
 ---
 
-For detailed architecture and design patterns, see `.kiro/specs/amartha-chatbot/design.md`
+For detailed architecture and design patterns, see `docs/ARCHITECTURE.md`

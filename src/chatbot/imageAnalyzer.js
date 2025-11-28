@@ -1,5 +1,5 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { getUserContext, saveBusinessIntelligence } = require('./db');
+const UserService = require('../services/UserService');
 const axios = require('axios');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -18,7 +18,7 @@ const visionModel = genAI.getGenerativeModel({
 
 async function analyzeImage(imageId, caption, senderPhone) {
   try {
-    const userProfile = await getUserContext(senderPhone);
+    const userProfile = await UserService.getUser(senderPhone);
     
     // Check if user is registered
     if (!userProfile) {
@@ -49,13 +49,12 @@ async function analyzeImage(imageId, caption, senderPhone) {
       const shouldStoreImage = ['building', 'inventory'].includes(structuredData.category);
       const imageData = shouldStoreImage ? imageBuffer.toString('base64') : null;
       
-      await saveBusinessIntelligence(senderPhone, structuredData, imageData, imageId);
+      await UserService.saveBusinessIntelligence(senderPhone, structuredData, imageData, imageId);
       console.log(`💾 Business intelligence saved for ${senderPhone}: ${structuredData.category}`);
       
       // Step 2.5: If user is verified and this is a business asset photo, populate business profile
       if (userProfile.is_verified && shouldStoreImage) {
-        const { updateUserBusinessProfile } = require('./db');
-        await updateUserBusinessProfile(senderPhone, structuredData);
+        await UserService.updateBusinessProfile(senderPhone, structuredData);
         console.log(`📊 Business profile updated for verified user ${senderPhone}`);
       }
     }

@@ -108,7 +108,7 @@ node scripts/import-business-types.js
 ```
 
 This imports 25 business type categories with maturity levels from Google Drive.
-See [Business Types Import Guide](./docs/BUSINESS_TYPES_IMPORT.md) for details.
+See [Scripts Guide](./scripts/README.md) for details.
 
 ## 🔧 Configuration
 
@@ -116,20 +116,25 @@ See [Business Types Import Guide](./docs/BUSINESS_TYPES_IMPORT.md) for details.
 
 See `.env.example` for all required variables:
 
+Required:
 - `MY_VERIFY_TOKEN` - WhatsApp webhook verification token
 - `WHATSAPP_TOKEN` - WhatsApp API access token
 - `PHONE_NUMBER_ID` - WhatsApp Business phone number ID
 - `GEMINI_API_KEY` - Google Gemini API key
 - `GCP_PROJECT_ID` - Google Cloud project ID
+
+Optional:
 - `PORT` - Server port (default: 8080)
+- `NODE_ENV` - Environment (production/development)
+- `FINANCIAL_LITERACY_FOLDER_ID` - Google Drive folder for course content
+- `BUSINESS_TYPES_FOLDER_ID` - Google Drive folder for business classifications
 
 ## 📚 Documentation
 
 - **[Complete Guide](./docs/GUIDE.md)** - Setup, API, development, troubleshooting
-- **[Requirements](./kiro/specs/amartha-chatbot/requirements.md)** - Functional & non-functional requirements
-- **[Design](./kiro/specs/amartha-chatbot/design.md)** - Architecture & design patterns
+- **[Architecture](./docs/ARCHITECTURE.md)** - Architecture & SOLID principles
 - **[Scripts Guide](./scripts/README.md)** - Import scripts documentation
-- **[Changelog](./CHANGELOG.md)** - Version history
+- **[Specs](./docs/specs/)** - Feature specifications
 
 ## 🧪 Testing
 
@@ -148,25 +153,64 @@ TEST_URL=http://localhost:8080 ./tests/integration.test.sh
 
 ```
 .
-├── index.js                 # Express server & API routes
+├── index.js                 # Express server entry point
 ├── src/
-│   ├── aiEngine.js         # Gemini AI integration
-│   ├── db.js               # Firestore database operations
-│   ├── imageAnalyzer.js    # Vision AI for image analysis
-│   ├── whatsapp.js         # WhatsApp API client
-│   └── knowledge.js        # Amartha knowledge base
+│   ├── config/             # Configuration & constants
+│   │   ├── database.js     # Firestore initialization
+│   │   ├── constants.js    # Collection names
+│   │   └── mockData.js     # Test data
+│   ├── core/               # Domain models (entities)
+│   │   ├── User.js         # User entity & factory
+│   │   └── Majelis.js      # Majelis entity & factory
+│   ├── repositories/       # Data access layer
+│   │   ├── UserRepository.js
+│   │   ├── MajelisRepository.js
+│   │   ├── BusinessIntelligenceRepository.js
+│   │   └── RAGRepository.js
+│   ├── services/           # Business logic layer
+│   │   ├── UserService.js
+│   │   └── MajelisService.js
+│   ├── controllers/        # Request handlers
+│   │   ├── UserController.js
+│   │   ├── MajelisController.js
+│   │   └── WebhookController.js
+│   ├── routes/             # API route definitions
+│   │   ├── userRoutes.js
+│   │   ├── majelisRoutes.js
+│   │   ├── webhookRoutes.js
+│   │   ├── superadminRoutes.js
+│   │   └── ragRoutes.js
+│   ├── chatbot/            # Chatbot domain
+│   │   ├── aiEngine.js     # Gemini AI integration
+│   │   ├── imageAnalyzer.js # Vision AI for image analysis
+│   │   ├── knowledge.js    # Amartha knowledge base (RAG)
+│   │   └── whatsapp.js     # WhatsApp API client
+│   ├── db.js               # Legacy database (deprecated)
+│   └── schemas.js          # Legacy schemas (deprecated)
 ├── public/
 │   ├── index.html          # User management dashboard
-│   ├── majelis.html        # Majelis management page
-│   ├── business-types.html # Business classifications library
-│   └── layout.js           # Shared UI components
+│   └── assets/             # Frontend static files
 ├── scripts/
 │   └── import-business-types.js  # Google Drive import script
-├── docs/                   # Documentation
-├── .kiro/steering/         # Development standards
+├── docs/
+│   ├── ARCHITECTURE.md     # Architecture & SOLID principles
+│   └── GUIDE.md            # Complete setup guide
 ├── Dockerfile              # Container configuration
 └── deploy.sh               # Deployment script
 ```
+
+## 🏛️ Architecture
+
+This project follows **SOLID principles** with a layered architecture:
+
+- **Config Layer**: Database connections, constants, configuration
+- **Core Layer**: Domain models and business entities
+- **Repository Layer**: Data access abstraction (Firestore)
+- **Service Layer**: Business logic and orchestration
+- **Controller Layer**: HTTP request/response handling
+- **Routes Layer**: API endpoint definitions
+
+See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed design patterns and principles.
 
 ## 🌐 Live URLs
 
@@ -177,7 +221,7 @@ TEST_URL=http://localhost:8080 ./tests/integration.test.sh
 
 ## 🤝 Contributing
 
-Please read [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for development guidelines.
+See [GUIDE.md](./docs/GUIDE.md) for development guidelines and contribution workflow.
 
 ## 📄 License
 
@@ -186,7 +230,7 @@ ISC
 ## 🆘 Support
 
 For issues and questions:
-1. Check [troubleshooting guide](./docs/SETUP.md#troubleshooting)
+1. Check [troubleshooting guide](./docs/GUIDE.md#troubleshooting)
 2. Review logs: `gcloud run logs read whatsapp-bot`
 3. Open an issue on GitHub
 

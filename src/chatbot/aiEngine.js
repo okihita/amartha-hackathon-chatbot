@@ -1,5 +1,5 @@
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
-const { getUserContext, registerNewUser, populateLoanData } = require('./db');
+const UserService = require('../services/UserService');
 const { retrieveKnowledge } = require('./knowledge');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -77,7 +77,7 @@ async function getGeminiResponse(userText, senderPhone) {
       }
     }
     
-    const userProfile = await getUserContext(senderPhone);
+    const userProfile = await UserService.getUser(senderPhone);
     
     // 🐛 DEBUG COMMAND
     const lowerText = userText.toLowerCase().trim();
@@ -138,7 +138,7 @@ async function getGeminiResponse(userText, senderPhone) {
       if (!userProfile) {
         return "❌ Anda belum terdaftar.";
       }
-      const result = await populateLoanData(senderPhone);
+      const result = await UserService.populateLoanData(senderPhone);
       if (result.error) {
         return `❌ Gagal: ${result.error}`;
       }
@@ -233,7 +233,7 @@ async function getGeminiResponse(userText, senderPhone) {
       if (name === "registerUser") {
         console.log('📝 Registering user with args:', JSON.stringify(args));
         // Execute DB Update
-        const newUser = await registerNewUser(senderPhone, args);
+        const newUser = await UserService.registerUser(senderPhone, args);
         
         if (!newUser) {
           return "Maaf, terjadi kesalahan saat mendaftar. Silakan coba lagi.";

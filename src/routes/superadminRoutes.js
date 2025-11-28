@@ -1,16 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { 
-  createMockUsers,
-  deleteAllMockUsers,
-  createMockMajelis,
-  deleteAllMockMajelis
-} = require('../db');
+const UserService = require('../services/UserService');
+const MajelisService = require('../services/MajelisService');
 
-// Populate mock users
 router.post('/populate-mock', async (req, res) => {
   try {
-    const count = await createMockUsers();
+    const count = await UserService.createMockUsers();
     res.json({ success: true, count });
   } catch (error) {
     console.error('Error populating mock data:', error);
@@ -18,10 +13,9 @@ router.post('/populate-mock', async (req, res) => {
   }
 });
 
-// Delete all mock users
 router.delete('/delete-all-mock', async (req, res) => {
   try {
-    const count = await deleteAllMockUsers();
+    const count = await UserService.deleteMockUsers();
     res.json({ success: true, count });
   } catch (error) {
     console.error('Error deleting mock users:', error);
@@ -29,10 +23,9 @@ router.delete('/delete-all-mock', async (req, res) => {
   }
 });
 
-// Populate mock majelis
 router.post('/populate-mock-majelis', async (req, res) => {
   try {
-    const count = await createMockMajelis();
+    const count = await MajelisService.createMockMajelis();
     res.json({ success: true, count });
   } catch (error) {
     console.error('Error populating mock majelis:', error);
@@ -40,10 +33,9 @@ router.post('/populate-mock-majelis', async (req, res) => {
   }
 });
 
-// Delete all mock majelis
 router.delete('/delete-all-mock-majelis', async (req, res) => {
   try {
-    const count = await deleteAllMockMajelis();
+    const count = await MajelisService.deleteMockMajelis();
     res.json({ success: true, count });
   } catch (error) {
     console.error('Error deleting mock majelis:', error);
