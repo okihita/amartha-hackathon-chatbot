@@ -118,135 +118,188 @@ const calculateCreditScore = (userData) => {
 
 const CreditScoreDashboard = ({ userData }) => {
   const credit = calculateCreditScore(userData);
-  const { rawScore, maxScore, normalizedScore, isRejected, autoReject, factors, sections, riskLevel, loanEligibility, interestRate } = credit;
+  const { rawScore, maxScore, isRejected, autoReject, factors, sections, riskLevel, loanEligibility, interestRate } = credit;
 
   const getScoreColor = (s) => isRejected ? '#EF4444' : s >= 32 ? '#10B981' : s >= 24 ? '#F59E0B' : '#EF4444';
   const getRiskColor = (r) => r === 'Low' ? '#10B981' : r === 'Medium' ? '#F59E0B' : '#EF4444';
   const scorePercent = (rawScore / maxScore) * 100;
-
-  const MockBadge = () => (
-    <span style="background: #FEF3C7; color: #92400E; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px;">PARTIAL MOCK</span>
-  );
+  const categoryLabels = { A: 'Financial Capacity & History', B: 'Business Validation', C: 'Financial Literacy & Quality' };
 
   return (
     <div style="margin-top: 32px;">
-      {/* Section Header */}
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+      {/* Header */}
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
         <div style="width: 4px; height: 32px; background: linear-gradient(180deg, #63297A 0%, #F9CF79 100%); border-radius: 2px;" />
         <h2 style="margin: 0; font-size: 22px; color: #1F2937;">Credit Risk Assessment</h2>
-        <MockBadge />
       </div>
+      <p style="margin: 0 0 24px; font-size: 13px; color: #6B7280; padding-left: 16px;">
+        Powered by Amartha Scoring Model v1.0 — Multi-factor risk analysis based on OJK guidelines
+      </p>
 
-      {/* Auto Reject Warning */}
+      {/* Auto Reject Alert */}
       {isRejected && (
-        <div style="margin-bottom: 20px; padding: 16px; background: #FEE2E2; border-radius: 12px; border: 1px solid #FECACA;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <Ban size={24} style="color: #DC2626;" />
+        <div style="margin-bottom: 24px; padding: 20px; background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%); border-radius: 12px; border-left: 4px solid #DC2626;">
+          <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <div style="width: 48px; height: 48px; background: #DC2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <Ban size={24} style="color: white;" />
+            </div>
             <div>
-              <div style="font-size: 15px; font-weight: 700; color: #DC2626;">AUTO REJECT</div>
-              <div style="font-size: 13px; color: #991B1B;">
-                {autoReject.slik && 'SLIK OJK: COL 3/4/5 dalam 12 bulan terakhir. '}
-                {autoReject.goldenRule && 'Golden Rule: Angsuran > 30% dari Net Profit.'}
+              <div style="font-size: 16px; font-weight: 700; color: #DC2626; margin-bottom: 4px;">Application Auto-Rejected</div>
+              <div style="font-size: 13px; color: #991B1B; margin-bottom: 8px;">
+                {autoReject.slik && '• SLIK OJK violation: Collectibility status 3/4/5 detected within 12 months'}
+                {autoReject.slik && autoReject.goldenRule && <br/>}
+                {autoReject.goldenRule && '• Golden Rule violation: Installment exceeds 30% of net profit threshold'}
               </div>
+              <div style="font-size: 11px; color: #B91C1C;">Ref: OJK Regulation No. 77/POJK.01/2016 on Information Technology-Based Lending Services</div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Score Summary */}
-      <div style="display: grid; grid-template-columns: 280px 1fr; gap: 24px; margin-bottom: 24px;">
-        {/* Score Gauge */}
-        <div class="card" style="text-align: center; padding: 24px;">
-          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #6B7280; margin-bottom: 12px;">Total Score</div>
-          <div style="position: relative; width: 160px; height: 160px; margin: 0 auto;">
-            <svg viewBox="0 0 160 160" style="transform: rotate(-90deg);">
-              <circle cx="80" cy="80" r="65" fill="none" stroke="#E5E7EB" stroke-width="12" />
-              <circle cx="80" cy="80" r="65" fill="none" stroke={getScoreColor(rawScore)} stroke-width="12" stroke-dasharray={`${scorePercent * 4.08} 408`} stroke-linecap="round" />
-            </svg>
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-              <div style={`font-size: 36px; font-weight: 800; color: ${getScoreColor(rawScore)}; line-height: 1;`}>{rawScore}</div>
-              <div style="font-size: 12px; color: #9CA3AF;">/ {maxScore}</div>
-            </div>
-          </div>
-          <div style={`margin-top: 12px; padding: 6px 16px; border-radius: 20px; display: inline-block; background: ${getRiskColor(riskLevel)}15; color: ${getRiskColor(riskLevel)}; font-weight: 700; font-size: 14px;`}>
-            {riskLevel} Risk
-          </div>
+      {/* Executive Summary Card */}
+      <div class="card" style="margin-bottom: 24px; padding: 0; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #1F2937 0%, #374151 100%); padding: 24px; color: white;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.7; margin-bottom: 4px;">Executive Summary</div>
+          <div style="font-size: 18px; font-weight: 600;">Borrower Risk Profile Analysis</div>
         </div>
-
-        {/* Section Breakdown */}
-        <div class="card" style="padding: 24px;">
-          <div style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 16px;">Score by Section</div>
-          <div style="display: grid; gap: 16px;">
-            {Object.entries(sections).map(([key, sec]) => {
-              const pct = (sec.score / sec.max) * 100;
-              const color = pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444';
-              return (
-                <div key={key}>
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                    <span style="font-size: 13px; color: #374151;">{key}. {sec.name}</span>
-                    <span style="font-size: 13px; font-weight: 700;">{sec.score}/{sec.max} <span style="color: #9CA3AF; font-weight: 400;">({sec.weight}%)</span></span>
-                  </div>
-                  <div style="height: 8px; background: #E5E7EB; border-radius: 4px; overflow: hidden;">
-                    <div style={`height: 100%; width: ${pct}%; background: ${color}; border-radius: 4px;`} />
-                  </div>
+        <div style="padding: 24px;">
+          <div style="display: grid; grid-template-columns: 200px 1fr 1fr; gap: 32px; align-items: center;">
+            {/* Score Gauge */}
+            <div style="text-align: center;">
+              <div style="position: relative; width: 140px; height: 140px; margin: 0 auto;">
+                <svg viewBox="0 0 140 140" style="transform: rotate(-90deg);">
+                  <circle cx="70" cy="70" r="58" fill="none" stroke="#E5E7EB" stroke-width="10" />
+                  <circle cx="70" cy="70" r="58" fill="none" stroke={getScoreColor(rawScore)} stroke-width="10" stroke-dasharray={`${scorePercent * 3.64} 364`} stroke-linecap="round" />
+                </svg>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                  <div style={`font-size: 32px; font-weight: 800; color: ${getScoreColor(rawScore)}; line-height: 1;`}>{rawScore}</div>
+                  <div style="font-size: 11px; color: #9CA3AF;">of {maxScore} pts</div>
                 </div>
-              );
-            })}
+              </div>
+              <div style={`margin-top: 12px; padding: 6px 16px; border-radius: 6px; display: inline-block; background: ${getRiskColor(riskLevel)}; color: white; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;`}>
+                {riskLevel} Risk
+              </div>
+            </div>
+
+            {/* Key Metrics */}
+            <div>
+              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #6B7280; margin-bottom: 12px;">Key Metrics</div>
+              <div style="display: grid; gap: 8px;">
+                {Object.entries(sections).map(([key, sec]) => {
+                  const pct = Math.round((sec.score / sec.max) * 100);
+                  return (
+                    <div key={key} style="display: flex; align-items: center; gap: 12px;">
+                      <div style={`width: 24px; height: 24px; border-radius: 4px; background: ${pct >= 70 ? '#D1FAE5' : pct >= 40 ? '#FEF3C7' : '#FEE2E2'}; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: ${pct >= 70 ? '#065F46' : pct >= 40 ? '#92400E' : '#991B1B'};`}>{key}</div>
+                      <div style="flex: 1;">
+                        <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
+                          <div style={`height: 100%; width: ${pct}%; background: ${pct >= 70 ? '#10B981' : pct >= 40 ? '#F59E0B' : '#EF4444'}; border-radius: 3px;`} />
+                        </div>
+                      </div>
+                      <div style="font-size: 12px; font-weight: 600; color: #374151; width: 60px; text-align: right;">{sec.score}/{sec.max}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Decision Box */}
+            <div style={`padding: 20px; border-radius: 12px; text-align: center; ${isRejected ? 'background: #FEE2E2; border: 2px solid #FECACA;' : 'background: linear-gradient(135deg, #63297A 0%, #7E3D99 100%); color: white;'}`}>
+              <div style={`font-size: 11px; text-transform: uppercase; letter-spacing: 1px; ${isRejected ? 'color: #991B1B;' : 'opacity: 0.85;'} margin-bottom: 8px;`}>
+                {isRejected ? 'Application Status' : 'Loan Eligibility'}
+              </div>
+              {isRejected ? (
+                <div style="font-size: 20px; font-weight: 800; color: #DC2626;">REJECTED</div>
+              ) : (
+                <>
+                  <div style="font-size: 24px; font-weight: 800;">Rp {(loanEligibility/1000000).toFixed(1)}M</div>
+                  <div style="font-size: 12px; opacity: 0.85; margin-top: 4px;">@ {interestRate}% p.a.</div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Factor Details */}
-      <div class="card" style="margin-bottom: 24px; padding: 24px;">
-        <div style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 16px;">Scoring Factors</div>
-        <div style="display: grid; gap: 12px;">
-          {factors.map((f, i) => {
-            const Icon = f.icon;
-            const pct = (f.score / f.max) * 100;
-            const color = pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444';
-            return (
-              <div key={i} style="display: grid; grid-template-columns: 180px 1fr 70px 90px; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <div style={`width: 28px; height: 28px; border-radius: 6px; background: ${color}15; display: flex; align-items: center; justify-content: center;`}>
-                    <Icon size={14} style={`color: ${color};`} />
-                  </div>
-                  <span style="font-size: 13px; color: #374151;">{f.name}</span>
-                </div>
-                <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
-                  <div style={`height: 100%; width: ${pct}%; background: ${color}; border-radius: 3px;`} />
-                </div>
-                <div style="text-align: right; font-size: 14px; font-weight: 700; color: #1F2937;">{f.score}<span style="font-size: 11px; color: #9CA3AF;">/{f.max}</span></div>
-                <div style="font-size: 11px; color: #6B7280; text-align: right;">{f.detail || ''}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Loan Eligibility */}
-      {!isRejected && (
-        <div class="card" style="padding: 0; overflow: hidden;">
-          <div style="background: linear-gradient(135deg, #63297A 0%, #7E3D99 100%); padding: 20px; color: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-              <div>
-                <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Loan Eligibility</div>
-                <div style="font-size: 28px; font-weight: 800;">Rp {loanEligibility.toLocaleString('id-ID')}</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Suggested Rate</div>
-                <div style="font-size: 24px; font-weight: 700;">{interestRate}% <span style="font-size: 13px; opacity: 0.8;">p.a.</span></div>
-              </div>
-            </div>
+      {/* Detailed Factor Analysis */}
+      <div class="card" style="margin-bottom: 24px; padding: 0; overflow: hidden;">
+        <div style="padding: 20px 24px; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 15px; font-weight: 600; color: #1F2937;">Scoring Factor Analysis</div>
+            <div style="font-size: 12px; color: #6B7280;">8 factors across 3 categories weighted by risk impact</div>
+          </div>
+          <div style="display: flex; gap: 12px; font-size: 11px;">
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #10B981;" /> Optimal</span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B;" /> Moderate</span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #EF4444;" /> At Risk</span>
           </div>
         </div>
-      )}
 
-      {/* Disclaimer */}
-      <div style="margin-top: 20px; padding: 12px 16px; background: #FEF3C7; border-radius: 8px; border: 1px solid #FCD34D;">
-        <div style="display: flex; align-items: flex-start; gap: 10px;">
-          <AlertTriangle size={16} style="color: #92400E; flex-shrink: 0; margin-top: 2px;" />
-          <div style="font-size: 12px; color: #92400E;">
-            <strong>Note:</strong> SLIK OJK, financial data (income, debt) are mocked. Real data: literacy progress, majelis, business intelligence.
+        {['A', 'B', 'C'].map(cat => {
+          const catFactors = factors.filter(f => f.category === cat);
+          const sec = sections[cat];
+          return (
+            <div key={cat} style="border-bottom: 1px solid #E5E7EB;">
+              <div style="padding: 16px 24px; background: #F9FAFB; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 28px; height: 28px; border-radius: 6px; background: #63297A; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;">{cat}</div>
+                  <div>
+                    <div style="font-size: 13px; font-weight: 600; color: #1F2937;">{categoryLabels[cat]}</div>
+                    <div style="font-size: 11px; color: #6B7280;">Weight: {sec.weight}% of total score</div>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 18px; font-weight: 700; color: #1F2937;">{sec.score}<span style="font-size: 13px; color: #6B7280;">/{sec.max}</span></div>
+                  <div style={`font-size: 11px; font-weight: 600; color: ${(sec.score/sec.max) >= 0.7 ? '#059669' : (sec.score/sec.max) >= 0.4 ? '#D97706' : '#DC2626'};`}>
+                    {Math.round((sec.score/sec.max)*100)}% achieved
+                  </div>
+                </div>
+              </div>
+              <div style="padding: 0 24px;">
+                {catFactors.map((f, i) => {
+                  const Icon = f.icon;
+                  const pct = (f.score / f.max) * 100;
+                  const color = pct >= 70 ? '#10B981' : pct >= 40 ? '#F59E0B' : '#EF4444';
+                  const status = pct >= 70 ? 'Optimal' : pct >= 40 ? 'Moderate' : 'At Risk';
+                  return (
+                    <div key={i} style={`display: grid; grid-template-columns: 32px 1fr 100px 80px 90px; align-items: center; gap: 16px; padding: 14px 0; ${i < catFactors.length - 1 ? 'border-bottom: 1px solid #F3F4F6;' : ''}`}>
+                      <div style={`width: 32px; height: 32px; border-radius: 8px; background: ${color}15; display: flex; align-items: center; justify-content: center;`}>
+                        <Icon size={16} style={`color: ${color};`} />
+                      </div>
+                      <div>
+                        <div style="font-size: 13px; font-weight: 500; color: #1F2937;">{f.name}</div>
+                        <div style="font-size: 11px; color: #6B7280;">{f.detail || `Weight: ${f.weight}%`}</div>
+                      </div>
+                      <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
+                        <div style={`height: 100%; width: ${pct}%; background: ${color}; border-radius: 3px;`} />
+                      </div>
+                      <div style="text-align: right; font-size: 14px; font-weight: 700; color: #1F2937;">{f.score}<span style="font-size: 11px; color: #9CA3AF; font-weight: 400;">/{f.max}</span></div>
+                      <div style={`text-align: center; font-size: 10px; padding: 4px 8px; border-radius: 4px; background: ${color}15; color: ${color}; font-weight: 600; text-transform: uppercase;`}>{status}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Methodology Note */}
+      <div style="padding: 16px 20px; background: #F8FAFC; border-radius: 12px; border: 1px solid #E2E8F0;">
+        <div style="display: flex; gap: 16px;">
+          <div style="width: 40px; height: 40px; background: #63297A15; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <FileText size={20} style="color: #63297A;" />
+          </div>
+          <div>
+            <div style="font-size: 13px; font-weight: 600; color: #1F2937; margin-bottom: 4px;">Scoring Methodology</div>
+            <div style="font-size: 12px; color: #64748B; line-height: 1.5;">
+              This assessment uses Amartha's proprietary credit scoring model combining <strong>SLIK OJK data</strong> (payment history), 
+              <strong>financial ratios</strong> (RPC, DBR, cashflow volatility), <strong>AI-powered business validation</strong> (inventory & asset analysis), 
+              and <strong>behavioral indicators</strong> (literacy completion, group cohesion). Auto-reject rules comply with OJK microfinance guidelines.
+            </div>
+            <div style="margin-top: 8px; display: flex; gap: 16px; font-size: 11px; color: #94A3B8;">
+              <span>📊 Real data: Literacy, Majelis, Business Intelligence</span>
+              <span>🔄 Simulated: SLIK, Income/Debt figures</span>
+            </div>
           </div>
         </div>
       </div>
