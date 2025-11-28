@@ -71,6 +71,24 @@ app.post('/webhook', async (req, res) => {
 
         // Send Reply
         await sendMessage(senderPhone, aiReply);
+      } else if (message.type === 'image') {
+        console.log(`📷 Image received from ${senderPhone} (not supported)`);
+        await sendMessage(
+          senderPhone, 
+          "Maaf Bu, saat ini saya belum bisa memproses gambar. Silakan kirim pesan teks untuk pertanyaan Ibu. 😊"
+        );
+      } else if (message.type === 'audio' || message.type === 'voice') {
+        console.log(`🎤 Audio received from ${senderPhone} (not supported)`);
+        await sendMessage(
+          senderPhone, 
+          "Maaf Bu, saat ini saya belum bisa memproses pesan suara. Silakan kirim pesan teks untuk pertanyaan Ibu. 😊"
+        );
+      } else {
+        console.log(`📎 ${message.type} received from ${senderPhone} (not supported)`);
+        await sendMessage(
+          senderPhone, 
+          "Maaf Bu, saya hanya bisa memproses pesan teks. Silakan kirim pertanyaan Ibu dalam bentuk teks. 😊"
+        );
       }
     }
     res.sendStatus(200);

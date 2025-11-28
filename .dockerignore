@@ -1,0 +1,31 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+
+# Kiro
+.kiro
+
+# Documentation
+README.md
+*.md
+test-chats.md
+FEATURE_PLAN.md
+
+# Deployment
+deploy.sh
+.gcloudignore
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
