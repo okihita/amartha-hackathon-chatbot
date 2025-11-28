@@ -34,10 +34,26 @@ export default function BusinessTypes() {
   }, []);
 
   const fetchBusinessTypes = async () => {
+    const CACHE_KEY = 'businessTypes';
+    const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+    
     try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_TTL) {
+          setBusinessTypes(data);
+          setLoading(false);
+          return;
+        }
+      }
+      
       const res = await fetch('/api/business-types');
       const data = await res.json();
-      setBusinessTypes(data.sort((a, b) => (a.category_number || 999) - (b.category_number || 999)));
+      const sorted = data.sort((a, b) => (a.category_number || 999) - (b.category_number || 999));
+      
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ data: sorted, timestamp: Date.now() }));
+      setBusinessTypes(sorted);
     } catch (error) {
       console.error('Failed to fetch business types', error);
     } finally {

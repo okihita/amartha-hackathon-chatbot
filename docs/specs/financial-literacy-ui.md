@@ -28,6 +28,37 @@
 - ❌ Decorative elements
 - ❌ Consumer-app styling
 
+### Icon System
+**Emoji Icons**: Used exclusively for business type categorization.
+
+**Business Type Icons**:
+- 🏪 Warung Sembako/Kelontong
+- 🍽️ Warung Makan
+- ☕ Coffee Shop
+- 🍪 Jajanan/Camilan
+- 👗 Fashion/Hijab
+- 📱 Elektronik/Gadget
+- 🐾 Pet Shop
+- 🧱 Bahan Bangunan
+- 🎮 Mainan/Hobi
+- 👕 Laundry
+- 🏍️ Bengkel Motor
+- 💇 Kecantikan/Salon
+- ✂️ Penjahit/Permak
+- 🏠 Kos-kosan/Penginapan
+- 📦 Logistik/Ekspedisi
+- 🚗 Sewa Kendaraan
+- 🚿 Cuci Steam/Detailing
+- 💊 Apotek/Obat
+- 🎉 Event/Wedding
+- 🔧 Bengkel Las/Bubut
+- 🏗️ Kontraktor/Renovasi
+- 🎨 Kriya/Kerajinan
+- 🌱 Petani/Holtikultura
+- 🐟 Nelayan/Ikan
+
+**Rationale**: Emojis provide quick visual recognition for business categories and are culturally appropriate for the Indonesian UMKM context. They are NOT used for UI controls or actions.
+
 ## Overview
 This document specifies the UI/UX requirements for the Financial Literacy course dashboard.
 
@@ -343,9 +374,82 @@ Page Title: Financial Literacy Course - 15 Weeks
 - [ ] Database content remains unchanged
 - [ ] Responsive layout works on mobile/tablet
 
+## Performance Optimization
+
+### Browser Caching Strategy
+**Requirement**: Cache reference data in localStorage to improve load times and reduce API calls.
+
+**Implementation**:
+- **Cache Key**: `financialLiteracy` (for Financial Literacy page), `businessTypes` (for Business Types page)
+- **TTL**: 24 hours (86,400,000 milliseconds)
+- **Storage**: localStorage (persists across sessions)
+- **Cache Structure**:
+  ```javascript
+  {
+    data: [...], // Actual course/business data
+    timestamp: 1700000000000 // Unix timestamp in milliseconds
+  }
+  ```
+
+**Cache Logic**:
+```javascript
+const CACHE_KEY = 'financialLiteracy';
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+// Check cache first
+const cached = localStorage.getItem(CACHE_KEY);
+if (cached) {
+  const { data, timestamp } = JSON.parse(cached);
+  if (Date.now() - timestamp < CACHE_TTL) {
+    // Use cached data (instant load)
+    setWeeks(data);
+    setLoading(false);
+    return;
+  }
+}
+
+// Fetch from API if cache miss or expired
+const res = await fetch('/api/financial-literacy');
+const data = await res.json();
+
+// Store in cache with timestamp
+localStorage.setItem(CACHE_KEY, JSON.stringify({ 
+  data: processedData, 
+  timestamp: Date.now() 
+}));
+```
+
+**Rationale**:
+- Financial literacy content and business types are **reference data** that rarely changes
+- Large payloads (15 weeks with quizzes, 25 business types with maturity levels)
+- Eliminates loading spinner on repeat visits
+- Reduces server load and bandwidth usage
+- Standard practice for static/master data in web applications
+
+**Cache Invalidation**:
+- **Automatic**: Cache expires after 24 hours
+- **Manual**: Admin can clear cache via browser console:
+  ```javascript
+  localStorage.removeItem('financialLiteracy');
+  localStorage.removeItem('businessTypes');
+  ```
+- **On Update**: If data is updated on server, users will see changes within 24 hours or after manual cache clear
+
+**Storage Limits**:
+- localStorage limit: 5-10MB (browser-dependent)
+- Current data size: ~500KB (well within limits)
+- No risk of quota exceeded errors
+
+**Applied To**:
+- ✅ Financial Literacy page (`/financial-literacy`)
+- ✅ Business Types page (`/business-types`)
+- ❌ Users page (dynamic data, no caching)
+- ❌ Majelis page (dynamic data, no caching)
+
 ## Future Enhancements
 
 - Add progress tracking per module
 - Show completion status for each week
 - Add search/filter functionality
 - Export quiz results
+- Add cache version number for forced invalidation on data schema changes

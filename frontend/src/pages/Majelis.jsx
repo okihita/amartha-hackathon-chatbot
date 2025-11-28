@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { Plus, Edit2, Trash2, X, UserPlus, Calendar, MapPin, Users } from 'lucide-preact';
 
 export default function Majelis() {
   const [majelis, setMajelis] = useState([]);
@@ -13,10 +14,27 @@ export default function Majelis() {
     schedule_time: '10:00',
     location: ''
   });
+  const [addMemberModal, setAddMemberModal] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredUsers, setFilteredUsers] = useState([]);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredUsers([]);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    const verified = users.filter(u => u.is_verified === true);
+    const matches = verified.filter(u => 
+      u.name?.toLowerCase().includes(query) || 
+      u.phone?.includes(query)
+    ).slice(0, 5);
+    setFilteredUsers(matches);
+  }, [searchQuery, users]);
 
   const fetchData = async () => {
     try {
@@ -64,6 +82,36 @@ export default function Majelis() {
     }
   };
 
+  const handleAddMember = async (majelisId, phone) => {
+    try {
+      const res = await fetch(`/api/majelis/${majelisId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Failed to add member');
+        return;
+      }
+      setAddMemberModal(null);
+      setSearchQuery('');
+      fetchData();
+    } catch (error) {
+      alert('Failed to add member');
+    }
+  };
+
+  const handleRemoveMember = async (majelisId, phone) => {
+    if (!confirm('Remove this member?')) return;
+    try {
+      await fetch(`/api/majelis/${majelisId}/members/${phone}`, { method: 'DELETE' });
+      fetchData();
+    } catch (error) {
+      alert('Failed to remove member');
+    }
+  };
+
   if (loading) return <div class="loading">Loading...</div>;
 
   return (
@@ -71,7 +119,9 @@ export default function Majelis() {
       <div class="card">
         <div class="card-header-actions">
           <h2>Majelis Groups</h2>
-          <button class="btn btn-primary" onClick={() => setShowModal(true)}>+ Create Majelis</button>
+          <button class="btn btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={16} /> Create Majelis
+          </button>
         </div>
         
         <div class="majelis-grid">
@@ -84,14 +134,14 @@ export default function Majelis() {
                 <div key={m.id} class="majelis-card">
                   <h3>{m.name}</h3>
                   <div class="info-row">
-                    <span>📅 {m.schedule_day} {m.schedule_time}</span>
-                    <span>📍 {m.location || 'No location'}</span>
+                    <span><Calendar size={14} /> {m.schedule_day} {m.schedule_time}</span>
+                    <span><MapPin size={14} /> {m.location || 'No location'}</span>
                   </div>
                   {m.description && <p class="majelis-description">{m.description}</p>}
-                  <div class="member-count">👥 {memberCount} member{memberCount !== 1 ? 's' : ''}</div>
+                  <div class="member-count"><Users size={14} /> {memberCount} member{memberCount !== 1 ? 's' : ''}</div>
                   <div class="member-list">
                     {memberCount === 0 ? (
-                      <div class="no-members">📭 No members yet</div>
+                      <div class="no-members">No members yet</div>
                     ) : (
                       m.members.map(phone => {
                         const user = users.find(u => u.phone === phone);
@@ -99,18 +149,32 @@ export default function Majelis() {
                           <div key={phone} class="member-item-inline">
                             <span class="member-name">{user?.name || phone}</span>
                             {user && <span class="member-details"> • {user.business_type}</span>}
+                            <button 
+                              class="btn-remove-member" 
+                              onClick={() => handleRemoveMember(m.id, phone)}
+                              title="Remove member"
+                            >
+                              <X size={14} />
+                            </button>
                           </div>
                         );
                       })
                     )}
                   </div>
                   <div class="actions">
+                    <button class="btn btn-primary btn-sm" onClick={() => setAddMemberModal(m.id)}>
+                      <UserPlus size={14} /> Add Member
+                    </button>
                     <button class="btn btn-secondary" onClick={() => {
                       setEditingId(m.id);
                       setFormData(m);
                       setShowModal(true);
-                    }}>Edit</button>
-                    <button class="btn btn-danger" onClick={() => handleDelete(m.id, m.name)}>Delete</button>
+                    }}>
+                      <Edit2 size={14} /> Edit
+                    </button>
+                    <button class="btn btn-danger" onClick={() => handleDelete(m.id, m.name)}>
+                      <Trash2 size={14} /> Delete
+                    </button>
                   </div>
                 </div>
               );
@@ -181,6 +245,52 @@ export default function Majelis() {
                 <button type="submit" class="btn btn-primary">Save</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {addMemberModal && (
+        <div class="modal active" onClick={(e) => {
+          if (e.target.className === 'modal active') {
+            setAddMemberModal(null);
+            setSearchQuery('');
+          }
+        }}>
+          <div class="modal-content modal-sm">
+            <h2>Add Member</h2>
+            <div class="form-group">
+              <label>Search by name or phone</label>
+              <input 
+                type="text" 
+                value={searchQuery}
+                onInput={(e) => setSearchQuery(e.target.value)}
+                placeholder="Type to search..."
+                autoFocus
+              />
+              {filteredUsers.length > 0 && (
+                <div class="autocomplete-results">
+                  {filteredUsers.map(user => (
+                    <div 
+                      key={user.phone} 
+                      class="autocomplete-item"
+                      onClick={() => handleAddMember(addMemberModal, user.phone)}
+                    >
+                      <div class="autocomplete-name">{user.name}</div>
+                      <div class="autocomplete-details">{user.phone} • {user.business_type}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {searchQuery && filteredUsers.length === 0 && (
+                <div class="autocomplete-empty">No verified users found</div>
+              )}
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" onClick={() => {
+                setAddMemberModal(null);
+                setSearchQuery('');
+              }}>Cancel</button>
+            </div>
           </div>
         </div>
       )}

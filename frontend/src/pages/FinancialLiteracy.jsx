@@ -32,12 +32,28 @@ export default function FinancialLiteracy() {
   }, []);
 
   const fetchCourse = async () => {
+    const CACHE_KEY = 'financialLiteracy';
+    const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+    
     try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_TTL) {
+          setWeeks(data);
+          setLoading(false);
+          return;
+        }
+      }
+      
       const res = await fetch('/api/financial-literacy');
       const data = await res.json();
       const filtered = data
         .filter(w => w.week_number && w.bank_soal && w.bank_soal.length > 0)
         .sort((a, b) => a.week_number - b.week_number);
+      
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ data: filtered, timestamp: Date.now() }));
+      setWeeks(filtered);
       setWeeks(filtered);
     } catch (error) {
       console.error('Failed to fetch course:', error);

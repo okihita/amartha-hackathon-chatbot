@@ -372,4 +372,30 @@ app.delete('/api/majelis/:id/members/:phone', async (req, res) => {
   }
 });
 
+// --- SUPERADMIN APIs ---
+
+// Populate mock users
+app.post('/api/superadmin/populate-mock', async (req, res) => {
+  try {
+    const { createMockUsers } = require('./src/db');
+    const count = await createMockUsers();
+    res.json({ success: true, count });
+  } catch (error) {
+    console.error('Error populating mock data:', error);
+    res.status(500).json({ error: 'Failed to populate mock data' });
+  }
+});
+
+// Delete all mock users
+app.delete('/api/superadmin/delete-all-mock', async (req, res) => {
+  try {
+    const { deleteAllMockUsers } = require('./src/db');
+    const count = await deleteAllMockUsers();
+    res.json({ success: true, count });
+  } catch (error) {
+    console.error('Error deleting mock users:', error);
+    res.status(500).json({ error: 'Failed to delete mock users' });
+  }
+});
+
 app.listen(PORT, () => console.log(`🚀 Server listening on ${PORT}`));
