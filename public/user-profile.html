@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Amartha Dashboard</title>
+    <script src="/layout.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header h1 { font-size: 24px; color: #333; margin-bottom: 10px; }
+        .back-link { display: inline-block; padding: 8px 16px; background: #f0f0f0; border-radius: 4px; text-decoration: none; color: #333; margin-top: 10px; }
+        .back-link:hover { background: #e0e0e0; }
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h2 { font-size: 18px; margin-bottom: 20px; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .profile-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .profile-label { color: #666; font-weight: 500; }
+        .profile-value { color: #333; font-weight: 600; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .status-verified { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .score-display { text-align: center; padding: 20px; background: #f9f9f9; border-radius: 8px; margin: 10px 0; }
+        .score-number { font-size: 48px; font-weight: 700; margin: 10px 0; }
+        .score-label { color: #666; font-size: 14px; }
+        .metric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
+        .metric-item { background: #f9f9f9; padding: 15px; border-radius: 8px; text-align: center; }
+        .metric-value { font-size: 24px; font-weight: 700; color: #007bff; }
+        .metric-label { font-size: 12px; color: #666; margin-top: 5px; }
+        .images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .image-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .image-card img { width: 100%; height: 200px; object-fit: cover; cursor: pointer; transition: transform 0.2s; }
+        .image-card img:hover { transform: scale(1.05); }
+        .image-info { padding: 15px; }
+        .image-category { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .image-date { font-size: 12px; color: #999; }
+        .image-insights { font-size: 13px; color: #666; margin-top: 10px; line-height: 1.5; }
+        .transaction-item { padding: 12px; background: #f9f9f9; border-radius: 4px; margin-bottom: 10px; }
+        .transaction-type { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .transaction-amount { font-size: 18px; font-weight: 700; }
+        .transaction-amount.positive { color: #28a745; }
+        .transaction-amount.negative { color: #dc3545; }
+        .transaction-date { font-size: 11px; color: #999; margin-top: 5px; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .image-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
+        .image-modal.active { display: flex; }
+        .image-modal img { max-width: 90%; max-height: 90%; object-fit: contain; }
+        .image-modal-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; }
+        .full-width { grid-column: 1 / -1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👤 User Profile</h1>
+            <a href="/" class="back-link">← Back to Users</a>
+        </div>
+        
+        <div id="loading" class="loading">Loading user profile...</div>
+        
+        <div id="profileContent" style="display: none;">
+            <div class="profile-grid">
+                <!-- Personal Info -->
+                <div class="card">
+                    <h2>👤 Personal Information</h2>
+                    <div id="personalInfo"></div>
+                </div>
+                
+                <!-- Credit Score -->
+                <div class="card">
+                    <h2>📊 Credit Score</h2>
+                    <div id="creditScore"></div>
+                </div>
+                
+                <!-- Business Metrics -->
+                <div class="card full-width">
+                    <h2>💼 Business Metrics</h2>
+                    <div id="businessMetrics"></div>
+                </div>
+                
+                <!-- Loan Information -->
+                <div class="card">
+                    <h2>💰 Loan Information</h2>
+                    <div id="loanInfo"></div>
+                </div>
+                
+                <!-- Transaction History -->
+                <div class="card">
+                    <h2>📜 Transaction History</h2>
+                    <div id="transactionHistory"></div>
+                </div>
+            </div>
+            
+            <!-- Business Photos -->
+            <div class="card">
+                <h2>📸 Business Photos</h2>
+                <div id="businessPhotos"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Viewer Modal -->
+    <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+        <span class="image-modal-close">&times;</span>
+        <img id="modalImage" src="" alt="Business Image">
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const phone = urlParams.get('phone');
+
+        if (!phone) {
+            document.getElementById('loading').textContent = 'Error: No phone number provided';
+        } else {
+            loadUserProfile(phone);
+        }
+
+        async function loadUserProfile(phone) {
+            try {
+                // Fetch user data
+                const userRes = await fetch('/api/users');
+                const users = await userRes.json();
+                const user = users.find(u => u.phone === phone);
+                
+                if (!user) {
+                    document.getElementById('loading').textContent = 'User not found';
+                    return;
+                }
+                
+                // Fetch business images
+                const imagesRes = await fetch(`/api/users/${phone}/images`);
+                const images = await imagesRes.json();
+                
+                // Render profile
+                renderProfile(user, images);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('profileContent').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                document.getElementById('loading').textContent = 'Error loading profile';
+            }
+        }
+
+        function renderProfile(user, images) {
+            // Personal Info
+            const majelisInfo = user.majelis_name || 'Not assigned';
+            document.getElementById('personalInfo').innerHTML = `
+                <div class="profile-row">
+                    <span class="profile-label">Name</span>
+                    <span class="profile-value">${user.name}</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Phone</span>
+                    <span class="profile-value">${user.phone}</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Business</span>
+                    <span class="profile-value">${user.business_type}</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Location</span>
+                    <span class="profile-value">${user.location}</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Majelis</span>
+                    <span class="profile-value">${majelisInfo}</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Status</span>
+                    <span class="profile-value">
+                        <span class="status-badge ${user.is_verified ? 'status-verified' : 'status-pending'}">
+                            ${user.is_verified ? 'Verified' : 'Pending'}
+                        </span>
+                    </span>
+                </div>
+            `;
+            
+            // Credit Score
+            if (user.credit_score && user.credit_metrics) {
+                const cm = user.credit_metrics;
+                const creditScore = user.credit_score;
+                let scoreColor = '#dc3545';
+                if (creditScore >= 70) scoreColor = '#28a745';
+                else if (creditScore >= 50) scoreColor = '#ffc107';
+                
+                let riskColor = '#dc3545';
+                if (cm.risk_level === 'rendah') riskColor = '#28a745';
+                else if (cm.risk_level === 'sedang') riskColor = '#ffc107';
+                
+                document.getElementById('creditScore').innerHTML = `
+                    <div class="score-display">
+                        <div class="score-label">Overall Credit Score</div>
+                        <div class="score-number" style="color: ${scoreColor};">${creditScore}</div>
+                        <div class="score-label">out of 100</div>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Risk Level</span>
+                        <span class="profile-value" style="color: ${riskColor}; text-transform: uppercase;">
+                            ${cm.risk_level || 'N/A'}
+                        </span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Data Points</span>
+                        <span class="profile-value">${cm.data_points || 0} images analyzed</span>
+                    </div>
+                `;
+                
+                // Business Metrics
+                document.getElementById('businessMetrics').innerHTML = `
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-value">${cm.business_health_score || 0}</div>
+                            <div class="metric-label">Business Health</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${cm.asset_score || 0}</div>
+                            <div class="metric-label">Asset Score</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${cm.cashflow_score || 0}</div>
+                            <div class="metric-label">Cashflow Score</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${cm.management_score || 0}</div>
+                            <div class="metric-label">Management Score</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${cm.growth_potential || 0}</div>
+                            <div class="metric-label">Growth Potential</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">Rp ${(cm.total_asset_value || 0).toLocaleString('id-ID')}</div>
+                            <div class="metric-label">Total Assets</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">Rp ${(cm.total_inventory_value || 0).toLocaleString('id-ID')}</div>
+                            <div class="metric-label">Inventory Value</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">Rp ${(cm.estimated_monthly_cashflow || 0).toLocaleString('id-ID')}</div>
+                            <div class="metric-label">Monthly Cashflow</div>
+                        </div>
+                        <div class="metric-item" style="grid-column: 1 / -1;">
+                            <div class="metric-value" style="color: #007bff;">Rp ${(cm.recommended_loan_amount || 0).toLocaleString('id-ID')}</div>
+                            <div class="metric-label">Recommended Loan Amount</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('creditScore').innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No credit data available yet</p>';
+                document.getElementById('businessMetrics').innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No business metrics available yet</p>';
+            }
+            
+            // Loan Info
+            if (user.loan_limit > 0) {
+                document.getElementById('loanInfo').innerHTML = `
+                    <div class="profile-row">
+                        <span class="profile-label">Loan Limit</span>
+                        <span class="profile-value">Rp ${user.loan_limit.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Used</span>
+                        <span class="profile-value">Rp ${user.loan_used.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Remaining</span>
+                        <span class="profile-value" style="color: #28a745;">Rp ${user.loan_remaining.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Next Payment</span>
+                        <span class="profile-value">${user.next_payment_date ? new Date(user.next_payment_date).toLocaleDateString('id-ID') : 'N/A'}</span>
+                    </div>
+                    <div class="profile-row">
+                        <span class="profile-label">Payment Amount</span>
+                        <span class="profile-value">Rp ${user.next_payment_amount.toLocaleString('id-ID')}</span>
+                    </div>
+                `;
+            } else {
+                document.getElementById('loanInfo').innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No active loan</p>';
+            }
+            
+            // Transaction History
+            const loanHistory = user.loan_history || [];
+            if (loanHistory.length > 0) {
+                const historyHtml = loanHistory.map(tx => `
+                    <div class="transaction-item">
+                        <div class="transaction-type">${tx.type === 'disbursement' ? '💰 Disbursement' : '💵 Payment'}: ${tx.description}</div>
+                        <div class="transaction-amount ${tx.type === 'payment' ? 'negative' : 'positive'}">
+                            ${tx.type === 'disbursement' ? '+' : '-'} Rp ${tx.amount.toLocaleString('id-ID')}
+                        </div>
+                        <div class="transaction-date">${new Date(tx.date).toLocaleDateString('id-ID')}</div>
+                    </div>
+                `).join('');
+                document.getElementById('transactionHistory').innerHTML = historyHtml;
+            } else {
+                document.getElementById('transactionHistory').innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No transaction history</p>';
+            }
+            
+            // Business Photos
+            if (images && images.length > 0) {
+                const categoryLabels = {
+                    building: '🏪 Building/Store',
+                    inventory: '📦 Inventory/Stock'
+                };
+                
+                const imagesHtml = images.map(img => {
+                    const insights = img.insights && img.insights.length > 0 
+                        ? img.insights.slice(0, 2).join('<br>') 
+                        : 'No insights available';
+                    
+                    return `
+                        <div class="image-card">
+                            <img src="data:image/jpeg;base64,${img.image_data}" 
+                                 alt="${img.category}" 
+                                 onclick="viewImage('${img.image_data}')" />
+                            <div class="image-info">
+                                <div class="image-category">${categoryLabels[img.category] || img.category}</div>
+                                <div class="image-date">${new Date(img.analyzed_at).toLocaleDateString('id-ID')}</div>
+                                <div class="image-insights">${insights}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('businessPhotos').innerHTML = `
+                    <div class="images-grid">${imagesHtml}</div>
+                `;
+            } else {
+                document.getElementById('businessPhotos').innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No business photos uploaded yet</p>';
+            }
+        }
+
+        function viewImage(imageData) {
+            document.getElementById('modalImage').src = 'data:image/jpeg;base64,' + imageData;
+            document.getElementById('imageModal').classList.add('active');
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

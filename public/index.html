@@ -393,7 +393,7 @@
                 
                 return `
                 <tr>
-                    <td><strong>${user.name}</strong></td>
+                    <td><strong><a href="/user-profile.html?phone=${user.phone}" target="_blank" style="color: #007bff; text-decoration: none;">${user.name}</a></strong></td>
                     <td>${user.phone}</td>
                     <td>${user.business_type}</td>
                     <td>${user.location}</td>
@@ -409,7 +409,7 @@
                     </td>
                     <td>
                         <div class="actions">
-                            <button class="btn-approve" onclick="viewProfile('${user.phone}')" style="background: #007bff;">
+                            <button class="btn-approve" onclick="window.open('/user-profile.html?phone=${user.phone}', '_blank')" style="background: #007bff;">
                                 👁️ View
                             </button>
                             <button class="btn-approve" onclick="handleVerify('${user.phone}', true)" ${processing || user.is_verified ? 'disabled' : ''} style="${user.is_verified ? 'opacity: 0.3;' : ''}">
