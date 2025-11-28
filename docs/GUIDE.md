@@ -52,6 +52,17 @@ npm start
 - `FINANCIAL_LITERACY_FOLDER_ID` - Google Drive folder
 - `BUSINESS_TYPES_FOLDER_ID` - Google Drive folder
 
+## Chatbot Commands (Bahasa Indonesia)
+
+| Feature | Trigger Words |
+|---------|---------------|
+| Menu/Bantuan | menu, bantuan, help, tolong, bantu, halo, hi, hai |
+| Mulai Kuis | kuis, quiz, belajar, tes, ujian, soal, mulai kuis |
+| Lihat Nilai | nilai, hasil, skor, progress, hasil kuis, nilai saya |
+| Cek Data Profil | cek data, data saya, profil, info saya, debug, data |
+| Jadwal Majelis | jadwal, majelis, pertemuan, kapan ketemu, kumpul |
+| Kirim Foto | Langsung kirim gambar (dengan/tanpa caption) |
+
 ## Testing
 
 ```bash

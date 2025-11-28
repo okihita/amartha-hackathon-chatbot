@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Building2, Users, UsersRound, Briefcase, BookOpen, UserCircle } from 'lucide-preact';
+import { Building2, Users, UsersRound, Briefcase, BookOpen, UserCircle, HelpCircle } from 'lucide-preact';
 
 export default function Header() {
   const [currentPath, setCurrentPath] = useState('');
@@ -64,6 +64,13 @@ export default function Header() {
               onClick={(e) => handleNavClick(e, '/financial-literacy')}
             >
               <BookOpen size={16} /> Financial Literacy
+            </a>
+            <a
+              href="/how-it-works"
+              class={currentPath === '/how-it-works' ? 'active' : ''}
+              onClick={(e) => handleNavClick(e, '/how-it-works')}
+            >
+              <HelpCircle size={16} /> Cara Kerja
             </a>
           </div>
         </div>

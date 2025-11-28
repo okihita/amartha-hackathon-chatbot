@@ -8,6 +8,7 @@ import Majelis from './pages/Majelis';
 import BusinessTypes from './pages/BusinessTypes';
 import FinancialLiteracy from './pages/FinancialLiteracy';
 import UserProfile from './pages/UserProfile';
+import HowItWorks from './pages/HowItWorks';
 
 // Layout
 import Header from './components/Header';
@@ -21,6 +22,7 @@ function App() {
         <Majelis path="/majelis" />
         <BusinessTypes path="/business-types" />
         <FinancialLiteracy path="/financial-literacy" />
+        <HowItWorks path="/how-it-works" />
         <UserProfile path="/user-profile/:phone" />
       </Router>
     </div>

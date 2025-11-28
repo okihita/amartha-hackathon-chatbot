@@ -26,7 +26,8 @@ class WebhookController {
           const caption = message.text.body;
           await sendMessage(phone, await analyzeImage(imageId, caption, phone));
         } else {
-          await sendMessage(phone, await getGeminiResponse(message.text.body, phone));
+          const response = await getGeminiResponse(message.text.body, phone);
+          if (response) await sendMessage(phone, response);
         }
       },
       image: async () => {
