@@ -1,6 +1,7 @@
 const { getGeminiResponse } = require('../chatbot/aiEngine');
 const { sendMessage, sendQuizQuestion } = require('../chatbot/whatsapp');
 const { analyzeImage } = require('../chatbot/imageAnalyzer');
+const { transcribeVoiceNote } = require('../chatbot/voiceParser');
 const QuizService = require('../services/QuizService');
 const DemoService = require('../services/DemoService');
 
@@ -58,7 +59,42 @@ class WebhookController {
         }
       },
       audio: async () => {
-        await sendMessage(phone, "Maaf, saat ini saya belum bisa memproses pesan suara. Silakan kirim pesan teks.");
+        const audioId = message.audio?.id;
+        if (!audioId) {
+          await sendMessage(phone, "Maaf, gagal menerima pesan suara.");
+          return;
+        }
+        
+        const transcription = await transcribeVoiceNote(audioId);
+        if (!transcription) {
+          await sendMessage(phone, "Maaf, gagal memproses pesan suara. Silakan coba lagi atau kirim pesan teks.");
+          return;
+        }
+        
+        const text = transcription.trim();
+        
+        // Handle demo commands from voice
+        if (DemoService.isValidCommand(text)) {
+          if (text.toLowerCase() === '/demo:reset') {
+            await sendMessage(phone, await DemoService.resetDemo(phone));
+          } else if (text.toLowerCase() === '/demo:help' || text.toLowerCase() === '/demo') {
+            await sendMessage(phone, DemoService.getHelpMessage());
+          } else {
+            const result = await DemoService.injectDemo(phone, text);
+            await sendMessage(phone, result.message);
+          }
+          return;
+        }
+        
+        // Check if user has pending image waiting for caption
+        if (pendingImages.has(phone)) {
+          const imageId = pendingImages.get(phone);
+          pendingImages.delete(phone);
+          await sendMessage(phone, await analyzeImage(imageId, text, phone));
+        } else {
+          const response = await getGeminiResponse(text, phone);
+          if (response) await sendMessage(phone, response);
+        }
       },
       interactive: async () => {
         await this.handleInteractiveMessage(message, phone);

@@ -1,5 +1,12 @@
 module.exports = {
-  clean: (phone) => phone.replace(/\D/g, ''),
+  clean: (phone) => {
+    let cleaned = phone.replace(/\D/g, '');
+    // Normalize to 62 format
+    if (cleaned.startsWith('0')) {
+      cleaned = '62' + cleaned.slice(1);
+    }
+    return cleaned;
+  },
   
   isValid: (phone) => {
     const cleaned = phone.replace(/\D/g, '');

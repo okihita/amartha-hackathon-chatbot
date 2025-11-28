@@ -14,6 +14,8 @@ class UserService {
       if (majelis) {
         user.majelis_name = majelis.name;
         user.majelis_day = majelis.schedule_day;
+        user.majelis_time = majelis.schedule_time;
+        user.majelis_location = majelis.location;
       }
     }
     
@@ -66,6 +68,8 @@ class UserService {
         if (majelis) {
           user.majelis_name = majelis.name;
           user.majelis_day = majelis.schedule_day;
+          user.majelis_time = majelis.schedule_time;
+          user.majelis_location = majelis.location;
         }
       }
     }
