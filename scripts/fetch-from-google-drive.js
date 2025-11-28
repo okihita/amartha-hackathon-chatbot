@@ -106,7 +106,12 @@ function parseBusinessClassification(docName, content) {
   // Extract business type from document name
   // Expected format: "Warung Sembako - Maturity Levels.gdoc"
   const businessType = docName.replace(/\s*-\s*Maturity Levels.*$/i, '').trim();
-  const id = businessType.toLowerCase().replace(/\s+/g, '_');
+  // Sanitize ID: remove special characters that Firestore doesn't allow
+  const id = businessType
+    .toLowerCase()
+    .replace(/[()\/\\]/g, '') // Remove parentheses and slashes
+    .replace(/\s+/g, '_')      // Replace spaces with underscores
+    .replace(/[^a-z0-9_-]/g, '_'); // Replace any other special chars with underscore
   
   // Parse content into structured format
   // This is a simplified parser - adjust based on your actual document structure
