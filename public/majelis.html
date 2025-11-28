@@ -30,10 +30,17 @@
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         .majelis-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .majelis-card { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; }
-        .majelis-card h3 { font-size: 16px; margin-bottom: 10px; color: #333; }
+        .majelis-card h3 { font-size: 16px; margin-bottom: 10px; color: #333; font-weight: 600; }
         .majelis-card p { font-size: 14px; color: #666; margin-bottom: 5px; }
-        .majelis-card .members { font-size: 12px; color: #999; margin-top: 10px; }
-        .majelis-card .actions { margin-top: 15px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .majelis-card .info-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; color: #666; }
+        .majelis-card .member-count { font-size: 12px; color: #28a745; font-weight: 600; margin: 10px 0 5px 0; }
+        .majelis-card .member-list { margin: 5px 0 10px 0; max-height: 150px; overflow-y: auto; }
+        .majelis-card .member-item-inline { font-size: 12px; color: #555; padding: 4px 0; border-bottom: 1px solid #eee; }
+        .majelis-card .member-item-inline:last-child { border-bottom: none; }
+        .majelis-card .member-name { font-weight: 500; color: #333; }
+        .majelis-card .member-details { color: #999; font-size: 11px; }
+        .majelis-card .no-members { font-size: 12px; color: #999; font-style: italic; }
+        .majelis-card .actions { margin-top: 15px; display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid #e0e0e0; padding-top: 10px; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
         .modal.active { display: flex; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
@@ -123,7 +130,7 @@
     <!-- Members Modal -->
     <div id="membersModal" class="modal">
         <div class="modal-content">
-            <h2>Manage Members</h2>
+            <h2>Add/Remove Members</h2>
             <p id="membersModalTitle" style="color: #666; margin-bottom: 20px;"></p>
             
             <div class="form-group">
@@ -184,20 +191,39 @@
                 return;
             }
             
-            grid.innerHTML = majelis.map(m => `
+            grid.innerHTML = majelis.map(m => {
+                const memberCount = m.members?.length || 0;
+                const membersList = m.members?.map(phone => {
+                    const user = allUsers.find(u => u.phone === phone);
+                    if (user) {
+                        return `
+                            <div class="member-item-inline">
+                                <span class="member-name">${user.name}</span>
+                                <span class="member-details"> • ${user.business_type}</span>
+                            </div>
+                        `;
+                    }
+                    return `<div class="member-item-inline"><span class="member-name">${phone}</span></div>`;
+                }).join('') || '<div class="no-members">No members yet</div>';
+                
+                return `
                 <div class="majelis-card">
                     <h3>${m.name}</h3>
-                    <p>📅 ${m.schedule_day} at ${m.schedule_time}</p>
-                    <p>📍 ${m.location || 'No location set'}</p>
-                    <p style="font-size: 13px; color: #666; margin-top: 10px;">${m.description || 'No description'}</p>
-                    <div class="members">👥 ${m.members?.length || 0} members</div>
+                    <div class="info-row">
+                        <span>📅 ${m.schedule_day} ${m.schedule_time}</span>
+                        <span>📍 ${m.location || 'No location'}</span>
+                    </div>
+                    ${m.description ? `<p style="font-size: 12px; color: #888; margin-bottom: 10px;">${m.description}</p>` : ''}
+                    <div class="member-count">👥 ${memberCount} member${memberCount !== 1 ? 's' : ''}</div>
+                    <div class="member-list">${membersList}</div>
                     <div class="actions">
-                        <button class="btn btn-primary" onclick="openMembersModal('${m.id}', '${m.name}')">Members</button>
+                        <button class="btn btn-primary" onclick="openMembersModal('${m.id}', '${m.name}')">+ Add Member</button>
                         <button class="btn btn-secondary" onclick="openEditModal('${m.id}')">Edit</button>
                         <button class="btn btn-danger" onclick="deleteMajelis('${m.id}', '${m.name}')">Delete</button>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function openCreateModal() {

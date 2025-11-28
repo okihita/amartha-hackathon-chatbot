@@ -36,6 +36,13 @@ async function registerNewUser(phoneNumber, data) {
     is_verified: false,
     pending_verification: null,
     verified_transactions: [],
+    // Loan fields
+    loan_limit: 0,
+    loan_used: 0,
+    loan_remaining: 0,
+    next_payment_date: null,
+    next_payment_amount: 0,
+    loan_history: [],
     created_at: new Date().toISOString(),
   };
   
@@ -295,6 +302,71 @@ async function updateUserMajelis(phoneNumber, majelisInfo) {
   }
 }
 
+// ===== LOAN MANAGEMENT =====
+
+// Populate loan data for a user (for testing/demo)
+async function populateLoanData(phoneNumber) {
+  const cleanPhone = phoneNumber.replace(/\D/g, '');
+  try {
+    const userRef = db.collection(USERS_COLLECTION).doc(cleanPhone);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      return { error: 'User not found' };
+    }
+    
+    // Generate sample loan data
+    const loanAmount = 2000000; // Rp 2 juta
+    const installmentAmount = 150000; // Rp 150k per week
+    const totalInstallments = 14; // 14 weeks
+    const paidInstallments = 5; // Already paid 5
+    
+    const loanHistory = [
+      {
+        id: `loan-${Date.now()}`,
+        type: 'disbursement',
+        amount: loanAmount,
+        date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(), // 35 days ago
+        description: 'Pinjaman Tahap 1'
+      }
+    ];
+    
+    // Add payment history
+    for (let i = 0; i < paidInstallments; i++) {
+      loanHistory.push({
+        id: `payment-${Date.now()}-${i}`,
+        type: 'payment',
+        amount: installmentAmount,
+        date: new Date(Date.now() - (28 - i * 7) * 24 * 60 * 60 * 1000).toISOString(),
+        description: `Cicilan minggu ke-${i + 1}`
+      });
+    }
+    
+    const totalPaid = paidInstallments * installmentAmount;
+    const remainingDebt = loanAmount - totalPaid;
+    const nextPaymentDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // Next week
+    
+    const loanData = {
+      loan_limit: 5000000, // Rp 5 juta limit
+      loan_used: loanAmount,
+      loan_remaining: 5000000 - loanAmount,
+      next_payment_date: nextPaymentDate,
+      next_payment_amount: installmentAmount,
+      remaining_debt: remainingDebt,
+      loan_history: loanHistory,
+      updated_at: new Date().toISOString()
+    };
+    
+    await userRef.update(loanData);
+    console.log(`💰 Loan data populated for ${userDoc.data().name}`);
+    
+    return { success: true, data: loanData };
+  } catch (error) {
+    console.error('Error populating loan data:', error);
+    return { error: 'Failed to populate loan data' };
+  }
+}
+
 module.exports = { 
   getUserContext, 
   registerNewUser, 
@@ -307,5 +379,6 @@ module.exports = {
   updateMajelis,
   deleteMajelis,
   addMemberToMajelis,
-  removeMemberFromMajelis
+  removeMemberFromMajelis,
+  populateLoanData
 };
