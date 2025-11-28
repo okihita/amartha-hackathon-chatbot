@@ -5,7 +5,6 @@ class User {
       business_type: data.business_type,
       location: data.location,
       majelis_id: null,
-      majelis_day: "BELUM VERIFIKASI (Hubungi Petugas)",
       current_module: "Welcome Phase",
       literacy_score: "Low",
       is_verified: false,

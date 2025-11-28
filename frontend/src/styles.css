@@ -561,108 +561,382 @@ tbody tr:hover {
    RESPONSIVE
    =================================== */
 @media (max-width: 768px) {
-    .container {
-        padding: 16px;
+    /* Base Layout */
+    body {
+        font-size: 14px;
     }
 
+    .container {
+        padding: 12px;
+        max-width: 100%;
+    }
+
+    /* Header */
     .header {
-        padding: 20px 16px;
-        margin: -16px -16px 16px -16px;
+        padding: 16px 12px;
+        margin: -12px -12px 12px -12px;
     }
 
     .header h1 {
-        font-size: 22px;
+        font-size: 20px;
     }
 
+    /* Navigation */
     .nav {
         width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .nav a {
-        flex: 1;
+        flex: 1 1 calc(50% - 4px);
         text-align: center;
-        padding: 8px 12px;
-        font-size: 13px;
-        min-height: var(--touch-target-min, 44px);
+        padding: 10px 8px;
+        font-size: 12px;
+        min-height: 44px;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
+    /* Cards */
     .card {
-        padding: 16px;
-        margin-bottom: 16px;
+        padding: 14px;
+        margin-bottom: 12px;
     }
 
+    .card h2 {
+        font-size: 18px;
+    }
+
+    /* Stats Grid */
     .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 12px;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 12px;
     }
 
     .stat-value {
-        font-size: 28px;
+        font-size: 24px;
     }
 
-    .modal-content {
-        padding: 24px;
+    .stat-label {
+        font-size: 11px;
     }
 
-    /* Ensure touch targets are adequate on mobile */
+    /* Tables */
+    table {
+        font-size: 13px;
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    thead {
+        display: none;
+    }
+
+    tbody {
+        display: block;
+    }
+
+    tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        background: white;
+    }
+
+    td {
+        display: block;
+        text-align: left;
+        padding: 6px 0;
+        border: none;
+    }
+
+    td:before {
+        content: attr(data-label);
+        font-weight: 600;
+        display: inline-block;
+        width: 100px;
+        color: #666;
+    }
+
+    /* Buttons */
     button,
-    .btn,
-    a {
-        min-height: var(--touch-target-min, 44px);
-        min-width: var(--touch-target-min, 44px);
+    .btn {
+        min-height: 44px;
+        padding: 10px 16px;
+        font-size: 14px;
     }
 
-    /* Stack majelis and business cards vertically */
-    .majelis-grid,
-    .business-grid {
-        grid-template-columns: 1fr;
+    .btn-sm {
+        min-height: 36px;
+        padding: 8px 12px;
+        font-size: 12px;
     }
 
-    /* Responsive table - hide less important columns */
-    table td:nth-child(3),
-    table th:nth-child(3) {
-        display: none;
-        /* Hide business type on mobile */
-    }
-
-    table td:nth-child(4),
-    table th:nth-child(4) {
-        display: none;
-        /* Hide location on mobile */
-    }
-
-    /* Make action buttons stack on very small screens */
+    /* Actions */
     .actions {
         flex-direction: column;
+        gap: 8px;
     }
 
     .actions button,
     .actions .btn {
         width: 100%;
     }
+
+    /* Grids */
+    .majelis-grid,
+    .business-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    /* Modals */
+    .modal {
+        padding: 8px;
+        align-items: flex-start;
+    }
+
+    .modal-content {
+        padding: 16px;
+        max-width: 100%;
+        max-height: 92vh;
+        margin: 0;
+        border-radius: 8px;
+    }
+
+    .modal-content h2 {
+        font-size: 18px;
+        margin-bottom: 14px;
+        padding-right: 40px;
+    }
+
+    .modal-content h3 {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+
+    .modal-content h4 {
+        font-size: 14px;
+    }
+
+    .modal-close {
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 28px;
+        top: 8px;
+        right: 8px;
+    }
+
+    /* Inline styles overrides for modals */
+    [style*="padding: '24px'"],
+    [style*="padding: '20px'"] {
+        padding: 12px !important;
+    }
+
+    [style*="gridTemplateColumns: '1fr 1fr'"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    [style*="display: flex"][style*="gap: '15px'"],
+    [style*="display: flex"][style*="gap: '12px'"] {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    [style*="fontSize: '40px'"],
+    [style*="fontSize: '28px'"] {
+        font-size: 28px !important;
+        width: 44px !important;
+        height: 44px !important;
+    }
+
+    [style*="fontSize: '24px'"] {
+        font-size: 20px !important;
+    }
+
+    [style*="fontSize: '18px'"] {
+        font-size: 16px !important;
+    }
+
+    /* Form inputs */
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+        padding: 10px;
+        width: 100%;
+    }
+
+    /* Search bars */
+    .search-input {
+        width: 100%;
+        margin-bottom: 12px;
+    }
+
+    /* Filters */
+    .filters {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .filters > * {
+        width: 100%;
+    }
 }
 
-/* Additional mobile breakpoint for very small screens */
+/* Small screens */
 @media (max-width: 480px) {
+    body {
+        font-size: 13px;
+    }
+
+    .container {
+        padding: 8px;
+    }
+
+    .header {
+        padding: 12px 8px;
+        margin: -8px -8px 8px -8px;
+    }
+
     .header h1 {
-        font-size: 18px;
+        font-size: 16px;
+    }
+
+    .nav {
+        gap: 6px;
     }
 
     .nav a {
         font-size: 11px;
-        padding: 6px 8px;
+        padding: 8px 6px;
+        min-height: 40px;
     }
 
-    /* Further simplify table on very small screens */
+    .card {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .card h2 {
+        font-size: 16px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .stat-card {
+        padding: 10px;
+    }
+
+    .stat-value {
+        font-size: 20px;
+    }
+
+    .stat-label {
+        font-size: 10px;
+    }
+
     table {
         font-size: 12px;
     }
 
-    th,
+    tr {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
     td {
+        padding: 4px 0;
+        font-size: 12px;
+    }
+
+    td:before {
+        width: 80px;
+        font-size: 11px;
+    }
+
+    button,
+    .btn {
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .modal {
+        padding: 4px;
+    }
+
+    .modal-content {
+        padding: 12px;
+        max-height: 95vh;
+        border-radius: 6px;
+    }
+
+    .modal-content h2 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .modal-content h3 {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .modal-content h4 {
+        font-size: 13px;
+    }
+
+    .modal-content p,
+    .modal-content li,
+    .modal-content div {
+        font-size: 12px !important;
+    }
+
+    .modal-close {
+        min-width: 40px;
+        min-height: 40px;
+        font-size: 24px;
+    }
+
+    [style*="padding: '16px'"],
+    [style*="padding: '14px'"],
+    [style*="padding: '12px'"] {
+        padding: 8px !important;
+    }
+
+    [style*="fontSize: '28px'"],
+    [style*="fontSize: '24px'"] {
+        font-size: 20px !important;
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    [style*="fontSize: '18px'"],
+    [style*="fontSize: '16px'"] {
+        font-size: 14px !important;
+    }
+
+    [style*="fontSize: '14px'"],
+    [style*="fontSize: '13px'"] {
+        font-size: 12px !important;
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 14px;
         padding: 8px;
     }
 }

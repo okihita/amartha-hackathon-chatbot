@@ -1,11 +1,24 @@
 const UserRepository = require('../repositories/UserRepository');
 const BusinessIntelligenceRepository = require('../repositories/BusinessIntelligenceRepository');
+const MajelisRepository = require('../repositories/MajelisRepository');
 const User = require('../core/User');
 const { MOCK_USERS } = require('../config/mockData');
 
 class UserService {
   async getUser(phoneNumber) {
-    return UserRepository.findByPhone(phoneNumber);
+    const user = await UserRepository.findByPhone(phoneNumber);
+    if (!user) return null;
+    
+    // Fetch majelis data if user belongs to one
+    if (user.majelis_id) {
+      const majelis = await MajelisRepository.findById(user.majelis_id);
+      if (majelis) {
+        user.majelis_name = majelis.name;
+        user.majelis_day = majelis.schedule_day;
+      }
+    }
+    
+    return user;
   }
 
   async registerUser(phoneNumber, data) {
@@ -17,7 +30,24 @@ class UserService {
   }
 
   async getAllUsers() {
-    return UserRepository.findAll();
+    const users = await UserRepository.findAll();
+    
+    // Fetch majelis data for all users
+    const majelisCache = {};
+    for (const user of users) {
+      if (user.majelis_id) {
+        if (!majelisCache[user.majelis_id]) {
+          majelisCache[user.majelis_id] = await MajelisRepository.findById(user.majelis_id);
+        }
+        const majelis = majelisCache[user.majelis_id];
+        if (majelis) {
+          user.majelis_name = majelis.name;
+          user.majelis_day = majelis.schedule_day;
+        }
+      }
+    }
+    
+    return users;
   }
 
   async verifyUser(phoneNumber, isVerified) {
@@ -35,13 +65,6 @@ class UserService {
     }
     await UserRepository.delete(phoneNumber);
     return true;
-  }
-
-  async updateMajelisInfo(phoneNumber, majelisInfo) {
-    return UserRepository.update(phoneNumber, {
-      majelis_id: majelisInfo.id,
-      majelis_day: majelisInfo.schedule_day
-    });
   }
 
   async updateBusinessProfile(phoneNumber, structuredData) {

@@ -33,10 +33,7 @@ class MajelisService {
     // Remove majelis reference from all members
     if (majelis.members && majelis.members.length > 0) {
       for (const phone of majelis.members) {
-        await UserRepository.update(phone, {
-          majelis_id: null,
-          majelis_day: "BELUM VERIFIKASI (Hubungi Petugas)"
-        });
+        await UserRepository.update(phone, { majelis_id: null });
       }
     }
     
@@ -70,10 +67,7 @@ class MajelisService {
 
     members.push(phoneNumber);
     await MajelisRepository.update(majelisId, { members });
-    await UserRepository.update(phoneNumber, {
-      majelis_id: majelisId,
-      majelis_day: majelis.schedule_day
-    });
+    await UserRepository.update(phoneNumber, { majelis_id: majelisId });
 
     return MajelisRepository.findById(majelisId);
   }
@@ -86,10 +80,7 @@ class MajelisService {
 
     const members = (majelis.members || []).filter(m => m !== phoneNumber);
     await MajelisRepository.update(majelisId, { members });
-    await UserRepository.update(phoneNumber, {
-      majelis_id: null,
-      majelis_day: "BELUM VERIFIKASI (Hubungi Petugas)"
-    });
+    await UserRepository.update(phoneNumber, { majelis_id: null });
 
     return MajelisRepository.findById(majelisId);
   }
