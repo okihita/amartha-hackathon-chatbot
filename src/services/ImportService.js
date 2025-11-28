@@ -7,7 +7,7 @@ const { google } = require('googleapis');
 const db = require('../config/database');
 
 const FOLDER_ID = process.env.FINANCIAL_LITERACY_FOLDER_ID || '1_qBhLNCfdxkLVTro_jJACF6sm_rG9ZBt';
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+const API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
 
 async function clearCollection() {
   const snapshot = await db.collection('financial_literacy').get();
@@ -15,19 +15,6 @@ async function clearCollection() {
   snapshot.docs.forEach(doc => batch.delete(doc.ref));
   await batch.commit();
   return snapshot.size;
-}
-
-async function getGoogleDriveClient() {
-  const fs = require('fs');
-  if (fs.existsSync('./service-account-key.json')) {
-    const auth = new google.auth.GoogleAuth({
-      keyFile: './service-account-key.json',
-      scopes: ['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/documents.readonly'],
-    });
-    return await auth.getClient();
-  }
-  if (GOOGLE_API_KEY) return GOOGLE_API_KEY;
-  throw new Error('No authentication method available');
 }
 
 function extractSections(doc) {
@@ -128,20 +115,24 @@ function parseCourseModule(sections, fileName) {
 }
 
 async function reimportFinancialLiteracy() {
+  if (!API_KEY) throw new Error('GOOGLE_API_KEY or GEMINI_API_KEY required');
+  
   const deleted = await clearCollection();
-  const authClient = await getGoogleDriveClient();
-  const drive = google.drive({ version: 'v3', auth: authClient });
-  const docs = google.docs({ version: 'v1', auth: authClient });
+  
+  // Use API key directly for public folder access
+  const drive = google.drive({ version: 'v3', auth: API_KEY });
+  const docs = google.docs({ version: 'v1', auth: API_KEY });
   
   const response = await drive.files.list({
     q: `'${FOLDER_ID}' in parents and mimeType='application/vnd.google-apps.document'`,
     fields: 'files(id, name)',
+    key: API_KEY
   });
   const files = response.data.files;
   
   let imported = 0;
   for (const file of files) {
-    const doc = await docs.documents.get({ documentId: file.id });
+    const doc = await docs.documents.get({ documentId: file.id, key: API_KEY });
     const sections = extractSections(doc.data);
     const parsed = parseCourseModule(sections, file.name);
     

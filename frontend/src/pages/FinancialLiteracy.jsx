@@ -42,9 +42,14 @@ export default function FinancialLiteracy() {
     }
   };
 
-  const handleReimport = async () => {
-    const msg = 'Reimport requires service account credentials.\n\nRun locally instead:\n  node scripts/import-financial-literacy.js\n\nThen refresh this page.';
-    alert(msg);
+  const handleReimport = () => {
+    alert('To reimport quizzes, run locally:\n\nnode scripts/import-financial-literacy.js\n\nThen click Refresh below.');
+  };
+
+  const handleRefresh = async () => {
+    localStorage.removeItem('financialLiteracy');
+    setLoading(true);
+    await fetchCourse(true);
   };
 
   const replacePlaceholder = (text) => {
@@ -74,13 +79,14 @@ export default function FinancialLiteracy() {
           <h2 style={{ margin: 0, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <BookOpen size={18} /> 15 Weeks
           </h2>
-          <button
-            onClick={handleReimport}
-            title="Reimport from Google Drive (run locally)"
-            style={{ padding: '6px 10px', background: '#fff', border: '1px solid #dee2e6', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
-          >
-            <RefreshCw size={14} /> Reimport
-          </button>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button onClick={handleReimport} title="Show reimport instructions" style={{ padding: '6px 10px', background: '#fff', border: '1px solid #dee2e6', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+              <RefreshCw size={14} />
+            </button>
+            <button onClick={handleRefresh} title="Refresh from database" style={{ padding: '6px 10px', background: '#fff', border: '1px solid #dee2e6', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+              Refresh
+            </button>
+          </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {Object.keys(groupedByModule).sort((a,b) => a-b).map(moduleNum => (
