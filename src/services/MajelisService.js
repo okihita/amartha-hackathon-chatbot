@@ -98,7 +98,7 @@ class MajelisService {
     let count = 0;
     for (const majelisData of MOCK_MAJELIS) {
       const mockMajelis = Majelis.createMock(majelisData);
-      await MajelisRepository.create(mockMajelis);
+      await MajelisRepository.createRaw(mockMajelis);
       count++;
     }
     return count;

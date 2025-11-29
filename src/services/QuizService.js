@@ -34,6 +34,9 @@ class QuizService {
       throw new Error(`No questions found for week ${nextWeek}`);
     }
 
+    // Extract intro material
+    const introMaterial = allQuestions.materi_penyampaian?.materi_inti || null;
+
     // Randomly select 4 questions
     const selectedQuestions = this.selectRandomQuestions(allQuestions.bank_soal, this.QUESTIONS_PER_QUIZ);
     
@@ -50,6 +53,7 @@ class QuizService {
       weekInfo: {
         week_number: nextWeek,
         module_name: allQuestions.module_name,
+        intro_material: introMaterial,
         total_questions: this.QUESTIONS_PER_QUIZ
       }
     };

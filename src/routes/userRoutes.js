@@ -7,6 +7,8 @@ router.get('/:phone/complete', UserController.getCompleteProfile.bind(UserContro
 router.get('/:phone/images', UserController.getImages.bind(UserController));
 router.get('/:phone/business-intelligence', UserController.getBusinessIntelligence.bind(UserController));
 router.post('/verify', UserController.verify.bind(UserController));
+router.post('/:phone/capacity', UserController.updateCapacity.bind(UserController));
+router.post('/:phone/engagement', UserController.updateEngagement.bind(UserController));
 router.delete('/:phone', UserController.delete.bind(UserController));
 
 module.exports = router;

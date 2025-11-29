@@ -15,7 +15,7 @@ class Majelis {
   static createMock(majelisData) {
     return {
       ...majelisData,
-      members: [],
+      members: majelisData.members || [],
       is_mock: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

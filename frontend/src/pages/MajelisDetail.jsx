@@ -1,17 +1,19 @@
 import { h } from 'preact';
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { Calendar, MapPin, Clock, Users, UserCheck, UserX, ChevronLeft, Plus, Save, FileText, Shield, AlertTriangle, TrendingUp, Award, Home, Building2 } from 'lucide-preact';
 
 const API_BASE = '/api';
 
-// Mock coordinates around Jakarta area for demo
+// Base coordinates for Jakarta area
+const JAKARTA_BASE = { lat: -6.2350, lng: 106.8000 };
+
+// Generate mock coordinates within 5km of base
 const generateMockCoords = (seed, isHome = true) => {
-  const base = { lat: -6.2088, lng: 106.8456 }; // Jakarta
   const hash = seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const offset = isHome ? 0.01 : 0.02;
+  const offset = isHome ? 0.015 : 0.020; // ~1.5km for home, ~2km for business
   return {
-    lat: base.lat + ((hash % 100) - 50) * offset / 50,
-    lng: base.lng + ((hash * 7 % 100) - 50) * offset / 50
+    lat: JAKARTA_BASE.lat + ((hash % 100) - 50) * offset / 50,
+    lng: JAKARTA_BASE.lng + ((hash * 7 % 100) - 50) * offset / 50
   };
 };
 
@@ -61,10 +63,100 @@ export default function MajelisDetail({ id }) {
   const [showAddWeek, setShowAddWeek] = useState(false);
   const [newWeek, setNewWeek] = useState({ date: '', attendees: [], notes: '' });
   const [riskProfile, setRiskProfile] = useState(null);
+  const [mapInstance, setMapInstance] = useState(null);
+  const mapRef = useRef(null);
 
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  // Initialize Leaflet map when members are loaded
+  useEffect(() => {
+    if (loading || members.length === 0 || typeof L === 'undefined') return;
+    
+    const mapEl = document.getElementById('majelis-map');
+    if (!mapEl) return;
+
+    // Get meeting location from majelis or use center of members
+    const meetingLat = majelis?.meeting_lat || JAKARTA_BASE.lat;
+    const meetingLng = majelis?.meeting_lng || JAKARTA_BASE.lng;
+
+    // Initialize map once
+    let map = mapInstance;
+    if (!map) {
+      map = L.map('majelis-map').setView([meetingLat, meetingLng], 14);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© CartoDB © OSM'
+      }).addTo(map);
+      setMapInstance(map);
+    } else {
+      map.setView([meetingLat, meetingLng], 14);
+    }
+
+    // Clear existing layers (except tile layer)
+    map.eachLayer(layer => {
+      if (!layer._url) map.removeLayer(layer);
+    });
+
+    // Add meeting point marker (purple)
+    const meetingIcon = L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="width: 36px; height: 36px; background: #7C3AED; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.4); border: 3px solid white; font-size: 16px;">👥</div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
+    L.marker([meetingLat, meetingLng], { icon: meetingIcon })
+      .addTo(map)
+      .bindPopup(`<b>Meeting Point</b><br/>${majelis?.location || 'Lokasi Pertemuan'}`);
+
+    // Add member markers
+    members.forEach(m => {
+      // Home marker (blue)
+      if (m.homeCoords?.lat && m.homeCoords?.lng) {
+        const homeIcon = L.divIcon({
+          className: 'custom-marker',
+          html: `<div style="width: 28px; height: 28px; background: #1D4ED8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); border: 3px solid white; font-size: 12px;">🏠</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+        L.marker([m.homeCoords.lat, m.homeCoords.lng], { icon: homeIcon })
+          .addTo(map)
+          .bindPopup(`<b>${m.name || 'Member'}</b><br/>🏠 Rumah`);
+      }
+
+      // Business marker (green)
+      if (m.bizCoords?.lat && m.bizCoords?.lng) {
+        const bizIcon = L.divIcon({
+          className: 'custom-marker',
+          html: `<div style="width: 26px; height: 26px; background: #059669; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); border: 3px solid white; font-size: 11px;">🏪</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+        L.marker([m.bizCoords.lat, m.bizCoords.lng], { icon: bizIcon })
+          .addTo(map)
+          .bindPopup(`<b>${m.name || 'Member'}</b><br/>🏪 ${m.business_name || 'Usaha'}`);
+      }
+    });
+
+    // Fit bounds to show all markers
+    const allCoords = [
+      [meetingLat, meetingLng],
+      ...members.flatMap(m => [
+        m.homeCoords?.lat ? [m.homeCoords.lat, m.homeCoords.lng] : null,
+        m.bizCoords?.lat ? [m.bizCoords.lat, m.bizCoords.lng] : null
+      ].filter(Boolean))
+    ];
+    if (allCoords.length > 1) {
+      map.fitBounds(allCoords, { padding: [30, 30] });
+    }
+
+    return () => {
+      // Cleanup on unmount
+      if (map && !mapInstance) {
+        map.remove();
+      }
+    };
+  }, [loading, members, majelis]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -79,8 +171,13 @@ export default function MajelisDetail({ id }) {
         const allUsers = await usersRes.json();
         memberDetails = majelisData.members.map(phone => {
           const user = allUsers.find(u => u.phone === phone) || { phone, name: phone };
-          const homeCoords = user.profile?.home_lat ? { lat: user.profile.home_lat, lng: user.profile.home_lng } : generateMockCoords(phone, true);
-          const bizCoords = user.business?.business_lat ? { lat: user.business.business_lat, lng: user.business.business_lng } : generateMockCoords(phone, false);
+          // Get coords from user data or generate mock
+          const homeCoords = user.home_lat ? { lat: user.home_lat, lng: user.home_lng } 
+            : user.profile?.home_lat ? { lat: user.profile.home_lat, lng: user.profile.home_lng }
+            : generateMockCoords(phone, true);
+          const bizCoords = user.business_lat ? { lat: user.business_lat, lng: user.business_lng }
+            : user.business?.business_lat ? { lat: user.business.business_lat, lng: user.business.business_lng }
+            : generateMockCoords(phone, false);
           return { ...user, homeCoords, bizCoords };
         });
         setMembers(memberDetails);
@@ -279,39 +376,12 @@ export default function MajelisDetail({ id }) {
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <h3 style="margin: 0; font-size: 15px; display: flex; align-items: center; gap: 8px;"><MapPin size={18} /> Member Locations</h3>
           <div style="display: flex; gap: 12px; font-size: 11px;">
-            <span style="display: flex; align-items: center; gap: 4px;"><Home size={12} style="color: #2563EB;" /> Home</span>
-            <span style="display: flex; align-items: center; gap: 4px;"><Building2 size={12} style="color: #10B981;" /> Business</span>
-            <span style="display: flex; align-items: center; gap: 4px;"><Users size={12} style="color: #63297A;" /> Meeting</span>
+            <span style="display: flex; align-items: center; gap: 4px;">🏠 <span style="color: #2563EB;">Home</span></span>
+            <span style="display: flex; align-items: center; gap: 4px;">🏪 <span style="color: #10B981;">Business</span></span>
+            <span style="display: flex; align-items: center; gap: 4px;">👥 <span style="color: #63297A;">Meeting</span></span>
           </div>
         </div>
-        <div style="position: relative; background: linear-gradient(135deg, #E0E7FF 0%, #DBEAFE 50%, #D1FAE5 100%); border-radius: 12px; height: 280px; overflow: hidden;">
-          <div style="position: absolute; inset: 0; background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 40px 40px;" />
-          {members.map((m, i) => {
-            const homeX = 15 + ((m.homeCoords.lng + 107) * 300) % 65 + i * 6;
-            const homeY = 15 + ((m.homeCoords.lat + 7) * 300) % 55 + i * 5;
-            const bizX = homeX + 8 + (i % 3) * 5;
-            const bizY = homeY + 8 + (i % 2) * 8;
-            return (
-              <div key={m.phone}>
-                <div style={`position: absolute; left: ${homeX}%; top: ${homeY}%; transform: translate(-50%, -50%);`} title={`${m.name} - Home`}>
-                  <div style="width: 24px; height: 24px; background: #2563EB; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 6px rgba(37,99,235,0.4); border: 2px solid white;">
-                    <Home size={10} />
-                  </div>
-                </div>
-                <div style={`position: absolute; left: ${bizX}%; top: ${bizY}%; transform: translate(-50%, -50%);`} title={`${m.name} - Business`}>
-                  <div style="width: 20px; height: 20px; background: #10B981; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 6px rgba(16,185,129,0.4); border: 2px solid white;">
-                    <Building2 size={8} />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">
-            <div style="width: 36px; height: 36px; background: #63297A; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 12px rgba(99,41,122,0.4); border: 3px solid white;">
-              <Users size={16} />
-            </div>
-          </div>
-        </div>
+        <div id="majelis-map" ref={mapRef} style="height: 320px; border-radius: 12px; z-index: 1;" />
       </div>
 
       {/* Members & Attendance - Merged Compact View */}

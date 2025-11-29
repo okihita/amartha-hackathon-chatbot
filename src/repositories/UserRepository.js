@@ -20,14 +20,16 @@ class UserRepository {
     const user = { phone: clean, ...doc.data() };
     
     // Fetch subcollections
-    const [profile, business, loan, literacy] = await Promise.all([
+    const [profile, business, loan, literacy, engagement, capacity] = await Promise.all([
       this.getProfile(clean),
       this.getBusiness(clean),
       this.getLoan(clean),
-      this.getLiteracy(clean)
+      this.getLiteracy(clean),
+      this.getEngagement(clean),
+      this.getCapacity(clean)
     ]);
 
-    return { ...user, profile, business, loan, literacy };
+    return { ...user, profile, business, loan, literacy, engagement, capacity };
   }
 
   async create(phoneNumber, userData) {
@@ -149,6 +151,38 @@ class UserRepository {
       updated_at: new Date().toISOString()
     }, { merge: true });
     return this.getLiteracy(clean);
+  }
+
+  // Engagement subcollection
+  async getEngagement(phoneNumber) {
+    const clean = phone.clean(phoneNumber);
+    const doc = await this.collection.doc(clean).collection(USER_COLLECTIONS.ENGAGEMENT).doc('data').get();
+    return doc.exists ? doc.data() : null;
+  }
+
+  async updateEngagement(phoneNumber, data) {
+    const clean = phone.clean(phoneNumber);
+    await this.collection.doc(clean).collection(USER_COLLECTIONS.ENGAGEMENT).doc('data').set({
+      ...data,
+      updated_at: new Date().toISOString()
+    }, { merge: true });
+    return this.getEngagement(clean);
+  }
+
+  // Capacity subcollection
+  async getCapacity(phoneNumber) {
+    const clean = phone.clean(phoneNumber);
+    const doc = await this.collection.doc(clean).collection(USER_COLLECTIONS.CAPACITY).doc('data').get();
+    return doc.exists ? doc.data() : null;
+  }
+
+  async updateCapacity(phoneNumber, data) {
+    const clean = phone.clean(phoneNumber);
+    await this.collection.doc(clean).collection(USER_COLLECTIONS.CAPACITY).doc('data').set({
+      ...data,
+      updated_at: new Date().toISOString()
+    }, { merge: true });
+    return this.getCapacity(clean);
   }
 }
 

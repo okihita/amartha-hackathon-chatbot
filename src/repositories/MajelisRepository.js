@@ -23,6 +23,11 @@ class MajelisRepository {
     return { id: docRef.id, ...majelisData };
   }
 
+  async createRaw(data) {
+    const docRef = await this.collection.add(data);
+    return { id: docRef.id, ...data };
+  }
+
   async update(majelisId, data) {
     await this.collection.doc(majelisId).update({
       ...data,

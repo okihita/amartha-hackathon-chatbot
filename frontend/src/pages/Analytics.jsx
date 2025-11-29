@@ -135,8 +135,8 @@ export default function Analytics() {
     let map = mapInstance;
     if (!map) {
       map = L.map('routes-map').setView([-6, 110], 5);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OSM'
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© CartoDB © OSM'
       }).addTo(map);
       setMapInstance(map);
     }
@@ -147,7 +147,7 @@ export default function Analytics() {
     });
 
     const routes = data.routes;
-    const getColor = (eff) => eff === 'Good' ? '#10B981' : eff === 'Moderate' ? '#F59E0B' : '#EF4444';
+    const getColor = (eff) => eff === 'Good' ? '#059669' : eff === 'Moderate' ? '#D97706' : '#DC2626';
 
     if (mapMode === 'markers') {
       // Branch markers - use first valid location
@@ -155,9 +155,9 @@ export default function Analytics() {
         const center = getValidCenter(r);
         if (!center) return;
         L.circleMarker([center.lat, center.lng], {
-          radius: Math.min(12, 4 + r.taskCount / 500),
+          radius: Math.min(14, 5 + r.taskCount / 500),
           fillColor: getColor(r.efficiency),
-          color: '#fff', weight: 2, fillOpacity: 0.85
+          color: '#fff', weight: 3, fillOpacity: 0.9
         }).addTo(map).bindPopup(`<b>${r.branchId}</b><br/>Tasks: ${r.taskCount?.toLocaleString()}<br/>Spread: ${r.avgSpreadKm}km<br/>Efficiency: <b>${r.efficiency}</b>`);
       });
     } else if (mapMode === 'tasks') {
@@ -166,8 +166,8 @@ export default function Analytics() {
         r.locations?.slice(0, 15).forEach(loc => {
           if (!loc.lat || !loc.lng || Math.abs(loc.lat) < 1 || Math.abs(loc.lat) > 12 || loc.lng < 90 || loc.lng > 145) return;
           L.circleMarker([loc.lat, loc.lng], {
-            radius: 4, fillColor: getColor(r.efficiency),
-            color: getColor(r.efficiency), weight: 1, fillOpacity: 0.6
+            radius: 5, fillColor: getColor(r.efficiency),
+            color: '#fff', weight: 2, fillOpacity: 0.85
           }).addTo(map);
         });
       });
@@ -177,11 +177,11 @@ export default function Analytics() {
         const validLocs = r.locations?.filter(l => l.lat && l.lng && Math.abs(l.lat) > 1 && Math.abs(l.lat) < 12 && l.lng > 90 && l.lng < 145).slice(0, 20);
         if (validLocs?.length > 1) {
           L.polyline(validLocs.map(l => [l.lat, l.lng]), {
-            color: getColor(r.efficiency), weight: 2, opacity: 0.7
+            color: getColor(r.efficiency), weight: 3, opacity: 0.8
           }).addTo(map);
           // Start marker
           L.circleMarker([validLocs[0].lat, validLocs[0].lng], {
-            radius: 6, fillColor: '#3B82F6', color: '#fff', weight: 2, fillOpacity: 1
+            radius: 8, fillColor: '#1D4ED8', color: '#fff', weight: 3, fillOpacity: 1
           }).addTo(map).bindPopup(`Start: ${r.branchId}`);
         }
       });
@@ -193,11 +193,11 @@ export default function Analytics() {
         L.circle([center.lat, center.lng], {
           radius: Math.min(r.avgSpreadKm * 200, 100000),
           fillColor: getColor(r.efficiency),
-          color: getColor(r.efficiency), weight: 1, fillOpacity: 0.2
+          color: getColor(r.efficiency), weight: 2, fillOpacity: 0.25
         }).addTo(map);
         L.circleMarker([center.lat, center.lng], {
-          radius: 4, fillColor: getColor(r.efficiency),
-          color: '#fff', weight: 1, fillOpacity: 1
+          radius: 5, fillColor: getColor(r.efficiency),
+          color: '#fff', weight: 2, fillOpacity: 1
         }).addTo(map).bindPopup(`${r.branchId}<br/>Spread: ${r.avgSpreadKm}km`);
       });
     }

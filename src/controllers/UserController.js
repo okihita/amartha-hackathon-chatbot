@@ -31,6 +31,16 @@ class UserController {
     res.json({ success: true, user: await UserService.verifyUser(phone, status) });
   });
 
+  updateCapacity = handle(async (req, res) => {
+    const result = await UserService.updateCapacity(req.params.phone, req.body);
+    res.json({ success: true, capacity: result });
+  });
+
+  updateEngagement = handle(async (req, res) => {
+    const result = await UserService.trackInteraction(req.params.phone, req.body.type || 'other');
+    res.json({ success: true, engagement: result });
+  });
+
   delete = handle(async (req, res) => {
     const deleted = await UserService.deleteUser(req.params.phone);
     res.status(deleted ? 200 : 404).json(deleted ? { success: true } : { error: 'Not found' });

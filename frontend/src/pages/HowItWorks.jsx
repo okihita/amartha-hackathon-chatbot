@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { Bot, User, Menu, BookOpen, BarChart3, UserCircle, Calendar, Camera, Check, X, Cog, Smartphone, Monitor, FileText, Package, Store, Receipt, Mic } from 'lucide-preact';
+import { Bot, User, Menu, BookOpen, BarChart3, UserCircle, Calendar, Camera, Check, X, Cog, Smartphone, Monitor, FileText, Package, Store, Receipt, Mic, CreditCard } from 'lucide-preact';
 
 // Styled flow components
 const FlowBox = ({ children, type = 'default', style = {} }) => {
@@ -75,28 +75,37 @@ export default function HowItWorks() {
           <div style={cardStyle('#e8f5e9', '#4caf50')}>
             <strong style="display: flex; align-items: center; gap: 4px;"><BookOpen size={14} /> KUIS</strong>
             <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">kuis, quiz, belajar, tes, ujian, soal</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">Mulai/lanjut quiz literasi keuangan</p>
           </div>
           <div style={cardStyle('#fff3e0', '#ff9800')}>
             <strong style="display: flex; align-items: center; gap: 4px;"><BarChart3 size={14} /> NILAI</strong>
             <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">nilai, hasil, skor, progress</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">Lihat progress literasi keuangan</p>
           </div>
           <div style={cardStyle('#f3e5f5', '#9c27b0')}>
             <strong style="display: flex; align-items: center; gap: 4px;"><UserCircle size={14} /> PROFIL</strong>
             <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">cek data, data saya, profil, info saya</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">Lihat data profil + pinjaman + literasi</p>
           </div>
           <div style={cardStyle('#e0f7fa', '#00bcd4')}>
             <strong style="display: flex; align-items: center; gap: 4px;"><Calendar size={14} /> JADWAL</strong>
             <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">jadwal, majelis, pertemuan, kumpul</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">Info jadwal majelis mingguan</p>
           </div>
           <div style={cardStyle('#fce4ec', '#e91e63')}>
             <strong style="display: flex; align-items: center; gap: 4px;"><Camera size={14} /> FOTO</strong>
             <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">Kirim gambar + caption</p>
-            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">Tanpa caption: bot minta deskripsi</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">AI analisis: stok, bangunan, nota, dll</p>
           </div>
           <div style={cardStyle('#fff8e1', '#ffc107')}>
             <strong style="display: flex; align-items: center; gap: 4px;"><Mic size={14} /> VOICE NOTE</strong>
             <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">Kirim pesan suara</p>
-            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">AI transkripsi → proses seperti teks<br/>Balasan: teks + audio</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">AI transkripsi → proses seperti teks</p>
+          </div>
+          <div style={cardStyle('#ecfdf5', '#059669')}>
+            <strong style="display: flex; align-items: center; gap: 4px;"><CreditCard size={14} /> KAPASITAS</strong>
+            <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">kapasitas, kemampuan bayar, hitung cicilan</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">5 pertanyaan → hitung RPC (kemampuan cicilan)</p>
           </div>
         </div>
       </div>
@@ -345,11 +354,210 @@ export default function HowItWorks() {
 
       {/* Tech Info */}
       <div class="card">
-        <h2>🔧 Tech Stack</h2>
-        <div style="display: flex; flexWrap: 'wrap'; gap: '8px'; marginTop: '12px'">
-          {['Gemini 2.5 Flash', 'Gemini Vision', 'Firestore', 'Cloud Run', 'WhatsApp API', 'Preact', 'SSE'].map(tech => (
-            <span style={{padding: '6px 12px', background: '#e3f2fd', borderRadius: '16px', fontSize: '12px'}}>{tech}</span>
-          ))}
+        <h2>🔧 Tech Stack & Architecture</h2>
+        
+        {/* Tech badges - categorized */}
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0;">
+          <div>
+            <div style="font-size: 11px; color: #6B7280; margin-bottom: 8px; font-weight: 600;">🎨 FRONTEND</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              {['Preact', 'Vite', 'Leaflet Maps'].map(t => (
+                <span key={t} style="padding: 4px 10px; background: #DBEAFE; color: #1E40AF; border-radius: 12px; font-size: 11px; font-weight: 600;">{t}</span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: #6B7280; margin-bottom: 8px; font-weight: 600;">🧠 BACKEND & AI</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              {['Node.js', 'Express', 'Gemini 2.5 Flash', 'Gemini Vision'].map(t => (
+                <span key={t} style="padding: 4px 10px; background: #D1FAE5; color: #065F46; border-radius: 12px; font-size: 11px; font-weight: 600;">{t}</span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: #6B7280; margin-bottom: 8px; font-weight: 600;">☁️ INFRASTRUCTURE</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              {['Cloud Run', 'Firestore', 'WhatsApp API'].map(t => (
+                <span key={t} style="padding: 4px 10px; background: #FEF3C7; color: #92400E; border-radius: 12px; font-size: 11px; font-weight: 600;">{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* System Architecture ASCII - Light Mode */}
+        <div style="margin-top: 24px;">
+          <h3 style="font-size: 14px; margin-bottom: 12px;">📐 System Architecture</h3>
+          <pre style="background: #F8FAFC; color: #334155; padding: 16px; border-radius: 8px; font-size: 10px; line-height: 1.4; overflow-x: auto; font-family: 'Consolas', monospace; border: 1px solid #E2E8F0;">{`
+┌───────────────────────────────────────────────────────────────────┐
+│                       AMARTHA AI CHATBOT                          │
+└───────────────────────────────────────────────────────────────────┘
+
+┌────────────┐   ┌────────────┐   ┌─────────────────────────────────┐
+│  WhatsApp  │   │   Admin    │   │         Google Cloud            │
+│ Business   │   │ Dashboard  │   │                                 │
+│   API      │   │  (Preact)  │   │  ┌───────────────────────────┐  │
+└─────┬──────┘   └─────┬──────┘   │  │     Cloud Firestore       │  │
+      │                │          │  │  ┌─────┐ ┌──────┐ ┌────┐  │  │
+      │ Webhook        │ REST     │  │  │users│ │majelis│ │BI  │  │  │
+      ▼                ▼          │  │  └─────┘ └──────┘ └────┘  │  │
+┌─────────────────────────────┐   │  └───────────────────────────┘  │
+│      Express Server         │   │                                 │
+│  ┌───────────────────────┐  │   │  ┌───────────────────────────┐  │
+│  │     Routes Layer      │  │   │  │     Gemini AI APIs        │  │
+│  │ /webhook /api/users   │  │   │  │ ┌────────┐ ┌────────┐     │  │
+│  └──────────┬────────────┘  │   │  │ │Text 2.5│ │ Vision │     │  │
+│             ▼               │   │  │ │ Flash  │ │Analysis│     │  │
+│  ┌───────────────────────┐  │   │  │ └────────┘ └────────┘     │  │
+│  │  Controllers Layer    │  │   │  └───────────────────────────┘  │
+│  └──────────┬────────────┘  │   └─────────────────────────────────┘
+│             ▼               │
+│  ┌───────────────────────┐  │   Business Logic:
+│  │   Services Layer      │◄─┼── • Credit Scoring (A-Score)
+│  │ User, Majelis, Quiz   │  │   • Capacity Collection
+│  └──────────┬────────────┘  │   • Engagement Tracking
+│             ▼               │
+│  ┌───────────────────────┐  │
+│  │  Repositories Layer   │◄─┼── Data Access (Firestore)
+│  └───────────────────────┘  │
+└─────────────────────────────┘
+             │
+             ▼
+      ┌────────────┐
+      │ Cloud Run  │
+      │  (Docker)  │
+      └────────────┘
+`}</pre>
+        </div>
+
+        {/* Message Flow ASCII - Light Mode */}
+        <div style="margin-top: 24px;">
+          <h3 style="font-size: 14px; margin-bottom: 12px;">💬 WhatsApp Message Flow</h3>
+          <pre style="background: #F8FAFC; color: #334155; padding: 16px; border-radius: 8px; font-size: 10px; line-height: 1.4; overflow-x: auto; font-family: 'Consolas', monospace; border: 1px solid #E2E8F0;">{`
+User sends message (text/voice/image)
+              │
+              ▼
+┌──────────────────────┐
+│  WhatsApp Cloud API  │
+└──────────┬───────────┘
+           │ POST /webhook
+           ▼
+┌──────────────────────┐   ┌─────────────────────────────────┐
+│  WebhookController   │──▶│         Message Types           │
+└──────────┬───────────┘   │ • text  → processTextMessage()  │
+           │               │ • image → processImageMessage() │
+           ▼               │ • audio → transcribe + process  │
+┌──────────────────────┐   │ • interactive → handleQuiz()    │
+│   Input Validation   │   └─────────────────────────────────┘
+│ • Spam detection     │
+│ • Length check       │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐   ┌─────────────────────────────────┐
+│  Session Check       │──▶│    Active Sessions              │
+│ (CapacityCollection) │   │ • Capacity flow → next question │
+└──────────┬───────────┘   │ • Quiz flow → check answer      │
+           │ No session    └─────────────────────────────────┘
+           ▼
+┌──────────────────────┐   ┌─────────────────────────────────┐
+│  Command Detection   │──▶│       Keyword Triggers          │
+│    (aiEngine.js)     │   │ menu/halo    → showMenu()       │
+└──────────┬───────────┘   │ kuis/quiz    → startQuiz()      │
+           │ No match      │ kapasitas    → startCapacity()  │
+           ▼               │ cek data     → showProfile()    │
+┌──────────────────────┐   │ jadwal       → showMajelis()    │
+│  RAG Knowledge Base  │   │ nilai/skor   → showProgress()   │
+│ • Amartha products   │   └─────────────────────────────────┘
+│ • Financial literacy │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐   ┌─────────────────────────────────┐
+│   Gemini 2.5 Flash   │   │       AI Tool Calling           │
+│ • User context       │──▶│ • registerUser() - new users    │
+│ • Business KPIs      │   │ • startQuiz() - literacy quiz   │
+│ • RAG context        │   │ • showProgress() - scores       │
+└──────────┬───────────┘   └─────────────────────────────────┘
+           │
+           ▼
+┌──────────────────────┐
+│  WhatsApp Response   │
+│ • Text message       │
+│ • List (quiz)        │
+│ • Audio (TTS)        │
+└──────────────────────┘
+`}</pre>
+        </div>
+
+        {/* Credit Scoring Flow - Light Mode */}
+        <div style="margin-top: 24px;">
+          <h3 style="font-size: 14px; margin-bottom: 12px;">📊 A-Score Credit Scoring Model</h3>
+          <pre style="background: #F8FAFC; color: #334155; padding: 16px; border-radius: 8px; font-size: 10px; line-height: 1.4; overflow-x: auto; font-family: 'Consolas', monospace; border: 1px solid #E2E8F0;">{`
+┌─────────────────────────────────────────────────────────┐
+│              A-SCORE CALCULATION (0-100)                │
+└─────────────────────────────────────────────────────────┘
+                           │
+       ┌───────────────────┼───────────────────┐
+       │                   │                   │
+       ▼                   ▼                   ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  CHARACTER  │    │  CAPACITY   │    │  LITERACY   │
+│    (25%)    │    │    (30%)    │    │    (25%)    │
+├─────────────┤    ├─────────────┤    ├─────────────┤
+│• CRBI Score │    │• Monthly    │    │• Quiz Score │
+│• Payment    │    │  Income     │    │• Weeks Done │
+│  History    │    │• Expenses   │    │• Progress   │
+│• Attendance │    │• Surplus    │    │  Rate       │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       └───────────────────┼───────────────────┘
+                           │
+                           ▼
+                  ┌─────────────┐
+                  │ ENGAGEMENT  │
+                  │    (20%)    │
+                  ├─────────────┤
+                  │• Interactions│
+                  │• Streak Days│
+                  │• Frequency  │
+                  └─────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                  ZONE CLASSIFICATION                    │
+├─────────────┬─────────────┬─────────────┬──────────────┤
+│   Zone A    │   Zone B    │   Zone C    │   Zone D     │
+│  (80-100)   │  (60-79)    │  (40-59)    │   (0-39)     │
+│ Auto-Approve│ Conditional │ w/Coaching  │  Not Ready   │
+└─────────────┴─────────────┴─────────────┴──────────────┘
+`}</pre>
+        </div>
+
+        {/* Data Model - Light Mode */}
+        <div style="margin-top: 24px;">
+          <h3 style="font-size: 14px; margin-bottom: 12px;">🗄️ Firestore Data Model</h3>
+          <pre style="background: #F8FAFC; color: #334155; padding: 16px; border-radius: 8px; font-size: 10px; line-height: 1.4; overflow-x: auto; font-family: 'Consolas', monospace; border: 1px solid #E2E8F0;">{`
+Firestore Database
+│
+├── users (collection)
+│   └── {phone} (document)
+│       ├── name, status, majelis_id, is_mock
+│       └── (subcollections)
+│           ├── profile/data   → dob, gender, home_lat, home_lng
+│           ├── business/data  → name, category, business_lat/lng
+│           ├── loan/data      → limit, used, remaining, history[]
+│           ├── literacy/data  → week_01..week_15 {score}
+│           ├── engagement     → interactions, streak, daily_history[]
+│           ├── capacity/data  → income, expenses, surplus
+│           └── bi/images/*    → Business Intelligence data
+│
+├── majelis (collection)
+│   └── {id} → name, schedule, location, members[], attendance/
+│
+├── business_types → categories with maturity_levels[]
+│
+└── financial_literacy → week content + quiz questions
+`}</pre>
         </div>
       </div>
     </div>

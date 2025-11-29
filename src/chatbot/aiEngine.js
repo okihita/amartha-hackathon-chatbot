@@ -1,6 +1,7 @@
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
 const UserService = require('../services/UserService');
 const QuizService = require('../services/QuizService');
+const CapacityCollectionService = require('../services/CapacityCollectionService');
 const { sendQuizQuestion } = require('./whatsapp');
 const { retrieveKnowledge, getBusinessKPIs } = require('./knowledge');
 const { BUSINESS_CATEGORIES } = require('../config/constants');
@@ -121,13 +122,85 @@ Contoh: _"Saya Siti, jualan sembako di Bogor"_`;
 
 Ketik angka atau kata:
 
-1️⃣ *KUIS* - Belajar keuangan
+1️⃣ *BELAJAR* - Belajar keuangan
 2️⃣ *NILAI* - Lihat progress
 3️⃣ *DATA* - Info profil
 4️⃣ *FOTO* - Analisis usaha
 5️⃣ *JADWAL* - Info majelis
 
-Atau langsung tanya apa saja! 💬`;
+Atau langsung tanya apa saja! 💬
+Bisa ketik atau kirim voice note 🎤
+
+_Ketik *batal* untuk keluar dari sesi aktif_`;
+    }
+    
+    // 🚫 BATAL COMMAND - Cancel any active session
+    const batalTriggers = ['batal', 'cancel', 'keluar', 'stop', 'selesai', 'udah', 'sudah'];
+    if (batalTriggers.some(t => lowerText === t)) {
+      const quizCancelled = QuizService.stopQuiz(senderPhone);
+      CapacityCollectionService.clearSession(senderPhone);
+      
+      if (quizCancelled) {
+        return "✅ Sesi belajar dibatalkan.\n\nKetik *menu* untuk kembali ke menu utama.";
+      }
+      return "✅ Tidak ada sesi aktif.\n\nKetik *menu* untuk melihat menu.";
+    }
+    
+    // 💰 CAPACITY COLLECTION - Check for active session first
+    const capacitySession = CapacityCollectionService.getSession(senderPhone);
+    if (capacitySession) {
+      // Track engagement for capacity answers
+      UserService.trackInteraction(senderPhone, 'capacity_assessment').catch(() => {});
+      
+      // User is in capacity collection flow - process their answer
+      const result = CapacityCollectionService.processAnswer(senderPhone, userText);
+      
+      if (!result.success && result.retry) {
+        return result.error;
+      }
+      
+      if (result.completed) {
+        // Save to database
+        await UserService.updateCapacity(senderPhone, result.data);
+        return CapacityCollectionService.formatRPCResult(result.rpc, result.data);
+      }
+      
+      // Send next question
+      return result.nextQuestion.text;
+    }
+    
+    // 💰 CAPACITY TRIGGER - Start new session
+    if (userProfile && CapacityCollectionService.shouldTrigger(lowerText)) {
+      // Track engagement for capacity trigger
+      UserService.trackInteraction(senderPhone, 'capacity_assessment').catch(() => {});
+      
+      const session = CapacityCollectionService.startSession(senderPhone);
+      const firstQuestion = CapacityCollectionService.getCurrentQuestion(session);
+      
+      const honorific = userProfile.profile?.gender === 'male' ? 'Pak' : 'Bu';
+      return `📊 *Hitung Kapasitas Bayar*
+
+${honorific} ${userProfile.name}, saya akan bantu hitung kemampuan cicilan berdasarkan usaha ${honorific}.
+
+Jawab 5 pertanyaan singkat ya!
+
+${firstQuestion.text}`;
+    }
+    
+    // 📷 FOTO COMMAND
+    const fotoTriggers = ['foto', 'photo', 'gambar', 'analisis usaha', '4'];
+    if (fotoTriggers.some(t => lowerText === t)) {
+      if (!userProfile) {
+        return "⚠️ Anda belum terdaftar. Ketik *halo* untuk daftar.";
+      }
+      return `📷 *Analisis Foto Usaha*
+
+Kirim foto usaha Anda, misalnya:
+• Warung/toko
+• Stok barang
+• Catatan keuangan
+
+Saya akan bantu analisis dan beri saran! 💡`;
     }
     
     // 📅 JADWAL/MAJELIS COMMAND
@@ -177,9 +250,9 @@ Sampai ketemu ${honorific}! 👋`;
             const weeks = Object.keys(userProfile.literacy).filter(k => k.startsWith('week_'));
             const completed = weeks.filter(w => userProfile.literacy[w]?.score >= 100).length;
             const percentage = Math.round((completed / 15) * 100);
-            return `\n\n*LITERASI*\nProgress: ${completed}/15 minggu (${percentage}%)`;
+            return `\n\n*BELAJAR*\nProgress: ${completed}/15 minggu (${percentage}%)`;
           })()
-        : '\n\n*LITERASI*\nBelum memulai program';
+        : '\n\n*BELAJAR*\nBelum memulai program';
       
       return `*PROFIL ANDA*\n\n` +
              `Nama: ${userProfile.name}\n` +
@@ -358,9 +431,20 @@ ${BUSINESS_CATEGORIES_NUMBERED}
         
         if (quizResult.started && quizResult.question) {
           const { sendMessage } = require('./whatsapp');
+          const user = await UserService.getUser(senderPhone);
+          const userName = user?.name || 'Ibu';
           
-          // Send intro first
-          const intro = `*Quiz Minggu ${quizResult.weekInfo.week_number}*\n\n` +
+          // Send materi_inti first (if available)
+          if (quizResult.weekInfo.intro_material) {
+            let materialText = Array.isArray(quizResult.weekInfo.intro_material) 
+              ? quizResult.weekInfo.intro_material.join('\n\n') 
+              : String(quizResult.weekInfo.intro_material);
+            materialText = materialText.replace(/\[Sapaan\]/g, `Bu ${userName}`);
+            await sendMessage(senderPhone, materialText);
+          }
+          
+          // Send quiz intro
+          const intro = `*Belajar Minggu ${quizResult.weekInfo.week_number}*\n\n` +
                  `Topik: ${quizResult.weekInfo.module_name}\n\n` +
                  `4 pertanyaan, nilai lulus 100% (4/4 benar).`;
           await sendMessage(senderPhone, intro);
@@ -375,7 +459,7 @@ ${BUSINESS_CATEGORIES_NUMBERED}
       if (name === "showProgress") {
         const progress = await QuizService.getProgress(senderPhone);
         
-        let message = `*Progress Literasi Keuangan*\n\n`;
+        let message = `*Progress Belajar Keuangan*\n\n`;
         message += `Selesai: ${progress.total_completed}/15 minggu (${progress.percentage}%)\n`;
         
         if (progress.completed.length > 0) {

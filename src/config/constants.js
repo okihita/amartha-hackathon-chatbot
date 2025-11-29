@@ -10,7 +10,9 @@ const USER_COLLECTIONS = {
   BUSINESS: 'business',
   LOAN: 'loan',
   LITERACY: 'literacy',
-  BUSINESS_INTELLIGENCE: 'business_intelligence'
+  BUSINESS_INTELLIGENCE: 'business_intelligence',
+  ENGAGEMENT: 'engagement',
+  CAPACITY: 'capacity'
 };
 
 const MAJELIS_COLLECTIONS = {

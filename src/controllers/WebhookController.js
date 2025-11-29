@@ -4,9 +4,20 @@ const { analyzeImage } = require('../chatbot/imageAnalyzer');
 const { transcribeVoiceNote } = require('../chatbot/voiceParser');
 const QuizService = require('../services/QuizService');
 const DemoService = require('../services/DemoService');
+const UserService = require('../services/UserService');
 
 // Store pending images waiting for caption
 const pendingImages = new Map();
+
+// Classify interaction type for engagement tracking
+function classifyInteraction(text) {
+  const lower = (text || '').toLowerCase();
+  if (['kuis', 'quiz', 'belajar', 'tes', 'ujian'].some(k => lower.includes(k))) return 'quiz';
+  if (['usaha', 'bisnis', 'omset', 'untung', 'modal', 'stok'].some(k => lower.includes(k))) return 'business_advice';
+  if (['data', 'profil', 'cek', 'info'].some(k => lower.includes(k))) return 'check_data';
+  if (['menu', 'halo', 'hi', 'help'].some(k => lower.includes(k))) return 'menu';
+  return 'other';
+}
 
 class WebhookController {
   verify(req, res) {
@@ -27,6 +38,9 @@ class WebhookController {
     const handlers = {
       text: async () => {
         const text = message.text.body.trim();
+        
+        // Track engagement (fire and forget)
+        UserService.trackInteraction(phone, classifyInteraction(text)).catch(() => {});
         
         // Handle demo commands first
         if (DemoService.isValidCommand(text)) {
