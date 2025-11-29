@@ -1,247 +1,201 @@
-# Amartha WhatsApp Chatbot
+# 🌾 Akademi-AI Amartha
 
-AI-powered WhatsApp chatbot for Amartha's financial literacy program, providing personalized business coaching and management tools for Indonesian micro-entrepreneurs (UMKM).
+> **Bringing AI-powered financial education to 10 million unbanked Indonesian women—through the app they already use every day: WhatsApp.**
 
-## 🎯 Overview
+[![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Run-4285F4?logo=googlecloud)](https://cloud.google.com/run)
+[![Gemini](https://img.shields.io/badge/Gemini-2.5%20Flash-8E75B2?logo=google)](https://ai.google.dev/)
+[![WhatsApp](https://img.shields.io/badge/WhatsApp-Business%20API-25D366?logo=whatsapp)](https://business.whatsapp.com/)
 
-This chatbot serves as a digital assistant for Amartha's field agents and UMKM members, offering:
-- Automated user registration and verification
-- AI-powered financial literacy coaching
-- Loan management and payment tracking
-- Business image analysis with AI vision
-- Majelis (group) management system
-- Admin dashboard for field agents
+---
+
+## 🎯 The Problem
+
+In rural Indonesia, **70% of micro-entrepreneurs** have never used a banking app. They run businesses from handwritten notebooks, manage cash in plastic bags, and have zero credit history. Traditional fintech solutions fail them—they require app downloads, complex UIs, and assume digital literacy that doesn't exist.
+
+**But 95% of them use WhatsApp daily.**
+
+## 💡 Our Solution
+
+Akademi-AI is a **zero-friction AI assistant** that lives inside WhatsApp. No app to download. No login to remember. Just chat—in Bahasa Indonesia, with voice notes, with photos of their warung.
+
+```
+Ibu Siti: "Halo"
+Akademi-AI: "Halo Bu Siti! 👋 Mau belajar keuangan hari ini?"
+Ibu Siti: [sends voice note] "Gimana cara pisahin uang usaha sama uang rumah tangga?"
+Akademi-AI: "Bagus pertanyaannya Bu! Ada 3 cara mudah..."
+```
+
+### What Makes This Different
+
+| Traditional Fintech | Akademi-AI |
+|---------------------|------------|
+| Download app (50MB+) | Already on their phone |
+| Create account, verify email | Just send "Halo" |
+| Read complex UI | Natural conversation |
+| Type everything | Voice notes supported |
+| Generic content | Personalized to their business |
+
+---
 
 ## ✨ Key Features
 
-### For UMKM Members
-- **Smart Registration**: Natural language registration via WhatsApp
-- **Financial Coaching**: AI-powered business advice in Indonesian
-- **Interactive Quiz**: 15-week financial literacy course with progress tracking
-- **Loan Tracking**: Check limits, payments, and transaction history
-- **Image Analysis**: Upload business photos for AI insights
-- **Majelis Info**: View group schedule and meeting details
+### 📚 15-Week Financial Literacy Program
+Interactive quiz-based learning delivered weekly via WhatsApp. Each session starts with bite-sized material, followed by 4 questions. Pass rate: 100% (because we want them to *learn*, not fail).
 
-### For Field Agents
-- **Admin Dashboard**: Web interface for user management
-- **User Verification**: Approve/reject new registrations
-- **Majelis Management**: Create and manage groups
-- **Member Assignment**: Add/remove members with validation
-- **Business Intelligence**: View analyzed business data
-- **Business Types Library**: 25 UMKM categories with maturity levels
+### 🎤 Voice-First Design
+Many users are more comfortable speaking than typing. Gemini transcribes voice notes and responds naturally—like talking to a helpful neighbor.
+
+### 📸 Business Intelligence from Photos
+Send a photo of your warung, inventory, or handwritten ledger. Gemini Vision extracts:
+- Estimated daily revenue
+- Stock levels and variety
+- Record-keeping quality
+- Actionable improvement suggestions
+
+### 🏘️ Majelis (Group) Management
+Field agents manage lending groups through a web dashboard. Track member progress, schedule meetings, and monitor engagement—all synced with the chatbot.
+
+### 📊 Credit Readiness Scoring
+Behind the scenes, we calculate an "A-Score" based on:
+- **Character**: Engagement consistency, quiz completion
+- **Capacity**: Self-reported income/expenses via conversational collection
+- **Capital**: Business growth tracked through photo analysis
+- **Conditions**: Majelis participation and peer accountability
+
+---
+
+## 🏗️ Technical Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        WhatsApp Cloud API                        │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Google Cloud Run                            │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │   Express   │  │   Webhook   │  │     AI Engine           │  │
+│  │   Server    │──│  Controller │──│  • Gemini 2.5 Flash     │  │
+│  │             │  │             │  │  • Tool Calling         │  │
+│  └─────────────┘  └─────────────┘  │  • Context Management   │  │
+│                                     └─────────────────────────┘  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                    Service Layer                             ││
+│  │  UserService │ QuizService │ MajelisService │ BIService     ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Google Cloud Firestore                      │
+│         users/  │  majelis/  │  financial_literacy/             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Tech Stack
+
+| Layer | Technology | Why |
+|-------|------------|-----|
+| **Runtime** | Node.js 20 + Express | Fast cold starts on Cloud Run |
+| **AI** | Gemini 2.5 Flash | Best-in-class Indonesian language + vision |
+| **Database** | Cloud Firestore | Serverless, real-time sync |
+| **Messaging** | WhatsApp Business API | 2B+ users, zero friction |
+| **Frontend** | Preact + Vite | 56KB gzipped dashboard |
+| **Deployment** | Cloud Run | Scale to zero, pay per request |
+| **Maps** | Leaflet + CartoDB | Visualize member locations |
 
 ### AI Capabilities
-- **Gemini 2.5 Flash**: Conversational AI with tool calling
-- **Gemini Vision**: Image classification and data extraction
-- **Context-Aware**: Personalized responses based on user profile
-- **Input Validation**: Spam detection and topic filtering
-- **Interactive Quiz**: WhatsApp list messages for multiple choice questions
 
-### Security & Performance
-- **Rate Limiting**: 100 requests/minute per IP on webhook endpoint
-- **Environment Validation**: Startup checks for required credentials
-- **Error Handling**: Unhandled promise rejection tracking
+- **Conversational Registration**: Extract name, business type, and location from natural speech
+- **Tool Calling**: Gemini autonomously triggers quiz, registration, or data lookup
+- **Voice Transcription**: Process audio messages via Gemini's multimodal input
+- **Image Analysis**: Classify business photos into ledger/inventory/building types
+- **RAG Knowledge Base**: Ground responses in Amartha-specific terminology
 
-## 🏗️ Tech Stack
+---
 
-- **Backend**: Node.js + Express
-- **Database**: Google Cloud Firestore
-- **AI**: Google Gemini (Text + Vision)
-- **Messaging**: WhatsApp Business API
-- **Deployment**: Google Cloud Run
-- **Security**: express-rate-limit
-- **Frontend**: Vanilla HTML/CSS/JavaScript
+## 🚀 Quick Start
 
-## 📦 Installation
-
-### Prerequisites
-- Node.js 18+
-- Google Cloud Platform account
-- WhatsApp Business API access
-- Gemini API key
-
-### Setup
-
-1. **Clone the repository**
 ```bash
-git clone <repository-url>
-cd wa-chatbot-gcp-ai
-```
+# Clone
+git clone https://github.com/okihita/amartha-hackathon-chatbot.git
+cd amartha-hackathon-chatbot
 
-2. **Install dependencies**
-```bash
+# Install
 npm install
-```
 
-3. **Configure environment variables**
-```bash
+# Configure
 cp .env.example .env
-# Edit .env with your credentials
-```
+# Add: GEMINI_API_KEY, WHATSAPP_TOKEN, PHONE_NUMBER_ID
 
-4. **Set up Firestore**
-- Enable Firestore in your GCP project
-- Create collections: `users`, `majelis`
-
-5. **Run locally**
-```bash
+# Run
 npm start
 ```
 
-## 🚀 Deployment
-
-### Deploy to Google Cloud Run
+### Deploy to Production
 
 ```bash
-# Make deploy script executable
-chmod +x deploy.sh
-
-# Deploy
-./deploy.sh
+./deploy.sh  # Builds container, pushes to Artifact Registry, deploys to Cloud Run
 ```
 
-The script will:
-- Build Docker image
-- Push to Artifact Registry
-- Deploy to Cloud Run
-- Configure environment variables
+---
 
-### Import Business Types from Google Drive
+## 📱 User Journey
 
-After deployment, import business classifications:
-
-```bash
-# Set folder ID (already configured in script)
-node scripts/import-business-types.js
+```
+Day 1: "Halo" → Registration via natural conversation
+       ↓
+Day 3: First quiz notification → Complete Week 1 literacy module
+       ↓
+Day 7: Send photo of warung → Receive business analysis
+       ↓
+Day 14: Voice note question → Personalized coaching response
+       ↓
+Week 15: Complete all modules → Credit-ready status unlocked
 ```
 
-This imports 25 business type categories with maturity levels from Google Drive.
-See [Scripts Guide](./scripts/README.md) for details.
+---
 
-## 🔧 Configuration
+## 📊 Dashboard Preview
 
-### Environment Variables
+Field agents access a web dashboard to:
+- View all registered users with A-Score breakdown
+- Filter by verification status, majelis, or risk zone
+- See engagement heatmaps and literacy progress
+- Manage majelis membership and schedules
+- Review AI-extracted business intelligence
 
-See `.env.example` for all required variables:
+---
 
-Required:
-- `MY_VERIFY_TOKEN` - WhatsApp webhook verification token
-- `WHATSAPP_TOKEN` - WhatsApp API access token
-- `PHONE_NUMBER_ID` - WhatsApp Business phone number ID
-- `GEMINI_API_KEY` - Google Gemini API key
-- `GCP_PROJECT_ID` - Google Cloud project ID
+## 🔒 Security & Privacy
 
-Optional:
-- `PORT` - Server port (default: 8080)
-- `NODE_ENV` - Environment (production/development)
-- `FINANCIAL_LITERACY_FOLDER_ID` - Google Drive folder for course content
-- `BUSINESS_TYPES_FOLDER_ID` - Google Drive folder for business classifications
+- **Rate Limiting**: 100 req/min per IP on webhook
+- **No PII in Logs**: Phone numbers hashed in analytics
+- **Firestore Rules**: Role-based access for field agents
+- **Environment Validation**: Startup checks for required secrets
+
+---
 
 ## 📚 Documentation
 
-- **[Complete Guide](./docs/GUIDE.md)** - Setup, API, development, troubleshooting
-- **[Architecture](./docs/ARCHITECTURE.md)** - Architecture & SOLID principles
-- **[Scripts Guide](./scripts/README.md)** - Import scripts documentation
-- **[Specs](./docs/specs/)** - Feature specifications
+- [Architecture & SOLID Principles](./docs/ARCHITECTURE.md)
+- [Quiz Feature Spec](./docs/QUIZ_FEATURE.md)
+- [Credit Scoring Model](./docs/CREDIT_SCORING_MODEL.md)
+- [API Guide](./docs/GUIDE.md)
 
-## 🧪 Testing
+---
 
-```bash
-# Run all integration tests
-./tests/integration.test.sh
+## 🤝 Team
 
-# Verbose mode
-VERBOSE=true ./tests/integration.test.sh
+Built with ❤️ for the **Google Developer Groups Hackathon 2025** by a team passionate about financial inclusion in Indonesia.
 
-# Test different environment
-TEST_URL=http://localhost:8080 ./tests/integration.test.sh
-```
-
-## 📊 Project Structure
-
-```
-.
-├── index.js                 # Express server entry point
-├── src/
-│   ├── config/             # Configuration & constants
-│   │   ├── database.js     # Firestore initialization
-│   │   ├── constants.js    # Collection names
-│   │   └── mockData.js     # Test data
-│   ├── core/               # Domain models (entities)
-│   │   ├── User.js         # User entity & factory
-│   │   └── Majelis.js      # Majelis entity & factory
-│   ├── repositories/       # Data access layer
-│   │   ├── UserRepository.js
-│   │   ├── MajelisRepository.js
-│   │   ├── BusinessIntelligenceRepository.js
-│   │   └── RAGRepository.js
-│   ├── services/           # Business logic layer
-│   │   ├── UserService.js
-│   │   └── MajelisService.js
-│   ├── controllers/        # Request handlers
-│   │   ├── UserController.js
-│   │   ├── MajelisController.js
-│   │   └── WebhookController.js
-│   ├── routes/             # API route definitions
-│   │   ├── userRoutes.js
-│   │   ├── majelisRoutes.js
-│   │   ├── webhookRoutes.js
-│   │   ├── superadminRoutes.js
-│   │   └── ragRoutes.js
-│   ├── chatbot/            # Chatbot domain
-│   │   ├── aiEngine.js     # Gemini AI integration
-│   │   ├── imageAnalyzer.js # Vision AI for image analysis
-│   │   ├── knowledge.js    # Amartha knowledge base (RAG)
-│   │   └── whatsapp.js     # WhatsApp API client
-│   ├── db.js               # Legacy database (deprecated)
-│   └── schemas.js          # Legacy schemas (deprecated)
-├── public/
-│   ├── index.html          # User management dashboard
-│   └── assets/             # Frontend static files
-├── scripts/
-│   └── import-business-types.js  # Google Drive import script
-├── docs/
-│   ├── ARCHITECTURE.md     # Architecture & SOLID principles
-│   └── GUIDE.md            # Complete setup guide
-├── Dockerfile              # Container configuration
-└── deploy.sh               # Deployment script
-```
-
-## 🏛️ Architecture
-
-This project follows **SOLID principles** with a layered architecture:
-
-- **Config Layer**: Database connections, constants, configuration
-- **Core Layer**: Domain models and business entities
-- **Repository Layer**: Data access abstraction (Firestore)
-- **Service Layer**: Business logic and orchestration
-- **Controller Layer**: HTTP request/response handling
-- **Routes Layer**: API endpoint definitions
-
-See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed design patterns and principles.
-
-## 🌐 Live URLs
-
-- **Production**: Your Cloud Run URL will be displayed after deployment
-- **Dashboard**: `https://YOUR_SERVICE_URL/`
-- **Majelis**: `https://YOUR_SERVICE_URL/majelis`
-- **Business Types**: `https://YOUR_SERVICE_URL/business-types`
-
-## 🤝 Contributing
-
-See [GUIDE.md](./docs/GUIDE.md) for development guidelines and contribution workflow.
+---
 
 ## 📄 License
 
 ISC
 
-## 🆘 Support
-
-For issues and questions:
-1. Check [troubleshooting guide](./docs/GUIDE.md#troubleshooting)
-2. Review logs: `gcloud run logs read whatsapp-bot`
-3. Open an issue on GitHub
-
 ---
 
-**Built with ❤️ for Amartha UMKM Program**
+> *"The best interface is no interface. The best app is the one they already have."*
