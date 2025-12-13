@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMKM Assistant - Executive Briefing</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+            line-height: 1.6;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            padding: 50px 80px;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        /* Title Slide */
+        .slide-title {
+            background: linear-gradient(135deg, #E1261B 0%, #8B0000 100%);
+            text-align: center;
+            justify-content: center;
+        }
+
+        .slide-title h1 {
+            font-size: 64px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -2px;
+        }
+
+        .slide-title .tagline {
+            font-size: 28px;
+            font-weight: 300;
+            opacity: 0.95;
+            margin-bottom: 40px;
+        }
+
+        .slide-title .meta {
+            font-size: 16px;
+            opacity: 0.7;
+        }
+
+        .logo-container {
+            margin-bottom: 30px;
+        }
+
+        .logo-container span {
+            font-size: 80px;
+        }
+
+        /* Content Slides */
+        .slide-content {
+            background: #0a0a0a;
+        }
+
+        .slide-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #222;
+        }
+
+        .slide-header h2 {
+            font-size: 42px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .slide-header .subtitle {
+            font-size: 18px;
+            color: #E1261B;
+            font-weight: 500;
+        }
+
+        .slide-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 30px 0 16px 0;
+            color: #E1261B;
+        }
+
+        h3:first-child {
+            margin-top: 0;
+        }
+
+        p {
+            font-size: 16px;
+            color: #ccc;
+            margin-bottom: 16px;
+            max-width: 900px;
+        }
+
+        .highlight {
+            color: #E1261B;
+            font-weight: 600;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stat-card.accent {
+            border-color: #E1261B;
+            background: linear-gradient(135deg, #E1261B22 0%, #E1261B11 100%);
+        }
+
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .stat-card.accent .number {
+            color: #E1261B;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #888;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 15px;
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #222;
+        }
+
+        th {
+            background: #E1261B;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:nth-child(even) {
+            background: #111;
+        }
+
+        td.positive {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+
+        td.negative {
+            color: #E1261B;
+            font-weight: 600;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .feature-card .icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .feature-card h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: #888;
+            margin: 0;
+        }
+
+        .feature-card ul {
+            margin: 12px 0 0 0;
+            padding-left: 20px;
+        }
+
+        .feature-card li {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 6px;
+        }
+
+        /* Pricing Cards */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin: 24px 0;
+        }
+
+        .pricing-card {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 32px;
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            border-color: #E1261B;
+            transform: scale(1.02);
+        }
+
+        .pricing-card.featured::before {
+            content: 'RECOMMENDED';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #E1261B;
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .pricing-card h4 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .pricing-card .price {
+            font-size: 32px;
+            font-weight: 800;
+            color: #E1261B;
+            margin-bottom: 8px;
+        }
+
+        .pricing-card .price-note {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .pricing-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .pricing-card li {
+            font-size: 14px;
+            color: #aaa;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pricing-card li::before {
+            content: '✓';
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        /* Timeline */
+        .timeline {
+            margin: 24px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .timeline-marker {
+            width: 48px;
+            height: 48px;
+            background: #E1261B;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .timeline-content {
+            flex: 1;
+            background: #111;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #222;
+        }
+
+        .timeline-content h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .timeline-content p {
+            font-size: 14px;
+            color: #888;
+            margin: 0;
+        }
+
+        /* Tech Stack */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .tech-item {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .tech-item .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .tech-item h5 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .tech-item p {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
+        }
+
+        /* Quote Box */
+        .quote-box {
+            background: linear-gradient(135deg, #E1261B22 0%, #E1261B11 100%);
+            border-left: 4px solid #E1261B;
+            padding: 24px 30px;
+            margin: 24px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .quote-box p {
+            font-size: 20px;
+            font-style: italic;
+            color: #fff;
+            margin: 0;
+        }
+
+        .quote-box .author {
+            font-size: 14px;
+            color: #E1261B;
+            margin-top: 12px;
+            font-style: normal;
+        }
+
+        /* CTA Slide */
+        .slide-cta {
+            background: linear-gradient(135deg, #E1261B 0%, #8B0000 100%);
+            text-align: center;
+            justify-content: center;
+        }
+
+        .slide-cta h2 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .slide-cta p {
+            font-size: 24px;
+            opacity: 0.9;
+            margin-bottom: 40px;
+            max-width: 100%;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 18px 48px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+
+        .cta-button.primary {
+            background: #fff;
+            color: #E1261B;
+        }
+
+        .cta-button.secondary {
+            background: transparent;
+            color: #fff;
+            border: 2px solid #fff;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .nav button {
+            background: #222;
+            border: 1px solid #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav button:hover {
+            background: #E1261B;
+            border-color: #E1261B;
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            font-size: 13px;
+            color: #555;
+            z-index: 100;
+        }
+
+        /* Table of Contents */
+        .toc {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .toc-item {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toc-item:hover {
+            border-color: #E1261B;
+            background: #1a1a1a;
+        }
+
+        .toc-item .num {
+            font-size: 24px;
+            font-weight: 800;
+            color: #E1261B;
+            margin-bottom: 8px;
+        }
+
+        .toc-item h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .toc-item p {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
+        }
+
+        /* Two Column Layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .col h3:first-child {
+            margin-top: 0;
+        }
+
+        /* Bullet List Styled */
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .bullet-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #222;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 15px;
+            color: #ccc;
+        }
+
+        .bullet-list li::before {
+            content: '→';
+            color: #E1261B;
+            font-weight: bold;
+        }
+
+        /* Comparison Table */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 0;
+            margin: 20px 0;
+            border: 1px solid #333;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-header {
+            background: #E1261B;
+            padding: 16px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .comparison-cell {
+            padding: 16px;
+            border-bottom: 1px solid #222;
+            background: #111;
+        }
+
+        .comparison-cell.label {
+            background: #0a0a0a;
+            font-weight: 500;
+        }
+
+        .comparison-cell.good {
+            color: #4CAF50;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .comparison-cell.bad {
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Slide 1: Title -->
+    <div class="slide slide-title active" id="slide-1">
+        <div class="logo-container">
+            <span>🤖💬</span>
+        </div>
+        <h1>UMKM Assistant</h1>
+        <p class="tagline">AI-Powered Financial Literacy & Credit Scoring Platform</p>
+        <p class="meta">Executive Briefing for OCBC Indonesia | December 2025</p>
+    </div>
+
+    <!-- Slide 2: Table of Contents -->
+    <div class="slide slide-content" id="slide-2">
+        <div class="slide-header">
+            <h2>What's Inside</h2>
+            <div class="subtitle">Navigate to any section</div>
+        </div>
+        <div class="slide-body">
+            <div class="toc">
+                <div class="toc-item" onclick="goToSlide(3)">
+                    <div class="num">01</div>
+                    <h4>The Problem</h4>
+                    <p>Why UMKM microfinance is challenging</p>
+                </div>
+                <div class="toc-item" onclick="goToSlide(4)">
+                    <div class="num">02</div>
+                    <h4>Market Opportunity</h4>
+                    <p>Scale of untapped UMKM market</p>
+                </div>
+                <div class="toc-item" onclick="goToSlide(5)">
+                    <div class="num">03</div>
+                    <h4>Our Solution</h4>
+                    <p>How UMKM Assistant works</p>
+                </div>
+                <div class="toc-item" onclick="goToSlide(6)">
+                    <div class="num">04</div>
+                    <h4>Key Features</h4>
+                    <p>Platform capabilities deep-dive</p>
+                </div>
+                <div class="toc-item" onclick="goToSlide(7)">
+                    <div class="num">05</div>
+                    <h4>Financial Impact</h4>
+                    <p>ROI analysis and cost savings</p>
+                </div>
+                <div class="toc-item" onclick="goToSlide(8)">
+                    <div class="num">06</div>
+                    <h4>Technical Architecture</h4>
+                    <p>Infrastructure and security</p>
+                </div>
+                <div class="toc-item" onclick="goToSlide(9)">
+                    <div class="num">07</div>
+                    <h4>Implementation</h4>
+                    <p>Rollout timeline and phases</p>
+                </div>
+                <div class="toc-item" onclick="goToSlide(10)">
+                    <div class="num">08</div>
+                    <h4>Investment Options</h4>
+                    <p>Pricing models and terms</p>
+                </div>
+                <div class="toc-item" onclick="goToSlide(11)">
+                    <div class="num">09</div>
+                    <h4>Next Steps</h4>
+                    <p>How to proceed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: The Problem -->
+    <div class="slide slide-content" id="slide-3">
+        <div class="slide-header">
+            <h2>The UMKM Lending Challenge</h2>
+            <div class="subtitle">Why traditional approaches aren't working</div>
+        </div>
+        <div class="slide-body">
+            <div class="stats-grid">
+                <div class="stat-card accent">
+                    <div class="number">5-8%</div>
+                    <div class="label">Average NPL rate in UMKM segment</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">Rp 100M+</div>
+                    <div class="label">Monthly field agent cost per branch</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">70%</div>
+                    <div class="label">UMKM owners with low financial literacy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">2-3x</div>
+                    <div class="label">Higher collection cost vs retail</div>
+                </div>
+            </div>
+
+            <h3>Root Causes of High Default Rates</h3>
+            <div class="two-col">
+                <div class="col">
+                    <ul class="bullet-list">
+                        <li><strong>Information Asymmetry</strong> - Borrowers don't understand loan terms, interest
+                            calculation, or consequences of late payment</li>
+                        <li><strong>Poor Financial Planning</strong> - No distinction between personal and business cash
+                            flow</li>
+                        <li><strong>Limited Touchpoints</strong> - Only interact during collection, not proactive
+                            engagement</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <ul class="bullet-list">
+                        <li><strong>Reactive Collections</strong> - Issues discovered only after payment is missed</li>
+                        <li><strong>High Cost to Serve</strong> - Field agents expensive but necessary for relationship
+                        </li>
+                        <li><strong>No Early Warning</strong> - Can't predict which borrowers are at risk</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="quote-box">
+                <p>"Financial institutions lose an average of Rp 15-20 million per defaulted UMKM loan. Preventing just
+                    one default per month per branch could save Rp 180-240 million annually."</p>
+                <div class="author">— Industry Analysis</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Market Opportunity -->
+    <div class="slide slide-content" id="slide-4">
+        <div class="slide-header">
+            <h2>The UMKM Opportunity</h2>
+            <div class="subtitle">A massive, underserved market</div>
+        </div>
+        <div class="slide-body">
+            <div class="stats-grid">
+                <div class="stat-card accent">
+                    <div class="number">64.2M</div>
+                    <div class="label">UMKM businesses in Indonesia</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">97%</div>
+                    <div class="label">Of all businesses are UMKM</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">61%</div>
+                    <div class="label">Contribution to GDP</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">Rp 8,573T</div>
+                    <div class="label">Outstanding UMKM credit (2023)</div>
+                </div>
+            </div>
+
+            <h3>Why Digital Engagement is Critical Now</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="icon">📱</div>
+                    <h4>WhatsApp Penetration</h4>
+                    <p>95% of Indonesian smartphone users have WhatsApp. It's the default communication channel for UMKM
+                        owners.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🏦</div>
+                    <h4>OJK Regulatory Push</h4>
+                    <p>Regulators mandating financial inclusion and literacy programs. Digital solutions demonstrate
+                        compliance.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">⚔️</div>
+                    <h4>Fintech Competition</h4>
+                    <p>P2P lenders and digital banks aggressively targeting UMKM with superior digital experience.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🤖</div>
+                    <h4>AI Maturity</h4>
+                    <p>Large language models now capable of nuanced Indonesian conversation and financial advisory.</p>
+                </div>
+            </div>
+
+            <div class="quote-box">
+                <p>"Banks that invest in UMKM financial education see 30-40% lower default rates compared to those
+                    offering credit alone."</p>
+                <div class="author">— McKinsey Financial Inclusion Report</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Solution Overview -->
+    <div class="slide slide-content" id="slide-5">
+        <div class="slide-header">
+            <h2>Introducing UMKM Assistant</h2>
+            <div class="subtitle">AI that educates, engages, and predicts</div>
+        </div>
+        <div class="slide-body">
+            <p style="font-size: 20px; color: #fff; margin-bottom: 30px;">UMKM Assistant is a <span
+                    class="highlight">WhatsApp-based AI chatbot</span> that transforms borrowers from passive loan
+                recipients into financially literate, engaged partners who pay on time.</p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="number">24/7</div>
+                    <div class="label">Always available support</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">15</div>
+                    <div class="label">Week literacy curriculum</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">Real-time</div>
+                    <div class="label">Risk scoring updates</div>
+                </div>
+                <div class="stat-card accent">
+                    <div class="number">
+                        < Rp 150</div>
+                            <div class="label">Cost per user per month</div>
+                    </div>
+                </div>
+
+                <h3>How It Works</h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker">1</div>
+                        <div class="timeline-content">
+                            <h4>User Onboarding via WhatsApp</h4>
+                            <p>Borrower texts the bot, registers with name and business details. No app download
+                                required. Works on any phone.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker">2</div>
+                        <div class="timeline-content">
+                            <h4>Gamified Financial Education</h4>
+                            <p>15-week curriculum with weekly quizzes. Topics: budgeting, savings, loan management,
+                                business planning. 100% pass rate required.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker">3</div>
+                        <div class="timeline-content">
+                            <h4>A-Score Credit Assessment</h4>
+                            <p>AI calculates creditworthiness based on: engagement frequency, quiz performance, business
+                                photo analysis, payment behavior simulation.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker">4</div>
+                        <div class="timeline-content">
+                            <h4>Admin Dashboard & Alerts</h4>
+                            <p>Field agents and loan officers see real-time user engagement, risk scores, and early
+                                warning indicators. Prioritize outreach effectively.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Key Features -->
+        <div class="slide slide-content" id="slide-6">
+            <div class="slide-header">
+                <h2>Platform Capabilities</h2>
+                <div class="subtitle">Every feature designed for financial inclusion</div>
+            </div>
+            <div class="slide-body">
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="icon">💬</div>
+                        <h4>Conversational AI Engine</h4>
+                        <p>Powered by Google Gemini 2.5 Flash. Natural Indonesian language understanding including slang
+                            and regional dialects.</p>
+                        <ul>
+                            <li>Voice note transcription</li>
+                            <li>Context-aware responses</li>
+                            <li>Topic guardrails (finance only)</li>
+                            <li>Escalation to human when needed</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">📚</div>
+                        <h4>Financial Literacy Curriculum</h4>
+                        <p>15-week structured program covering essential financial skills for micro-entrepreneurs.</p>
+                        <ul>
+                            <li>225 quiz questions</li>
+                            <li>Weekly progress tracking</li>
+                            <li>Adaptive difficulty</li>
+                            <li>Completion certificates</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">📊</div>
+                        <h4>A-Score Credit Scoring</h4>
+                        <p>Proprietary algorithm that predicts loan repayment probability from behavioral signals.</p>
+                        <ul>
+                            <li>Engagement frequency score</li>
+                            <li>Literacy completion rate</li>
+                            <li>Business health indicators</li>
+                            <li>Psychological profiling</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">📸</div>
+                        <h4>Business Photo Analysis</h4>
+                        <p>AI vision analyzes photos of shops, inventory, and financial records.</p>
+                        <ul>
+                            <li>Inventory level estimation</li>
+                            <li>Shop condition assessment</li>
+                            <li>Receipt/note extraction</li>
+                            <li>Fraud detection flags</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">👥</div>
+                        <h4>Majelis Group Management</h4>
+                        <p>Support for group lending models with coordinated communication.</p>
+                        <ul>
+                            <li>Group payment reminders</li>
+                            <li>Attendance tracking</li>
+                            <li>Peer accountability metrics</li>
+                            <li>Group leader dashboard</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">📈</div>
+                        <h4>Admin Dashboard</h4>
+                        <p>Real-time web dashboard for field agents and loan officers.</p>
+                        <ul>
+                            <li>User engagement heatmaps</li>
+                            <li>Risk score distribution</li>
+                            <li>Collection predictions</li>
+                            <li>SSE real-time updates</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Financial Impact -->
+        <div class="slide slide-content" id="slide-7">
+            <div class="slide-header">
+                <h2>Financial Impact Analysis</h2>
+                <div class="subtitle">Conservative ROI projections</div>
+            </div>
+            <div class="slide-body">
+                <h3>Cost Reduction</h3>
+                <table>
+                    <tr>
+                        <th>Cost Category</th>
+                        <th>Current Cost</th>
+                        <th>With UMKM Assistant</th>
+                        <th>Annual Savings</th>
+                    </tr>
+                    <tr>
+                        <td>Customer support calls</td>
+                        <td>Rp 5,000/call × 100K calls</td>
+                        <td>AI handles 80% of inquiries</td>
+                        <td class="positive">Rp 400M</td>
+                    </tr>
+                    <tr>
+                        <td>Field agent visits</td>
+                        <td>Rp 50,000/visit × 50K visits</td>
+                        <td>Reduce routine visits by 30%</td>
+                        <td class="positive">Rp 750M</td>
+                    </tr>
+                    <tr>
+                        <td>Training & education</td>
+                        <td>Rp 200K/person classroom</td>
+                        <td>Self-service via WhatsApp</td>
+                        <td class="positive">Rp 200M</td>
+                    </tr>
+                    <tr>
+                        <td>NPL write-offs</td>
+                        <td>5% NPL × Rp 100B portfolio</td>
+                        <td>Reduce to 3.5% with education</td>
+                        <td class="positive">Rp 1.5B+</td>
+                    </tr>
+                </table>
+
+                <h3>Revenue Growth Opportunities</h3>
+                <table>
+                    <tr>
+                        <th>Opportunity</th>
+                        <th>Mechanism</th>
+                        <th>Potential Impact</th>
+                    </tr>
+                    <tr>
+                        <td>Loan upselling</td>
+                        <td>A-Score identifies ready customers for larger loans</td>
+                        <td class="positive">+15% loan volume</td>
+                    </tr>
+                    <tr>
+                        <td>Cross-selling</td>
+                        <td>Chatbot promotes savings, insurance products</td>
+                        <td class="positive">+10% product attach rate</td>
+                    </tr>
+                    <tr>
+                        <td>Customer retention</td>
+                        <td>Engaged customers have 2x higher LTV</td>
+                        <td class="positive">+20% customer lifetime value</td>
+                    </tr>
+                </table>
+
+                <div class="stats-grid" style="margin-top: 30px;">
+                    <div class="stat-card accent">
+                        <div class="number">300-500%</div>
+                        <div class="label">Expected ROI in Year 1</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number">6-8 months</div>
+                        <div class="label">Payback period</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number">Rp 2-3B</div>
+                        <div class="label">Total potential savings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number">1.5%</div>
+                        <div class="label">NPL reduction target</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Technical Architecture -->
+        <div class="slide slide-content" id="slide-8">
+            <div class="slide-header">
+                <h2>Technical Architecture</h2>
+                <div class="subtitle">Enterprise-grade, cloud-native infrastructure</div>
+            </div>
+            <div class="slide-body">
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <div class="icon">🤖</div>
+                        <h5>Google Gemini 2.5</h5>
+                        <p>Latest multimodal AI</p>
+                    </div>
+                    <div class="tech-item">
+                        <div class="icon">☁️</div>
+                        <h5>Google Cloud Run</h5>
+                        <p>Auto-scaling containers</p>
+                    </div>
+                    <div class="tech-item">
+                        <div class="icon">🗄️</div>
+                        <h5>Cloud Firestore</h5>
+                        <p>Real-time NoSQL database</p>
+                    </div>
+                    <div class="tech-item">
+                        <div class="icon">💬</div>
+                        <h5>WhatsApp Business API</h5>
+                        <p>Official Meta integration</p>
+                    </div>
+                </div>
+
+                <h3>Security & Compliance</h3>
+                <div class="two-col">
+                    <div class="col">
+                        <ul class="bullet-list">
+                            <li><strong>Data Residency</strong> - All data stored in Google Cloud Indonesia region
+                                (Jakarta)</li>
+                            <li><strong>Encryption</strong> - TLS 1.3 in transit, AES-256 at rest</li>
+                            <li><strong>Access Control</strong> - Role-based permissions, audit logging</li>
+                        </ul>
+                    </div>
+                    <div class="col">
+                        <ul class="bullet-list">
+                            <li><strong>Compliance Ready</strong> - Architecture supports OJK, BI, and POJK requirements
+                            </li>
+                            <li><strong>No PII in Logs</strong> - Customer data anonymized in all logging</li>
+                            <li><strong>GDPR-style Deletion</strong> - Full data deletion on customer request</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Integration Capabilities</h3>
+                <table>
+                    <tr>
+                        <th>System</th>
+                        <th>Integration Method</th>
+                        <th>Timeline</th>
+                    </tr>
+                    <tr>
+                        <td>Core Banking System</td>
+                        <td>REST API / SFTP batch</td>
+                        <td>2-4 weeks</td>
+                    </tr>
+                    <tr>
+                        <td>Loan Origination System</td>
+                        <td>Webhook callbacks</td>
+                        <td>1-2 weeks</td>
+                    </tr>
+                    <tr>
+                        <td>CRM / Salesforce</td>
+                        <td>Native connector</td>
+                        <td>1 week</td>
+                    </tr>
+                    <tr>
+                        <td>BI / Reporting</td>
+                        <td>Direct DB read replica</td>
+                        <td>3 days</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Slide 9: Implementation -->
+        <div class="slide slide-content" id="slide-9">
+            <div class="slide-header">
+                <h2>Implementation Roadmap</h2>
+                <div class="subtitle">From pilot to full rollout in 14 weeks</div>
+            </div>
+            <div class="slide-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker">1</div>
+                        <div class="timeline-content">
+                            <h4>Week 1-2: Pilot Setup</h4>
+                            <p><strong>Scope:</strong> 500 users in 1 branch<br>
+                                <strong>Activities:</strong> WhatsApp number setup, basic customization, field agent
+                                training<br>
+                                <strong>Deliverable:</strong> Working pilot with live users
+                            </p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker">2</div>
+                        <div class="timeline-content">
+                            <h4>Week 3-6: Core Banking Integration</h4>
+                            <p><strong>Scope:</strong> Connect to OCBC systems<br>
+                                <strong>Activities:</strong> API integration, data mapping, security review<br>
+                                <strong>Deliverable:</strong> Real loan data in chatbot, payment reminders
+                            </p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker">3</div>
+                        <div class="timeline-content">
+                            <h4>Week 7-10: Pilot Evaluation & Optimization</h4>
+                            <p><strong>Scope:</strong> Expand to 5,000 users across 5 branches<br>
+                                <strong>Activities:</strong> Performance tuning, response optimization, A/B testing<br>
+                                <strong>Deliverable:</strong> Validated ROI metrics, refined model
+                            </p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker">4</div>
+                        <div class="timeline-content">
+                            <h4>Week 11-14: Full Rollout</h4>
+                            <p><strong>Scope:</strong> All UMKM borrowers nationwide<br>
+                                <strong>Activities:</strong> Regional deployment, training at scale, monitoring
+                                setup<br>
+                                <strong>Deliverable:</strong> Fully operational platform with ongoing support
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Success Metrics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="number">&gt;80%</div>
+                        <div class="label">User activation rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number">&gt;60%</div>
+                        <div class="label">Weekly engagement</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number">&gt;50%</div>
+                        <div class="label">Curriculum completion</div>
+                    </div>
+                    <div class="stat-card accent">
+                        <div class="number">-1.5%</div>
+                        <div class="label">NPL reduction</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Pricing -->
+        <div class="slide slide-content" id="slide-10">
+            <div class="slide-header">
+                <h2>Investment Options</h2>
+                <div class="subtitle">Flexible models to match your needs</div>
+            </div>
+            <div class="slide-body">
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <h4>Pilot Program</h4>
+                        <div class="price">Rp 75M</div>
+                        <div class="price-note">3-month pilot for 1 branch</div>
+                        <ul>
+                            <li>500 user capacity</li>
+                            <li>Full platform features</li>
+                            <li>Basic customization</li>
+                            <li>WhatsApp setup included</li>
+                            <li>Training for 10 staff</li>
+                            <li>Weekly progress reports</li>
+                            <li>Upgrade to full license anytime</li>
+                        </ul>
+                    </div>
+                    <div class="pricing-card featured">
+                        <h4>Full License</h4>
+                        <div class="price">Rp 150M</div>
+                        <div class="price-note">One-time + Rp 15M/month</div>
+                        <ul>
+                            <li>Unlimited users</li>
+                            <li>Custom OCBC branding</li>
+                            <li>Core banking integration</li>
+                            <li>2 months implementation support</li>
+                            <li>Training for 30 staff</li>
+                            <li>Priority technical support</li>
+                            <li>Quarterly feature updates</li>
+                        </ul>
+                    </div>
+                    <div class="pricing-card">
+                        <h4>Full Acquisition</h4>
+                        <div class="price">Rp 300M</div>
+                        <div class="price-note">Complete ownership transfer</div>
+                        <ul>
+                            <li>Full source code transfer</li>
+                            <li>All intellectual property rights</li>
+                            <li>No ongoing license fees</li>
+                            <li>2 months transition support</li>
+                            <li>Technical documentation</li>
+                            <li>Training for internal dev team</li>
+                            <li>Optional: Rp 25M/month advisory</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>What's Included in All Options</h3>
+                <div class="two-col">
+                    <div class="col">
+                        <ul class="bullet-list">
+                            <li>WhatsApp Business API setup & costs</li>
+                            <li>Google Cloud infrastructure (first year)</li>
+                            <li>15-week financial literacy curriculum</li>
+                            <li>A-Score credit scoring engine</li>
+                        </ul>
+                    </div>
+                    <div class="col">
+                        <ul class="bullet-list">
+                            <li>Business photo AI analysis</li>
+                            <li>Admin dashboard with real-time sync</li>
+                            <li>Indonesian language AI model</li>
+                            <li>Security review & compliance docs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Next Steps -->
+        <div class="slide slide-cta" id="slide-11">
+            <h2>Ready to Transform UMKM Lending?</h2>
+            <p>Let's start with a 30-minute live demo</p>
+            <div class="cta-buttons">
+                <a href="https://umkm-chatbot.vercel.app" target="_blank" class="cta-button primary">View Live Dashboard
+                    →</a>
+                <a href="mailto:okihita@gmail.com" class="cta-button secondary">Schedule Demo</a>
+            </div>
+            <p style="margin-top: 60px; font-size: 18px; opacity: 0.8;">
+                Contact: <strong>okihita@gmail.com</strong><br>
+                Demo: umkm-chatbot.vercel.app
+            </p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <button onclick="prevSlide()">← Prev</button>
+            <button onclick="nextSlide()">Next →</button>
+        </div>
+        <div class="slide-counter">Slide <span id="current">1</span> of <span id="total">11</span></div>
+
+        <script>
+            let currentSlide = 1;
+            const totalSlides = 11;
+
+            function showSlide(n) {
+                const slides = document.querySelectorAll('.slide');
+                slides.forEach(s => s.classList.remove('active'));
+
+                if (n > totalSlides) currentSlide = 1;
+                if (n < 1) currentSlide = totalSlides;
+
+                document.getElementById(`slide-${currentSlide}`).classList.add('active');
+                document.getElementById('current').textContent = currentSlide;
+            }
+
+            function nextSlide() {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+
+            function prevSlide() {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+
+            function goToSlide(n) {
+                currentSlide = n;
+                showSlide(currentSlide);
+            }
+
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+                if (e.key === 'ArrowLeft') prevSlide();
+                if (e.key === 'Home') goToSlide(1);
+                if (e.key === 'End') goToSlide(totalSlides);
+            });
+
+            document.getElementById('total').textContent = totalSlides;
+        </script>
+</body>
+
+</html>
