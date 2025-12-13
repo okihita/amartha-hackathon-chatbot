@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { BookOpen, FileText, Lightbulb, CheckCircle, RefreshCw, ExternalLink } from 'lucide-preact';
+import { API_BASE_URL } from '../config';
 
 export default function FinancialLiteracy() {
   const [selectedWeek, setSelectedWeek] = useState(null);
@@ -11,7 +12,7 @@ export default function FinancialLiteracy() {
   const fetchCourse = async (skipCache = false) => {
     const CACHE_KEY = 'financialLiteracy';
     const CACHE_TTL = 24 * 60 * 60 * 1000;
-    
+
     try {
       if (!skipCache) {
         const cached = localStorage.getItem(CACHE_KEY);
@@ -25,13 +26,13 @@ export default function FinancialLiteracy() {
           }
         }
       }
-      
-      const res = await fetch('/api/knowledge/financial-literacy');
+
+      const res = await fetch(`${API_BASE_URL}/api/knowledge/financial-literacy`);
       const data = await res.json();
       const filtered = data
         .filter(w => w.week_number && w.bank_soal && w.bank_soal.length > 0)
         .sort((a, b) => a.week_number - b.week_number);
-      
+
       localStorage.setItem(CACHE_KEY, JSON.stringify({ data: filtered, timestamp: Date.now() }));
       setWeeks(filtered);
       if (filtered.length > 0) setSelectedWeek(filtered[0]);
@@ -80,7 +81,7 @@ export default function FinancialLiteracy() {
           </button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {Object.keys(groupedByModule).sort((a,b) => a-b).map(moduleNum => (
+          {Object.keys(groupedByModule).sort((a, b) => a - b).map(moduleNum => (
             <div key={moduleNum}>
               <div style={{ padding: '8px 16px', background: '#e9ecef', fontSize: '11px', fontWeight: 600, color: '#6c757d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Modul {moduleNum}: {getModuleName(parseInt(moduleNum))}

@@ -1,8 +1,8 @@
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { Copy, Trash2, RefreshCw, Gamepad2, Smartphone, Users, Clapperboard, Shuffle, RotateCcw, List, Route, Bot } from 'lucide-preact';
+import { API_BASE_URL } from '../config';
 
-const API_BASE = '/api';
 const WA_NUMBER = '6281991262988';
 const WA_LINK = `https://wa.me/${WA_NUMBER}`;
 
@@ -26,48 +26,60 @@ const SCENARIOS = [
 ];
 
 const JOURNEYS = [
-  { title: 'New User Registration', steps: [
-    'Send /demo:reset to clear data',
-    'Send "Halo" → Bot asks for info',
-    'Reply: "Saya Dewi, jualan kue di Bandung"',
-    'Dashboard → User appears "Pending"',
-    'Click Verify → Status "Active"'
-  ]},
-  { title: 'Quiz Flow (Full)', steps: [
-    'Send /demo:warung (40% progress)',
-    'Send "kuis" → Get next incomplete week',
-    'Answer 4 questions via list',
-    'Score 100% to pass week',
-    'Send "nilai" → See progress'
-  ]},
-  { title: 'Quiz Flow (Single Week)', steps: [
-    'Send /demo:baru (0% progress)',
-    'Send "kuis" → Start Week 1',
-    'Answer all 4 correctly → Pass',
-    'Send "kuis" again → Week 2 starts',
-    'Repeat until Week 15 = Graduate'
-  ]},
-  { title: 'Image Analysis (BI)', steps: [
-    'Send /demo:makanan',
-    'Send photo with caption',
-    'Bot extracts data (type, value)',
-    'Dashboard → User Profile → BI',
-    'New card with "NEW" badge'
-  ]},
-  { title: 'Profile & Loan Info', steps: [
-    'Send /demo:sukses',
-    'Send "cek data" → Full profile',
-    'See loan limit, balance, payments',
-    'Send "jadwal" → Majelis schedule',
-    'Dashboard shows same data'
-  ]},
-  { title: 'Majelis & Attendance', steps: [
-    'Send /demo:sukses (has majelis)',
-    'Dashboard → Majelis page',
-    'Click majelis card → Detail',
-    'See member list + attendance',
-    'Add attendance record'
-  ]},
+  {
+    title: 'New User Registration', steps: [
+      'Send /demo:reset to clear data',
+      'Send "Halo" → Bot asks for info',
+      'Reply: "Saya Dewi, jualan kue di Bandung"',
+      'Dashboard → User appears "Pending"',
+      'Click Verify → Status "Active"'
+    ]
+  },
+  {
+    title: 'Quiz Flow (Full)', steps: [
+      'Send /demo:warung (40% progress)',
+      'Send "kuis" → Get next incomplete week',
+      'Answer 4 questions via list',
+      'Score 100% to pass week',
+      'Send "nilai" → See progress'
+    ]
+  },
+  {
+    title: 'Quiz Flow (Single Week)', steps: [
+      'Send /demo:baru (0% progress)',
+      'Send "kuis" → Start Week 1',
+      'Answer all 4 correctly → Pass',
+      'Send "kuis" again → Week 2 starts',
+      'Repeat until Week 15 = Graduate'
+    ]
+  },
+  {
+    title: 'Image Analysis (BI)', steps: [
+      'Send /demo:makanan',
+      'Send photo with caption',
+      'Bot extracts data (type, value)',
+      'Dashboard → User Profile → BI',
+      'New card with "NEW" badge'
+    ]
+  },
+  {
+    title: 'Profile & Loan Info', steps: [
+      'Send /demo:sukses',
+      'Send "cek data" → Full profile',
+      'See loan limit, balance, payments',
+      'Send "jadwal" → Majelis schedule',
+      'Dashboard shows same data'
+    ]
+  },
+  {
+    title: 'Majelis & Attendance', steps: [
+      'Send /demo:sukses (has majelis)',
+      'Dashboard → Majelis page',
+      'Click majelis card → Detail',
+      'See member list + attendance',
+      'Add attendance record'
+    ]
+  },
 ];
 
 export default function Demo() {
@@ -78,7 +90,7 @@ export default function Demo() {
 
   const fetchDemoUsers = async () => {
     try {
-      const res = await fetch(`${API_BASE}/users`);
+      const res = await fetch(`${API_BASE_URL}/api/users`);
       const users = await res.json();
       setDemoUsers(users.filter(u => u.is_demo === true));
     } catch (e) {
@@ -89,9 +101,9 @@ export default function Demo() {
 
   useEffect(() => {
     fetchDemoUsers();
-    
+
     // SSE for real-time updates
-    const eventSource = new EventSource('/api/events/demo');
+    const eventSource = new EventSource(`${API_BASE_URL}/api/events/demo`);
     eventSource.onmessage = (e) => {
       const update = JSON.parse(e.data);
       if (update.type === 'user_created' && update.data?.is_demo) {
@@ -113,7 +125,7 @@ export default function Demo() {
 
   const deleteUser = async (phone) => {
     if (!confirm(`Delete demo user ${phone}?`)) return;
-    await fetch(`${API_BASE}/users/${phone}`, { method: 'DELETE' });
+    await fetch(`${API_BASE_URL}/api/users/${phone}`, { method: 'DELETE' });
     fetchDemoUsers();
   };
 
@@ -121,7 +133,7 @@ export default function Demo() {
     const cmd = `${prefix}${item.key}`;
     const isActive = copied === cmd;
     return (
-      <div 
+      <div
         onClick={() => copyCommand(cmd)}
         style={{
           padding: '14px',
@@ -153,9 +165,9 @@ export default function Demo() {
         <h1 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '24px' }}>
           <Gamepad2 size={28} /> Demo Mode
         </h1>
-        <a 
-          href={WA_LINK} 
-          target="_blank" 
+        <a
+          href={WA_LINK}
+          target="_blank"
           rel="noopener noreferrer"
           style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#25D366', color: '#fff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600, fontSize: '14px', marginBottom: '12px' }}
         >
@@ -197,7 +209,7 @@ export default function Demo() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             {SCENARIOS.map(s => <CommandCard key={s.key} item={s} prefix="/demo:" />)}
           </div>
-          
+
           {/* Combinations */}
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e0e0e0' }}>
             <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -205,7 +217,7 @@ export default function Demo() {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {['/demo:warung+krisis', '/demo:random+lulus', '/demo:makanan+fraud'].map(cmd => (
-                <button 
+                <button
                   key={cmd}
                   onClick={() => copyCommand(cmd)}
                   style={{
@@ -255,7 +267,7 @@ export default function Demo() {
         <div style={{ background: '#ffebee', padding: '16px', borderRadius: '8px', border: '1px solid #ef9a9a', textAlign: 'center' }}>
           <RotateCcw size={24} style={{ color: '#c62828', marginBottom: '8px' }} />
           <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>Clear demo data</div>
-          <button 
+          <button
             onClick={() => copyCommand('/demo:reset')}
             style={{
               padding: '10px 16px',
@@ -283,7 +295,7 @@ export default function Demo() {
               <RefreshCw size={12} /> Refresh
             </button>
           </div>
-          
+
           {loading ? (
             <div style={{ color: '#666', fontSize: '13px' }}>Loading...</div>
           ) : demoUsers.length === 0 ? (
@@ -294,12 +306,12 @@ export default function Demo() {
                 const isNew = newUserIds.has(u.phone);
                 const formattedPhone = u.phone.replace(/^62/, '+62 ').replace(/(\d{3})(\d{4})(\d+)/, '$1-$2-$3');
                 return (
-                  <div 
-                    key={u.phone} 
-                    style={{ 
-                      padding: '8px 12px', 
-                      background: isNew ? '#e8f5e9' : '#f5f5f5', 
-                      borderRadius: '6px', 
+                  <div
+                    key={u.phone}
+                    style={{
+                      padding: '8px 12px',
+                      background: isNew ? '#e8f5e9' : '#f5f5f5',
+                      borderRadius: '6px',
                       fontSize: '12px',
                       display: 'flex',
                       alignItems: 'center',
@@ -311,9 +323,9 @@ export default function Demo() {
                     {isNew && <span style={{ background: '#4caf50', color: '#fff', padding: '1px 5px', borderRadius: '3px', fontSize: '9px', fontWeight: 600 }}>NEW</span>}
                     <span style={{ fontWeight: 500 }}>{u.name}</span>
                     <span style={{ color: '#666', fontFamily: 'monospace', fontSize: '11px' }}>{formattedPhone}</span>
-                    <Trash2 
-                      size={14} 
-                      style={{ color: '#999', cursor: 'pointer', marginLeft: '4px' }} 
+                    <Trash2
+                      size={14}
+                      style={{ color: '#999', cursor: 'pointer', marginLeft: '4px' }}
                       onClick={() => deleteUser(u.phone)}
                     />
                   </div>

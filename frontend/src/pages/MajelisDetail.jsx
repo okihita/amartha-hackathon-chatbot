@@ -1,8 +1,7 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { Calendar, MapPin, Clock, Users, UserCheck, UserX, ChevronLeft, Plus, Save, FileText, Shield, AlertTriangle, TrendingUp, Award, Home, Building2 } from 'lucide-preact';
-
-const API_BASE = '/api';
+import { API_BASE_URL } from '../config';
 
 // Base coordinates for Jakarta area
 const JAKARTA_BASE = { lat: -6.2350, lng: 106.8000 };
@@ -21,17 +20,17 @@ const generateMockCoords = (seed, isHome = true) => {
 const generateGroupRiskProfile = (members, attendance, majelis) => {
   const seed = majelis?.id || 'default';
   const hash = seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  
-  const avgAttendance = attendance.length > 0 
-    ? attendance.reduce((sum, w) => sum + (w.attendees.length / w.total), 0) / attendance.length * 100 
+
+  const avgAttendance = attendance.length > 0
+    ? attendance.reduce((sum, w) => sum + (w.attendees.length / w.total), 0) / attendance.length * 100
     : 75;
-  
+
   const memberScores = members.map(m => {
     const mHash = (m.phone || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
     return 600 + (mHash % 200);
   });
   const avgCreditScore = memberScores.length > 0 ? Math.round(memberScores.reduce((a, b) => a + b, 0) / memberScores.length) : 680;
-  
+
   return {
     groupScore: Math.round(avgCreditScore * 0.4 + avgAttendance * 3 + (hash % 50)),
     avgMemberScore: avgCreditScore,
@@ -73,7 +72,7 @@ export default function MajelisDetail({ id }) {
   // Initialize Leaflet map when members are loaded
   useEffect(() => {
     if (loading || members.length === 0 || typeof L === 'undefined') return;
-    
+
     const mapEl = document.getElementById('majelis-map');
     if (!mapEl) return;
 
@@ -161,23 +160,23 @@ export default function MajelisDetail({ id }) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const majelisRes = await fetch(`${API_BASE}/majelis/${id}`);
+      const majelisRes = await fetch(`${API_BASE_URL}/api/majelis/${id}`);
       const majelisData = await majelisRes.json();
       setMajelis(majelisData);
 
       let memberDetails = [];
       if (majelisData.members?.length > 0) {
-        const usersRes = await fetch(`${API_BASE}/users`);
+        const usersRes = await fetch(`${API_BASE_URL}/api/users`);
         const allUsers = await usersRes.json();
         memberDetails = majelisData.members.map(phone => {
           const user = allUsers.find(u => u.phone === phone) || { phone, name: phone };
           // Get coords from user data or generate mock
-          const homeCoords = user.home_lat ? { lat: user.home_lat, lng: user.home_lng } 
+          const homeCoords = user.home_lat ? { lat: user.home_lat, lng: user.home_lng }
             : user.profile?.home_lat ? { lat: user.profile.home_lat, lng: user.profile.home_lng }
-            : generateMockCoords(phone, true);
+              : generateMockCoords(phone, true);
           const bizCoords = user.business_lat ? { lat: user.business_lat, lng: user.business_lng }
             : user.business?.business_lat ? { lat: user.business.business_lat, lng: user.business.business_lng }
-            : generateMockCoords(phone, false);
+              : generateMockCoords(phone, false);
           return { ...user, homeCoords, bizCoords };
         });
         setMembers(memberDetails);
@@ -221,7 +220,7 @@ export default function MajelisDetail({ id }) {
 
   const saveNewWeek = async () => {
     if (!newWeek.date) return alert('Pilih tanggal');
-    
+
     const weekData = {
       id: `week_${Date.now()}`,
       date: newWeek.date,
@@ -229,7 +228,7 @@ export default function MajelisDetail({ id }) {
       total: members.length,
       notes: newWeek.notes
     };
-    
+
     // In production, save to Firestore
     setAttendance(prev => [...prev, weekData]);
     setShowAddWeek(false);
@@ -470,11 +469,11 @@ export default function MajelisDetail({ id }) {
         <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
           <div style="background: white; padding: 24px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
             <h3 style="margin: 0 0 16px 0;">Tambah Kehadiran Minggu Ini</h3>
-            
+
             <div style="margin-bottom: 16px;">
               <label style="display: block; margin-bottom: 4px; font-weight: 500;">Tanggal</label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 value={newWeek.date}
                 onChange={(e) => setNewWeek(prev => ({ ...prev, date: e.target.value }))}
                 style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
@@ -487,11 +486,11 @@ export default function MajelisDetail({ id }) {
               </label>
               <div style="display: flex; flex-direction: column; gap: 8px;">
                 {members.map(m => (
-                  <label 
+                  <label
                     key={m.phone}
                     style="display: flex; align-items: center; gap: 8px; padding: 8px; background: newWeek.attendees.includes(m.phone) ? '#e8f5e9' : '#f5f5f5'; border-radius: 4px; cursor: pointer;"
                   >
-                    <input 
+                    <input
                       type="checkbox"
                       checked={newWeek.attendees.includes(m.phone)}
                       onChange={() => toggleAttendee(m.phone)}
@@ -504,7 +503,7 @@ export default function MajelisDetail({ id }) {
 
             <div style="margin-bottom: 16px;">
               <label style="display: block; margin-bottom: 4px; font-weight: 500;">Catatan</label>
-              <textarea 
+              <textarea
                 value={newWeek.notes}
                 onChange={(e) => setNewWeek(prev => ({ ...prev, notes: e.target.value }))}
                 placeholder="Catatan pertemuan minggu ini..."
@@ -513,13 +512,13 @@ export default function MajelisDetail({ id }) {
             </div>
 
             <div style="display: flex; gap: 8px; justify-content: flex-end;">
-              <button 
+              <button
                 onClick={() => setShowAddWeek(false)}
                 style="padding: 8px 16px; background: #f5f5f5; border: none; border-radius: 4px; cursor: pointer;"
               >
                 Batal
               </button>
-              <button 
+              <button
                 onClick={saveNewWeek}
                 style="padding: 8px 16px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;"
               >

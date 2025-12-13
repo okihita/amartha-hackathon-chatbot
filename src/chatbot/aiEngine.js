@@ -43,8 +43,8 @@ const showProgressTool = {
   parameters: { type: "OBJECT", properties: {} },
 };
 
-const model = genAI.getGenerativeModel({ 
-  model: "gemini-2.5-flash", 
+const model = genAI.getGenerativeModel({
+  model: "gemini-2.5-flash",
   generationConfig: { maxOutputTokens: 1500, temperature: 0.4 },
   tools: [{ functionDeclarations: [registerUserTool, startQuizTool, showProgressTool] }],
   safetySettings: [
@@ -64,20 +64,20 @@ function validateInput(text) {
   if (text.length > 1000) {
     return { valid: false, reason: "too_long" };
   }
-  
+
   // Check for spam patterns
   const spamPatterns = [
     /(.)\1{10,}/i, // Repeated characters (aaaaaaaaaa)
     /^[^a-zA-Z0-9\s]{20,}$/, // Only special characters
     /(https?:\/\/|www\.)/gi, // URLs (multiple)
   ];
-  
+
   for (const pattern of spamPatterns) {
     if (pattern.test(text)) {
       return { valid: false, reason: "spam" };
     }
   }
-  
+
   return { valid: true };
 }
 
@@ -96,16 +96,16 @@ async function getGeminiResponse(userText, senderPhone) {
         return "Maaf Bu, pesan tidak valid. Coba kirim pertanyaan yang jelas ya.";
       }
     }
-    
+
     const userProfile = await UserService.getUser(senderPhone);
     const lowerText = userText.toLowerCase().trim();
-    
+
     // 📋 MENU COMMAND - Different for new vs existing users
     const menuTriggers = ['menu', 'bantuan', 'help', 'tolong', 'bantu', 'apa saja', 'bisa apa', 'halo', 'hi', 'hai', 'hello', 'test', 'ping', 'tes'];
     if (menuTriggers.some(t => lowerText === t || lowerText.includes(t))) {
       if (!userProfile) {
         // NEW USER - Welcome & registration prompt (shorter, friendlier)
-        return `👋 *Halo! Selamat datang di Akademi-AI Amartha*
+        return `👋 *Halo! Selamat datang di UMKM Assistant*
 
 Saya asisten digital untuk UMKM.
 
@@ -133,50 +133,50 @@ Bisa ketik atau kirim voice note 🎤
 
 _Ketik *batal* untuk keluar dari sesi aktif_`;
     }
-    
+
     // 🚫 BATAL COMMAND - Cancel any active session
     const batalTriggers = ['batal', 'cancel', 'keluar', 'stop', 'selesai', 'udah', 'sudah'];
     if (batalTriggers.some(t => lowerText === t)) {
       const quizCancelled = QuizService.stopQuiz(senderPhone);
       CapacityCollectionService.clearSession(senderPhone);
-      
+
       if (quizCancelled) {
         return "✅ Sesi belajar dibatalkan.\n\nKetik *menu* untuk kembali ke menu utama.";
       }
       return "✅ Tidak ada sesi aktif.\n\nKetik *menu* untuk melihat menu.";
     }
-    
+
     // 💰 CAPACITY COLLECTION - Check for active session first
     const capacitySession = CapacityCollectionService.getSession(senderPhone);
     if (capacitySession) {
       // Track engagement for capacity answers
-      UserService.trackInteraction(senderPhone, 'capacity_assessment').catch(() => {});
-      
+      UserService.trackInteraction(senderPhone, 'capacity_assessment').catch(() => { });
+
       // User is in capacity collection flow - process their answer
       const result = CapacityCollectionService.processAnswer(senderPhone, userText);
-      
+
       if (!result.success && result.retry) {
         return result.error;
       }
-      
+
       if (result.completed) {
         // Save to database
         await UserService.updateCapacity(senderPhone, result.data);
         return CapacityCollectionService.formatRPCResult(result.rpc, result.data);
       }
-      
+
       // Send next question
       return result.nextQuestion.text;
     }
-    
+
     // 💰 CAPACITY TRIGGER - Start new session
     if (userProfile && CapacityCollectionService.shouldTrigger(lowerText)) {
       // Track engagement for capacity trigger
-      UserService.trackInteraction(senderPhone, 'capacity_assessment').catch(() => {});
-      
+      UserService.trackInteraction(senderPhone, 'capacity_assessment').catch(() => { });
+
       const session = CapacityCollectionService.startSession(senderPhone);
       const firstQuestion = CapacityCollectionService.getCurrentQuestion(session);
-      
+
       const honorific = userProfile.profile?.gender === 'male' ? 'Pak' : 'Bu';
       return `📊 *Hitung Kapasitas Bayar*
 
@@ -186,7 +186,7 @@ Jawab 5 pertanyaan singkat ya!
 
 ${firstQuestion.text}`;
     }
-    
+
     // 📷 FOTO COMMAND
     const fotoTriggers = ['foto', 'photo', 'gambar', 'analisis usaha', '4'];
     if (fotoTriggers.some(t => lowerText === t)) {
@@ -202,7 +202,7 @@ Kirim foto usaha Anda, misalnya:
 
 Saya akan bantu analisis dan beri saran! 💡`;
     }
-    
+
     // 📅 JADWAL/MAJELIS COMMAND
     const jadwalTriggers = ['jadwal', 'majelis', 'pertemuan', 'kapan ketemu', 'ketemu kapan', 'kumpul'];
     if (jadwalTriggers.some(t => lowerText === t || lowerText.includes(t))) {
@@ -221,52 +221,52 @@ Saya akan bantu analisis dan beri saran! 💡`;
 
 Sampai ketemu ${honorific}! 👋`;
     }
-    
+
     // 🐛 CEK DATA COMMAND
     const dataTriggers = ['debug', 'cek data', 'data saya', 'profil', 'info saya', 'lihat data', 'data', 'cek profil'];
     if (dataTriggers.some(t => lowerText === t || lowerText.includes(t))) {
       if (!userProfile) {
-        return "*Data tidak ditemukan*\n\nAnda belum terdaftar di Amartha. Silakan daftar dulu.";
+        return "*Data tidak ditemukan*\n\nAnda belum terdaftar. Silakan daftar dulu.";
       }
-      
-      const majelisInfo = userProfile.majelis_name 
+
+      const majelisInfo = userProfile.majelis_name
         ? `${userProfile.majelis_name} (${userProfile.majelis_day}, ${userProfile.majelis_time || ''})`
         : 'Belum terdaftar';
-      
+
       const currentDebt = userProfile.loan?.history?.length > 0
         ? userProfile.loan.history[userProfile.loan.history.length - 1].balance_after
         : 0;
-      
+
       const loanInfo = userProfile.loan?.limit > 0
         ? `\n\n*PINJAMAN*\n` +
-          `Limit: Rp ${userProfile.loan.limit.toLocaleString('id-ID')}\n` +
-          `Sisa Limit: Rp ${userProfile.loan.remaining.toLocaleString('id-ID')}\n` +
-          `Hutang: Rp ${currentDebt.toLocaleString('id-ID')}\n` +
-          `Cicilan: ${userProfile.loan.next_payment_date ? new Date(userProfile.loan.next_payment_date).toLocaleDateString('id-ID') : '-'} - Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
+        `Limit: Rp ${userProfile.loan.limit.toLocaleString('id-ID')}\n` +
+        `Sisa Limit: Rp ${userProfile.loan.remaining.toLocaleString('id-ID')}\n` +
+        `Hutang: Rp ${currentDebt.toLocaleString('id-ID')}\n` +
+        `Cicilan: ${userProfile.loan.next_payment_date ? new Date(userProfile.loan.next_payment_date).toLocaleDateString('id-ID') : '-'} - Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
         : '\n\n*PINJAMAN*\nBelum memiliki pinjaman aktif';
-      
-      const literacyInfo = userProfile.literacy 
+
+      const literacyInfo = userProfile.literacy
         ? (() => {
-            const weeks = Object.keys(userProfile.literacy).filter(k => k.startsWith('week_'));
-            const completed = weeks.filter(w => userProfile.literacy[w]?.score >= 100).length;
-            const percentage = Math.round((completed / 15) * 100);
-            return `\n\n*BELAJAR*\nProgress: ${completed}/15 minggu (${percentage}%)`;
-          })()
+          const weeks = Object.keys(userProfile.literacy).filter(k => k.startsWith('week_'));
+          const completed = weeks.filter(w => userProfile.literacy[w]?.score >= 100).length;
+          const percentage = Math.round((completed / 15) * 100);
+          return `\n\n*BELAJAR*\nProgress: ${completed}/15 minggu (${percentage}%)`;
+        })()
         : '\n\n*BELAJAR*\nBelum memulai program';
-      
+
       return `*PROFIL ANDA*\n\n` +
-             `Nama: ${userProfile.name}\n` +
-             `No. HP: ${userProfile.phone}\n` +
-             `Usaha: ${userProfile.business?.name || '-'}\n` +
-             `Kategori: ${userProfile.business?.category || '-'}\n` +
-             `Lokasi: ${userProfile.business?.location || '-'}\n` +
-             `Tingkat: ${userProfile.business?.maturity_level || 1}/5\n` +
-             `Majelis: ${majelisInfo}\n` +
-             `Status: ${userProfile.status === 'active' ? 'Terverifikasi' : 'Menunggu Verifikasi'}` +
-             loanInfo +
-             literacyInfo;
+        `Nama: ${userProfile.name}\n` +
+        `No. HP: ${userProfile.phone}\n` +
+        `Usaha: ${userProfile.business?.name || '-'}\n` +
+        `Kategori: ${userProfile.business?.category || '-'}\n` +
+        `Lokasi: ${userProfile.business?.location || '-'}\n` +
+        `Tingkat: ${userProfile.business?.maturity_level || 1}/5\n` +
+        `Majelis: ${majelisInfo}\n` +
+        `Status: ${userProfile.status === 'active' ? 'Terverifikasi' : 'Menunggu Verifikasi'}` +
+        loanInfo +
+        literacyInfo;
     }
-    
+
     // 💰 POPULATE LOAN COMMAND (for testing)
     if (lowerText === 'populate loan' || lowerText === 'isi pinjaman') {
       if (!userProfile) {
@@ -277,19 +277,19 @@ Sampai ketemu ${honorific}! 👋`;
         return `Gagal: ${result.error}`;
       }
       return `*Data pinjaman berhasil dibuat*\n\n` +
-             `Limit: Rp ${result.data.limit.toLocaleString('id-ID')}\n` +
-             `Sisa: Rp ${result.data.remaining.toLocaleString('id-ID')}\n` +
-             `Cicilan: ${new Date(result.data.next_payment_date).toLocaleDateString('id-ID')} - Rp ${result.data.next_payment_amount.toLocaleString('id-ID')}\n\n` +
-             `Ketik "cek data" untuk detail lengkap.`;
+        `Limit: Rp ${result.data.limit.toLocaleString('id-ID')}\n` +
+        `Sisa: Rp ${result.data.remaining.toLocaleString('id-ID')}\n` +
+        `Cicilan: ${new Date(result.data.next_payment_date).toLocaleDateString('id-ID')} - Rp ${result.data.next_payment_amount.toLocaleString('id-ID')}\n\n` +
+        `Ketik "cek data" untuk detail lengkap.`;
     }
-    
+
     const ragContext = await retrieveKnowledge(userText);
-    
+
     // Get business KPIs for existing users (use category_id for direct lookup)
     let businessKPIsContext = '';
     if (userProfile?.business?.category_id) {
       const kpis = await getBusinessKPIs(
-        userProfile.business.category_id, 
+        userProfile.business.category_id,
         userProfile.business.maturity_level || 1
       );
       if (kpis && kpis.kpis?.length > 0) {
@@ -303,23 +303,23 @@ Sampai ketemu ${honorific}! 👋`;
       Gunakan KPI ini untuk memberikan saran spesifik ketika user bertanya tentang cara mengembangkan usaha.`;
       }
     }
-    
+
     // 1. Construct Prompt
     let systemPrompt = "";
-    
+
     if (!userProfile) {
       // 🟢 NEW USER FLOW
       systemPrompt = `
-      PERAN: Akademi-AI, asisten pendaftaran Amartha untuk program literasi keuangan UMKM.
+      PERAN: UMKM Assistant, asisten pendaftaran untuk program literasi keuangan UMKM.
       TUGAS: Kamu sedang berbicara dengan pengguna BARU (belum terdaftar).
       
       JIKA USER MENYAPA (halo, hi, hello, test, ping, tes, dll):
       Balas dengan menu:
-      "*Selamat datang di Akademi-AI Amartha!*
+      "*Selamat datang di UMKM Assistant!*
       
       Saya bisa membantu Anda:
       1. *DAFTAR* - Daftar program literasi keuangan
-      2. *INFO* - Informasi tentang Amartha
+      2. *INFO* - Informasi program
       
       Untuk mendaftar, silakan berikan: Nama, Jenis Usaha, dan Lokasi.
       Contoh: Nama saya Siti, usaha warung sembako di Bogor"
@@ -337,22 +337,22 @@ ${BUSINESS_CATEGORIES_NUMBERED}
       `;
     } else {
       // 🔵 EXISTING USER FLOW
-      const majelisInfo = userProfile.majelis_name 
+      const majelisInfo = userProfile.majelis_name
         ? `${userProfile.majelis_name} (${userProfile.majelis_day})`
         : 'Belum terdaftar di Majelis';
-      
+
       const hasLoan = userProfile.loan?.limit > 0;
-      const loanContext = hasLoan 
+      const loanContext = hasLoan
         ? `\n- Limit Pinjaman: Rp ${userProfile.loan.limit.toLocaleString('id-ID')}\n` +
-          `- Sisa Limit: Rp ${userProfile.loan.remaining.toLocaleString('id-ID')}\n` +
-          `- Cicilan Berikutnya: ${userProfile.loan.next_payment_date ? new Date(userProfile.loan.next_payment_date).toLocaleDateString('id-ID') : 'Tidak ada'}\n` +
-          `- Jumlah Cicilan: Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
+        `- Sisa Limit: Rp ${userProfile.loan.remaining.toLocaleString('id-ID')}\n` +
+        `- Cicilan Berikutnya: ${userProfile.loan.next_payment_date ? new Date(userProfile.loan.next_payment_date).toLocaleDateString('id-ID') : 'Tidak ada'}\n` +
+        `- Jumlah Cicilan: Rp ${userProfile.loan.next_payment_amount.toLocaleString('id-ID')}`
         : '\n- Belum memiliki pinjaman aktif';
-      
+
       const honorific = userProfile.profile?.gender === 'male' ? 'Pak' : 'Bu';
-      
+
       systemPrompt = `
-      PERAN: Akademi-AI, asisten bisnis ${userProfile.name} untuk program literasi keuangan Amartha.
+      PERAN: UMKM Assistant, asisten bisnis ${userProfile.name} untuk program literasi keuangan UMKM.
       SAPAAN: Gunakan "${honorific}" untuk menyapa user ini.
       CONTEXT: 
       - Nama: ${userProfile.name}
@@ -365,11 +365,11 @@ ${BUSINESS_CATEGORIES_NUMBERED}
       - Majelis: ${majelisInfo}${loanContext}
       
       BATASAN TOPIK:
-      - HANYA jawab tentang: literasi keuangan, manajemen usaha, Amartha, bisnis UMKM
+      - HANYA jawab tentang: literasi keuangan, manajemen usaha, program UMKM, bisnis UMKM
       - TOLAK topik: politik, agama, gosip, hal pribadi, permintaan tidak pantas
       - Jika topik di luar scope, jawab: "Maaf ${honorific}, saya hanya bisa membantu literasi keuangan dan usaha. Ada yang bisa saya bantu terkait bisnis Anda?"
       
-      KAMUS ISTILAH AMARTHA:
+      KAMUS ISTILAH UMKM:
       ${ragContext}${businessKPIsContext}
       
       INSTRUKSI:
@@ -390,22 +390,22 @@ ${BUSINESS_CATEGORIES_NUMBERED}
 
     const result = await chat.sendMessage(userText);
     const response = await result.response;
-    
+
     // ✨ HANDLE TOOL CALLS
     const functionCall = response.functionCalls() ? response.functionCalls()[0] : null;
-    
-    
+
+
     if (functionCall) {
       const { name, args } = functionCall;
-      
+
       if (name === "registerUser") {
         // Execute DB Update
         const newUser = await UserService.createUser(senderPhone, args);
-        
+
         if (!newUser) {
           return "Maaf, terjadi kesalahan saat mendaftar. Silakan coba lagi.";
         }
-        
+
         // Send Tool Output back to Gemini
         const finalResult = await chat.sendMessage([
           {
@@ -417,77 +417,77 @@ ${BUSINESS_CATEGORIES_NUMBERED}
         ]);
         return finalResult.response.text();
       }
-      
+
       if (name === "startQuiz") {
         const quizResult = await QuizService.startQuiz(senderPhone);
-        
+
         if (quizResult.completed) {
           return quizResult.message;
         }
-        
+
         if (quizResult.resumed) {
           return "Anda masih memiliki sesi quiz aktif. Silakan selesaikan pertanyaan yang sedang berjalan.";
         }
-        
+
         if (quizResult.started && quizResult.question) {
           const { sendMessage } = require('./whatsapp');
           const user = await UserService.getUser(senderPhone);
           const userName = user?.name || 'Ibu';
-          
+
           // Send materi_inti first (if available)
           if (quizResult.weekInfo.intro_material) {
-            let materialText = Array.isArray(quizResult.weekInfo.intro_material) 
-              ? quizResult.weekInfo.intro_material.join('\n\n') 
+            let materialText = Array.isArray(quizResult.weekInfo.intro_material)
+              ? quizResult.weekInfo.intro_material.join('\n\n')
               : String(quizResult.weekInfo.intro_material);
             materialText = materialText.replace(/\[Sapaan\]/g, `Bu ${userName}`);
             await sendMessage(senderPhone, materialText);
           }
-          
+
           // Send quiz intro
           const intro = `*Belajar Minggu ${quizResult.weekInfo.week_number}*\n\n` +
-                 `Topik: ${quizResult.weekInfo.module_name}\n\n` +
-                 `4 pertanyaan, nilai lulus 100% (4/4 benar).`;
+            `Topik: ${quizResult.weekInfo.module_name}\n\n` +
+            `4 pertanyaan, nilai lulus 100% (4/4 benar).`;
           await sendMessage(senderPhone, intro);
-          
+
           // Then send question
           await sendQuizQuestion(senderPhone, quizResult.question, 1, 4);
-          
+
           return null; // Already sent messages
         }
       }
-      
+
       if (name === "showProgress") {
         const progress = await QuizService.getProgress(senderPhone);
-        
+
         let message = `*Progress Belajar Keuangan*\n\n`;
         message += `Selesai: ${progress.total_completed}/15 minggu (${progress.percentage}%)\n`;
-        
+
         if (progress.completed.length > 0) {
           message += `\nLulus:\n`;
           progress.completed.forEach(w => {
             message += `- Minggu ${w.week}: ${w.score}%\n`;
           });
         }
-        
+
         if (progress.inProgress.length > 0) {
           message += `\nDalam Progress:\n`;
           progress.inProgress.forEach(w => {
             message += `- Minggu ${w.week}: ${w.score}%\n`;
           });
         }
-        
+
         if (progress.total_completed < 15) {
           message += `\nKetik "quiz" untuk melanjutkan.`;
         } else {
           message += `\nSelamat! Semua minggu selesai.`;
         }
-        
+
         return message;
       }
     }
 
     return response.text();
-    
+
   } catch (error) {
     console.error('Gemini Error:', error.message);
     return FALLBACK_MESSAGE;

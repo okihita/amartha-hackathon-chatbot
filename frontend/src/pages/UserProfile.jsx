@@ -1,6 +1,7 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { User, Building2, CreditCard, BookOpen, Users as UsersIcon, ArrowLeft, Target, Calendar, Phone, TrendingUp, Shield, CheckCircle, Activity, MessageCircle, Zap, Award, ChevronRight, ArrowUpRight, Sparkles, MapPin, FileText } from 'lucide-preact';
+import { API_BASE_URL } from '../config';
 
 // Base coordinates for Jakarta area
 const JAKARTA_BASE = { lat: -6.2350, lng: 106.8000 };
@@ -21,7 +22,7 @@ const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString('id-ID', { da
 const getImprovementSuggestions = (data) => {
   const suggestions = [];
   const a = data.a_score?.components || {};
-  
+
   if (!data.capacity) {
     suggestions.push({ action: 'Hitung Kapasitas', impact: '+20 pts', desc: 'Ketik "kapasitas" di WhatsApp', priority: 1 });
   }
@@ -34,7 +35,7 @@ const getImprovementSuggestions = (data) => {
   if ((data.engagement?.total_interactions || 0) < 20) {
     suggestions.push({ action: 'Aktif di WhatsApp', impact: '+5 pts', desc: 'Tanya tips bisnis setiap hari', priority: 4 });
   }
-  
+
   return suggestions.sort((a, b) => a.priority - b.priority).slice(0, 3);
 };
 
@@ -46,7 +47,7 @@ export default function UserProfile({ phone }) {
   const [biFilter, setBiFilter] = useState('all');
 
   useEffect(() => {
-    fetch(`/api/users/${phone}/complete`)
+    fetch(`${API_BASE_URL}/api/users/${phone}/complete`)
       .then(res => res.ok ? res.json() : Promise.reject('User not found'))
       .then(setData)
       .catch(setError)
@@ -56,7 +57,7 @@ export default function UserProfile({ phone }) {
   // Initialize map when data is loaded
   useEffect(() => {
     if (loading || !data || typeof L === 'undefined') return;
-    
+
     const mapEl = document.getElementById('user-location-map');
     if (!mapEl) return;
 
@@ -104,7 +105,7 @@ export default function UserProfile({ phone }) {
   const rpc = data.rpc || {};
   const eng = data.engagement || {};
   const suggestions = getImprovementSuggestions(data);
-  
+
   // Literacy progress - find highest completed week
   const litData = data.literacy || {};
   let litCompleted = 0;
@@ -149,7 +150,7 @@ export default function UserProfile({ phone }) {
               <div style="position: relative; width: 160px; height: 160px; margin: 0 auto;">
                 <svg viewBox="0 0 160 160" style="transform: rotate(-90deg);">
                   <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="12" />
-                  <circle cx="80" cy="80" r="70" fill="none" stroke={zone.color} stroke-width="12" 
+                  <circle cx="80" cy="80" r="70" fill="none" stroke={zone.color} stroke-width="12"
                     stroke-dasharray={`${(a.score || 0) * 4.4} 440`} stroke-linecap="round" />
                 </svg>
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white;">
@@ -203,9 +204,9 @@ export default function UserProfile({ phone }) {
             <Sparkles size={20} style="color: #F9CF79;" />
             <span style="font-size: 14px;">
               {a.zone === 'A' ? 'Kelayakan kredit sangat baik! Siap untuk pinjaman.' :
-               a.zone === 'B' ? 'Kelayakan baik. Tingkatkan literasi untuk limit lebih tinggi.' :
-               a.zone === 'C' ? 'Perlu pendampingan. Selesaikan saran di bawah untuk naik level.' :
-               'Mulai perjalanan dengan menghitung kapasitas bayar via WhatsApp.'}
+                a.zone === 'B' ? 'Kelayakan baik. Tingkatkan literasi untuk limit lebih tinggi.' :
+                  a.zone === 'C' ? 'Perlu pendampingan. Selesaikan saran di bawah untuk naik level.' :
+                    'Mulai perjalanan dengan menghitung kapasitas bayar via WhatsApp.'}
             </span>
           </div>
         </div>
@@ -434,7 +435,7 @@ export default function UserProfile({ phone }) {
             <span style="font-size: 15px; font-weight: 600;">Business Intelligence</span>
             <span style="font-size: 11px; color: #6B7280; background: #F3F4F6; padding: 2px 8px; border-radius: 4px;">{data.business_intelligence.length} data</span>
           </div>
-          
+
           {/* Filter Tabs */}
           <div style="padding: 12px 16px; border-bottom: 1px solid #E5E7EB; display: flex; gap: 8px; flex-wrap: wrap;">
             {['all', 'ledger', 'building', 'inventory', 'transaction'].map(filter => {
@@ -452,111 +453,111 @@ export default function UserProfile({ phone }) {
               );
             })}
           </div>
-          
+
           <div style="padding: 16px; display: grid; gap: 16px; max-height: 600px; overflow-y: auto;">
             {data.business_intelligence
               .filter(bi => biFilter === 'all' || bi.type === biFilter)
               .map((bi, i) => {
-              const typeConfig = {
-                ledger: { icon: '📒', label: 'Buku Kas', color: '#2563EB', bg: '#EFF6FF' },
-                inventory: { icon: '📦', label: 'Inventaris', color: '#10B981', bg: '#ECFDF5' },
-                building: { icon: '🏪', label: 'Bangunan', color: '#F59E0B', bg: '#FFFBEB' },
-                transaction: { icon: '🧾', label: 'Transaksi', color: '#8B5CF6', bg: '#F5F3FF' },
-              };
-              const cfg = typeConfig[bi.type] || { icon: '📄', label: bi.type, color: '#6B7280', bg: '#F3F4F6' };
-              const d = bi.data || {};
-              
-              return (
-                <div key={i} style={`background: ${cfg.bg}; border-radius: 10px; border: 1px solid ${cfg.color}20; overflow: hidden;`}>
-                  {/* Header */}
-                  <div style={`padding: 10px 14px; background: ${cfg.color}15; display: flex; justify-content: space-between; align-items: center;`}>
-                    <span style="font-weight: 600; font-size: 13px;">{cfg.icon} {cfg.label}</span>
-                    <span style="font-size: 10px; color: #6B7280;">{formatDate(bi.analyzed_at)}</span>
-                  </div>
-                  
-                  {/* Content: Image left, Analysis right */}
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0;">
-                    {/* Left: Image + Caption */}
-                    <div style="padding: 12px; border-right: 1px solid #E5E7EB;">
-                      {bi.source?.image_url ? (
-                        <div>
-                          <img 
-                            src={bi.source.image_url} 
-                            alt={cfg.label} 
-                            style="width: 100%; height: auto; border-radius: 6px; display: block;" 
-                          />
-                          {bi.source?.caption && (
-                            <div style="margin-top: 8px; font-size: 11px; color: #6B7280; font-style: italic;">
-                              "{bi.source.caption}"
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div style="height: 120px; display: flex; align-items: center; justify-content: center; background: #F9FAFB; border-radius: 6px; color: #9CA3AF; font-size: 12px;">
-                          No image
-                        </div>
-                      )}
+                const typeConfig = {
+                  ledger: { icon: '📒', label: 'Buku Kas', color: '#2563EB', bg: '#EFF6FF' },
+                  inventory: { icon: '📦', label: 'Inventaris', color: '#10B981', bg: '#ECFDF5' },
+                  building: { icon: '🏪', label: 'Bangunan', color: '#F59E0B', bg: '#FFFBEB' },
+                  transaction: { icon: '🧾', label: 'Transaksi', color: '#8B5CF6', bg: '#F5F3FF' },
+                };
+                const cfg = typeConfig[bi.type] || { icon: '📄', label: bi.type, color: '#6B7280', bg: '#F3F4F6' };
+                const d = bi.data || {};
+
+                return (
+                  <div key={i} style={`background: ${cfg.bg}; border-radius: 10px; border: 1px solid ${cfg.color}20; overflow: hidden;`}>
+                    {/* Header */}
+                    <div style={`padding: 10px 14px; background: ${cfg.color}15; display: flex; justify-content: space-between; align-items: center;`}>
+                      <span style="font-weight: 600; font-size: 13px;">{cfg.icon} {cfg.label}</span>
+                      <span style="font-size: 10px; color: #6B7280;">{formatDate(bi.analyzed_at)}</span>
                     </div>
-                    
-                    {/* Right: Analysis */}
-                    <div style="padding: 12px; font-size: 12px;">
-                      {bi.type === 'ledger' && (
-                        <div style="display: grid; gap: 6px;">
-                          <div>📈 Pendapatan: <strong style="color: #10B981;">{formatCurrency(d.daily_income_estimate)}/hari</strong></div>
-                          <div>📉 Pengeluaran: <strong style="color: #EF4444;">{formatCurrency(d.daily_expense_estimate)}/hari</strong></div>
-                          <div>💰 Profit: <strong>{formatCurrency(d.daily_profit_estimate)}/hari</strong></div>
-                          <div style="margin-top: 4px; padding-top: 6px; border-top: 1px dashed #D1D5DB; font-size: 11px; color: #6B7280;">
-                            Kualitas: {d.record_quality}<br/>Literasi: {d.literacy_indicator}/10
+
+                    {/* Content: Image left, Analysis right */}
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0;">
+                      {/* Left: Image + Caption */}
+                      <div style="padding: 12px; border-right: 1px solid #E5E7EB;">
+                        {bi.source?.image_url ? (
+                          <div>
+                            <img
+                              src={bi.source.image_url}
+                              alt={cfg.label}
+                              style="width: 100%; height: auto; border-radius: 6px; display: block;"
+                            />
+                            {bi.source?.caption && (
+                              <div style="margin-top: 8px; font-size: 11px; color: #6B7280; font-style: italic;">
+                                "{bi.source.caption}"
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      )}
-                      
-                      {bi.type === 'inventory' && (
-                        <div style="display: grid; gap: 6px;">
-                          <div>📦 Total: <strong>{d.total_items_count}</strong> ({d.stock_level})</div>
-                          <div>💵 Nilai: <strong>{formatCurrency(d.inventory_value_estimate)}</strong></div>
-                          <div style="font-size: 11px; color: #6B7280;">Variasi: {d.variety_score}/10 • Perputaran: {d.turnover_indicator}</div>
-                          {d.items?.length > 0 && (
-                            <div style="margin-top: 4px; padding-top: 6px; border-top: 1px dashed #D1D5DB;">
-                              <div style="font-size: 10px; color: #6B7280; margin-bottom: 4px;">Items:</div>
-                              {d.items.slice(0, 5).map((item, j) => (
-                                <div key={j} style="font-size: 11px;">• {item.name}: {item.quantity_estimate} {item.unit}</div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      {bi.type === 'building' && (
-                        <div style="display: grid; gap: 6px;">
-                          <div>🏠 Tipe: <strong>{d.building_type}</strong></div>
-                          <div>📐 Ukuran: <strong>{d.size_estimate}</strong></div>
-                          <div>📍 Lokasi: <strong>{d.location_type}</strong></div>
-                          <div>💰 Nilai: <strong>{formatCurrency(d.estimated_value)}</strong></div>
-                          <div style="margin-top: 4px; padding-top: 6px; border-top: 1px dashed #D1D5DB; font-size: 11px; color: #6B7280;">
-                            Kondisi: {d.condition}<br/>Visibilitas: {d.visibility}<br/>Skor Strategis: {d.strategic_score}/10
+                        ) : (
+                          <div style="height: 120px; display: flex; align-items: center; justify-content: center; background: #F9FAFB; border-radius: 6px; color: #9CA3AF; font-size: 12px;">
+                            No image
                           </div>
-                        </div>
-                      )}
-                      
-                      {bi.type === 'transaction' && (
-                        <div style="display: grid; gap: 6px;">
-                          <div>🧾 Jumlah: <strong>{d.transaction_count} transaksi</strong></div>
-                          <div>💵 Total: <strong>{formatCurrency(d.total_amount)}</strong></div>
-                          {d.transactions?.length > 0 && (
-                            <div style="margin-top: 4px; padding-top: 6px; border-top: 1px dashed #D1D5DB; font-size: 11px;">
-                              {d.transactions.slice(0, 3).map((t, j) => (
-                                <div key={j} style="color: #6B7280;">{t.items?.join(', ')} - {formatCurrency(t.total)}</div>
-                              ))}
+                        )}
+                      </div>
+
+                      {/* Right: Analysis */}
+                      <div style="padding: 12px; font-size: 12px;">
+                        {bi.type === 'ledger' && (
+                          <div style="display: grid; gap: 6px;">
+                            <div>📈 Pendapatan: <strong style="color: #10B981;">{formatCurrency(d.daily_income_estimate)}/hari</strong></div>
+                            <div>📉 Pengeluaran: <strong style="color: #EF4444;">{formatCurrency(d.daily_expense_estimate)}/hari</strong></div>
+                            <div>💰 Profit: <strong>{formatCurrency(d.daily_profit_estimate)}/hari</strong></div>
+                            <div style="margin-top: 4px; padding-top: 6px; border-top: 1px dashed #D1D5DB; font-size: 11px; color: #6B7280;">
+                              Kualitas: {d.record_quality}<br />Literasi: {d.literacy_indicator}/10
                             </div>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        )}
+
+                        {bi.type === 'inventory' && (
+                          <div style="display: grid; gap: 6px;">
+                            <div>📦 Total: <strong>{d.total_items_count}</strong> ({d.stock_level})</div>
+                            <div>💵 Nilai: <strong>{formatCurrency(d.inventory_value_estimate)}</strong></div>
+                            <div style="font-size: 11px; color: #6B7280;">Variasi: {d.variety_score}/10 • Perputaran: {d.turnover_indicator}</div>
+                            {d.items?.length > 0 && (
+                              <div style="margin-top: 4px; padding-top: 6px; border-top: 1px dashed #D1D5DB;">
+                                <div style="font-size: 10px; color: #6B7280; margin-bottom: 4px;">Items:</div>
+                                {d.items.slice(0, 5).map((item, j) => (
+                                  <div key={j} style="font-size: 11px;">• {item.name}: {item.quantity_estimate} {item.unit}</div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {bi.type === 'building' && (
+                          <div style="display: grid; gap: 6px;">
+                            <div>🏠 Tipe: <strong>{d.building_type}</strong></div>
+                            <div>📐 Ukuran: <strong>{d.size_estimate}</strong></div>
+                            <div>📍 Lokasi: <strong>{d.location_type}</strong></div>
+                            <div>💰 Nilai: <strong>{formatCurrency(d.estimated_value)}</strong></div>
+                            <div style="margin-top: 4px; padding-top: 6px; border-top: 1px dashed #D1D5DB; font-size: 11px; color: #6B7280;">
+                              Kondisi: {d.condition}<br />Visibilitas: {d.visibility}<br />Skor Strategis: {d.strategic_score}/10
+                            </div>
+                          </div>
+                        )}
+
+                        {bi.type === 'transaction' && (
+                          <div style="display: grid; gap: 6px;">
+                            <div>🧾 Jumlah: <strong>{d.transaction_count} transaksi</strong></div>
+                            <div>💵 Total: <strong>{formatCurrency(d.total_amount)}</strong></div>
+                            {d.transactions?.length > 0 && (
+                              <div style="margin-top: 4px; padding-top: 6px; border-top: 1px dashed #D1D5DB; font-size: 11px;">
+                                {d.transactions.slice(0, 3).map((t, j) => (
+                                  <div key={j} style="color: #6B7280;">{t.items?.join(', ')} - {formatCurrency(t.total)}</div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
       )}

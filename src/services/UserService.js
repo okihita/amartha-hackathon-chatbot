@@ -11,7 +11,7 @@ class UserService {
   async getUser(phoneNumber) {
     const user = await UserRepository.findByPhone(phoneNumber);
     if (!user) return null;
-    
+
     if (user.majelis_id) {
       const majelis = await MajelisRepository.findById(user.majelis_id);
       if (majelis) {
@@ -21,7 +21,7 @@ class UserService {
         user.majelis_location = majelis.location;
       }
     }
-    
+
     return user;
   }
 
@@ -85,9 +85,9 @@ class UserService {
       UserRepository.findAll(),
       MajelisRepository.findAll()
     ]);
-    
+
     const majelisMap = new Map(allMajelis.map(m => [m.id, m]));
-    
+
     for (const user of users) {
       if (user.majelis_id) {
         const majelis = majelisMap.get(user.majelis_id);
@@ -99,7 +99,7 @@ class UserService {
         }
       }
     }
-    
+
     return users;
   }
 
@@ -108,8 +108,8 @@ class UserService {
     if (!user) {
       throw new Error('User not found');
     }
-    
-    const result = await UserRepository.update(phoneNumber, { 
+
+    const result = await UserRepository.update(phoneNumber, {
       status: isVerified ? 'active' : 'pending'
     });
 
@@ -119,7 +119,7 @@ class UserService {
       const honorific = user.profile?.gender === 'male' ? 'Pak' : 'Bu';
       const welcomeMsg = `🎉 *Selamat ${honorific} ${user.name}!*
 
-Akun Anda sudah diverifikasi dan aktif di Akademi-AI Amartha.
+Akun Anda sudah diverifikasi dan aktif di UMKM Assistant.
 
 Fitur yang bisa ${honorific} gunakan:
 
@@ -132,7 +132,7 @@ Fitur yang bisa ${honorific} gunakan:
 Ketik *menu* kapan saja untuk bantuan.
 
 Selamat belajar! 📚💪`;
-      
+
       sendMessage(phoneNumber, welcomeMsg).catch(err => {
         console.error('Failed to send welcome message:', err.message);
       });
@@ -180,12 +180,12 @@ Selamat belajar! 📚💪`;
     const createUser = async (user, index) => {
       const existing = await UserRepository.findByPhone(user.phone);
       if (existing) return 0;
-      
+
       await UserRepository.create(user.phone, { ...user, is_mock: true });
-      
+
       // Generate mock engagement data based on user index
       const hash = user.phone.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-      
+
       // Generate last 5 days of activity history
       const activityTypes = ['greeting', 'quiz', 'check_loan', 'business_advice', 'upload_image', 'check_majelis', 'menu'];
       const dailyHistory = [];
@@ -193,7 +193,7 @@ Selamat belajar! 📚💪`;
         const date = new Date(Date.now() - d * 24 * 60 * 60 * 1000);
         const dateStr = date.toISOString().split('T')[0];
         const dayHash = hash + d * 17;
-        
+
         // Generate 2-5 activities per day
         const numActivities = 2 + (dayHash % 4);
         const activities = {};
@@ -201,7 +201,7 @@ Selamat belajar! 📚💪`;
           const actType = activityTypes[(dayHash + a * 7) % activityTypes.length];
           activities[actType] = (activities[actType] || 0) + 1 + ((dayHash + a) % 2);
         }
-        
+
         // Generate AI summary based on activities
         const summaries = [];
         if (activities.quiz) summaries.push(`mengerjakan ${activities.quiz} quiz literasi keuangan`);
@@ -211,14 +211,14 @@ Selamat belajar! 📚💪`;
         if (activities.upload_image) summaries.push(`mengunggah ${activities.upload_image} foto usaha`);
         if (activities.check_majelis) summaries.push(`melihat info majelis`);
         if (activities.menu) summaries.push(`membuka menu utama`);
-        
+
         const totalActions = Object.values(activities).reduce((a, b) => a + b, 0);
         const engagement = totalActions > 5 ? 'sangat aktif' : totalActions > 2 ? 'cukup aktif' : 'kurang aktif';
         const summary = `Hari ini ${user.name.split(' ')[0]} ${engagement}: ${summaries.slice(0, 3).join(', ')}.`;
-        
+
         dailyHistory.push({ date: dateStr, activities, total_actions: totalActions, ai_summary: summary });
       }
-      
+
       const engagementData = {
         total_interactions: 15 + (hash % 40),
         last_interaction: new Date().toISOString(),
@@ -259,7 +259,7 @@ Selamat belajar! 📚💪`;
         remaining: 5000000 - loanAmount + (paidInstallments * installmentAmount),
         history: loanHistory,
       });
-      
+
       // Create all BI data in parallel
       const biPromises = MOCK_BI_DATA.map(biData => {
         let imageUrl = null;
@@ -273,7 +273,7 @@ Selamat belajar! 📚💪`;
       await Promise.all(biPromises);
       return 1;
     };
-    
+
     const results = await Promise.all(MOCK_USERS.map((u, i) => createUser(u, i)));
     return results.reduce((a, b) => a + b, 0);
   }
@@ -374,12 +374,12 @@ Selamat belajar! 📚💪`;
 
   calculateRemainingDebt(loanHistory) {
     if (!loanHistory || loanHistory.length === 0) return 0;
-    
+
     // Get the most recent transaction's balance
-    const sortedHistory = [...loanHistory].sort((a, b) => 
+    const sortedHistory = [...loanHistory].sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-    
+
     return sortedHistory[0]?.balance_after || 0;
   }
 
@@ -387,10 +387,10 @@ Selamat belajar! 📚💪`;
   async trackInteraction(phoneNumber, type) {
     const user = await UserRepository.findByPhone(phoneNumber);
     if (!user) return null;
-    
+
     const currentEngagement = user.engagement || EngagementService.createEngagement();
     const updated = EngagementService.recordInteraction(currentEngagement, type);
-    
+
     await UserRepository.updateEngagement(phoneNumber, updated);
     return updated;
   }

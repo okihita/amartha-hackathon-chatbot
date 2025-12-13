@@ -1,6 +1,7 @@
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { BarChart3, AlertTriangle, TrendingUp, MapPin, Target, Loader, Lightbulb, Code, Database, Zap, ChevronRight, Banknote } from 'lucide-preact';
+import { API_BASE_URL } from '../config';
 
 // Navigation sections config - ordered for data storytelling narrative
 // Flow: Context → Questions → Engineering → Insights → Operations
@@ -105,12 +106,12 @@ export default function Analytics() {
     (async () => {
       try {
         const [summary, payments, segments, routes, risks, collections] = await Promise.all([
-          fetch('/api/analytics/summary').then(r => r.json()),
-          fetch('/api/analytics/payments').then(r => r.json()),
-          fetch('/api/analytics/segments').then(r => r.json()),
-          fetch('/api/analytics/routes').then(r => r.json()),
-          fetch('/api/analytics/risk/all?limit=30').then(r => r.json()),
-          fetch('/api/analytics/collections').then(r => r.json()).catch(() => null),
+          fetch(`${API_BASE_URL}/api/analytics/summary`).then(r => r.json()),
+          fetch(`${API_BASE_URL}/api/analytics/payments`).then(r => r.json()),
+          fetch(`${API_BASE_URL}/api/analytics/segments`).then(r => r.json()),
+          fetch(`${API_BASE_URL}/api/analytics/routes`).then(r => r.json()),
+          fetch(`${API_BASE_URL}/api/analytics/risk/all?limit=30`).then(r => r.json()),
+          fetch(`${API_BASE_URL}/api/analytics/collections`).then(r => r.json()).catch(() => null),
         ]);
         setData({ summary, payments, segments, routes, risks, collections });
       } catch (err) { console.error(err); }
@@ -121,7 +122,7 @@ export default function Analytics() {
   // Initialize and update map
   useEffect(() => {
     if (loading || !data.routes?.length || typeof L === 'undefined') return;
-    
+
     const mapEl = document.getElementById('routes-map');
     if (!mapEl) return;
 
@@ -234,10 +235,10 @@ export default function Analytics() {
     <div style="max-width: 1000px; margin: 0 auto;">
       <FloatingNav activeSection={activeSection} />
       {/* Hero Header */}
-      <div style="text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #7B3F9E 0%, #5E2D7A 100%); border-radius: 12px; color: white; margin-bottom: 24px;">
-        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.7;">GDG Hackathon 2025 • Data Analytics Track</div>
+      <div style="text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #E1261B 0%, #B81D15 100%); border-radius: 12px; color: white; margin-bottom: 24px;">
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.7;">UMKM Intelligence Platform</div>
         <div style="font-size: 32px; font-weight: 800; margin: 8px 0;">Credit Risk Intelligence Platform</div>
-        <div style="font-size: 15px; opacity: 0.9; max-width: 600px; margin: 0 auto;">From raw CSVs to actionable insights: predicting defaults, optimizing collections, and improving field agent efficiency using <strong>2M+ records</strong></div>
+        <div style="font-size: 15px; opacity: 0.9; max-width: 600px; margin: 0 auto;">From raw data to actionable insights: predicting defaults, optimizing collections, and improving field agent efficiency using <strong>AI-powered analytics</strong></div>
       </div>
 
       {/* Executive Summary - Key Findings */}
@@ -270,7 +271,7 @@ export default function Analytics() {
 
       {/* Narrative Arc Indicator */}
       {(() => {
-        const phase = ['data', 'questions', 'engineering'].includes(activeSection) ? 1 
+        const phase = ['data', 'questions', 'engineering'].includes(activeSection) ? 1
           : ['risk', 'segments'].includes(activeSection) ? 2 : 3;
         return (
           <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 32px; padding: 12px; background: #F9FAFB; border-radius: 8px; font-size: 11px; color: #6B7280;">
@@ -290,7 +291,7 @@ export default function Analytics() {
 
       {/* ========== SECTION 1: DATA DISCOVERY ========== */}
       <SectionHeader id="data" number="1" title="Data Profiling & Discovery" subtitle="Exploratory Data Analysis (EDA) of the hackathon dataset" icon={Database} />
-      
+
       <div class="card">
         <p style="color: #4B5563; margin-bottom: 16px;">We received <strong>5 denormalized CSV files</strong> representing Amartha's microfinance operations. Our first step: <strong>data profiling</strong> — understanding schema, cardinality, and identifying the target variable for our predictive model.</p>
         <table class="data-table">
@@ -315,7 +316,7 @@ export default function Analytics() {
 
       {/* ========== SECTION 2: QUESTIONS ========== */}
       <SectionHeader id="questions" number="2" title="Problem Framing" subtitle="Defining business questions before building models" icon={Lightbulb} />
-      
+
       <div class="card" style="margin-bottom: 16px;">
         <p style="color: #4B5563; margin: 0;">Following the <strong>CRISP-DM methodology</strong>, we started with business understanding: <em>"What decisions will this analysis inform?"</em> This prevents building technically impressive but business-irrelevant models.</p>
       </div>
@@ -336,16 +337,16 @@ export default function Analytics() {
 
       {/* ========== SECTION 3: DATA ENGINEERING ========== */}
       <SectionHeader id="engineering" number="3" title="ETL & Feature Engineering" subtitle="Data pipeline: Extract, Transform, Load + feature creation" icon={Code} />
-      
+
       <div class="card" style="margin-bottom: 16px;">
         <p style="color: #4B5563; margin: 0 0 16px 0;"><strong>Challenge:</strong> The bills table (600K rows) has no direct customer foreign key — only loan_id. We built an <strong>ETL pipeline</strong> to denormalize and aggregate at the customer grain.</p>
         <div style="background: #1F2937; color: #E5E7EB; padding: 16px; border-radius: 8px; font-family: monospace; font-size: 13px; line-height: 1.8;">
-          <span style="color: #6B7280;">-- Star schema join strategy</span><br/>
-          <span style="color: #93C5FD;">customers</span> (12K) <span style="color: #6B7280;">-- dimension</span><br/>
-          &nbsp;&nbsp;└─→ <span style="color: #93C5FD;">loan_snapshots</span> <span style="color: #6B7280;">ON customer_number</span><br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─→ <span style="color: #93C5FD;">bills</span> <span style="color: #6B7280;">ON loan_id (1:N, ~50 per customer)</span><br/>
-          <br/>
-          <span style="color: #FCD34D;">-- Aggregated feature vector per customer</span><br/>
+          <span style="color: #6B7280;">-- Star schema join strategy</span><br />
+          <span style="color: #93C5FD;">customers</span> (12K) <span style="color: #6B7280;">-- dimension</span><br />
+          &nbsp;&nbsp;└─→ <span style="color: #93C5FD;">loan_snapshots</span> <span style="color: #6B7280;">ON customer_number</span><br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─→ <span style="color: #93C5FD;">bills</span> <span style="color: #6B7280;">ON loan_id (1:N, ~50 per customer)</span><br />
+          <br />
+          <span style="color: #FCD34D;">-- Aggregated feature vector per customer</span><br />
           <span style="color: #A5F3FC;">GROUP BY</span> customer → paymentRatio, lateRatio, dpd, businessType
         </div>
       </div>
@@ -366,7 +367,7 @@ export default function Analytics() {
 
       {/* ========== SECTION 4: RISK PREDICTIONS ========== */}
       <SectionHeader id="risk" number="4" title="Credit Risk Model" subtitle="Rule-based scoring inspired by the 5 C's of Credit" icon={AlertTriangle} />
-      
+
       <div class="stats-grid" style="margin-bottom: 20px;">
         <div class="stat-card"><div class="stat-value" style="color: #10B981;">{summary?.riskDistribution?.Low?.toLocaleString()}</div><div class="stat-label">Low Risk</div></div>
         <div class="stat-card"><div class="stat-value" style="color: #F59E0B;">{summary?.riskDistribution?.Medium?.toLocaleString()}</div><div class="stat-label">Medium Risk</div></div>
@@ -405,13 +406,13 @@ export default function Analytics() {
         <h3 style="margin: 0 0 8px 0;">Risk Scoring Formula</h3>
         <p style="color: #6B7280; font-size: 13px; margin: 0 0 12px 0;">Weighted combination of available 5 C's factors. Score 0-100, higher = riskier.</p>
         <div style="background: #1F2937; color: #E5E7EB; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 12px;">
-          <span style="color: #FCD34D;">score</span> = 50<br/>
-          &nbsp;&nbsp;- paymentRatio × 30 <span style="color: #6B7280;">// Capacity: good payers reduce risk</span><br/>
-          &nbsp;&nbsp;+ lateRatio × 25 <span style="color: #6B7280;">// Character: late payments increase risk</span><br/>
-          &nbsp;&nbsp;+ min(dpd/2, 30) <span style="color: #6B7280;">// Current delinquency status</span><br/>
+          <span style="color: #FCD34D;">score</span> = 50<br />
+          &nbsp;&nbsp;- paymentRatio × 30 <span style="color: #6B7280;">// Capacity: good payers reduce risk</span><br />
+          &nbsp;&nbsp;+ lateRatio × 25 <span style="color: #6B7280;">// Character: late payments increase risk</span><br />
+          &nbsp;&nbsp;+ min(dpd/2, 30) <span style="color: #6B7280;">// Current delinquency status</span><br />
           &nbsp;&nbsp;+ businessAdj <span style="color: #6B7280;">// Conditions: risky business types +5</span>
         </div>
-        
+
         <h3 style="margin: 20px 0 12px 0;">Top High-Risk Customers</h3>
         <table class="data-table">
           <thead><tr><th>Customer</th><th>Score</th><th>Payment%</th><th>Late%</th><th>DPD</th></tr></thead>
@@ -432,18 +433,18 @@ export default function Analytics() {
       <div class="so-what-box">
         <div class="so-what-title">💡 So What?</div>
         <div class="so-what-text">
-          <strong>{summary?.riskDistribution?.High?.toLocaleString()} customers (~12%)</strong> are flagged high risk. 
+          <strong>{summary?.riskDistribution?.High?.toLocaleString()} customers (~12%)</strong> are flagged high risk.
           Field agents should prioritize these for immediate contact before they default. Industry research shows <strong>early intervention</strong> (within 7 days of first missed payment) can recover 40-60% of at-risk loans. This is the ROI of predictive analytics.
         </div>
       </div>
 
       {/* ========== SECTION 5: CUSTOMER SEGMENTS ========== */}
       <SectionHeader id="segments" number="5" title="Customer Segmentation" subtitle="RFM-inspired clustering for targeted interventions" icon={Target} />
-      
+
       <div class="card" style="margin-bottom: 16px;">
         <p style="color: #4B5563; margin: 0;">Using our risk scores, we applied <strong>rule-based segmentation</strong> (inspired by RFM analysis) to group customers into actionable cohorts. Each segment gets a tailored intervention strategy — this is <strong>prescriptive analytics</strong> in action.</p>
       </div>
-      
+
       <div style="display: grid; gap: 16px;">
         {segments && Object.entries(segments).map(([key, seg]) => (
           <div key={key} class="card" style="padding: 0; overflow: hidden;">
@@ -471,7 +472,7 @@ export default function Analytics() {
 
       {/* ========== SECTION 6: PAYMENT BEHAVIOR ANALYSIS ========== */}
       <SectionHeader id="payments" number="6" title="Payment Behavior Analysis" subtitle="Historical cohort analysis of 599K bill transactions" icon={TrendingUp} />
-      
+
       <div class="card" style="margin-bottom: 16px;">
         <p style="color: #4B5563; margin: 0;"><strong>Collection rate</strong> is the lifeblood of microfinance. We performed <strong>cohort analysis</strong> on historical bill records to identify payment patterns, seasonal trends, and segment-level performance. This is <em>descriptive analytics</em> — understanding what happened.</p>
       </div>
@@ -511,7 +512,7 @@ export default function Analytics() {
       {collections && (
         <>
           <SectionHeader id="collections" number="7" title="Field Operations Analytics" subtitle="Real-time branch performance from 1.3M task participant records" icon={Banknote} />
-          
+
           <div class="card" style="margin-bottom: 16px;">
             <p style="color: #4B5563; margin: 0;">Moving from historical analysis to <strong>operational intelligence</strong>: we processed the <strong>task_participants.csv</strong> (1.3M records) to benchmark field collection effectiveness. This reveals which branches excel at converting visits into payments — critical for <strong>performance management</strong> and <strong>best practice identification</strong>.</p>
           </div>
@@ -520,7 +521,7 @@ export default function Analytics() {
             <div class="stat-card"><div class="stat-value" style="color: #7B3F9E;">1.3M</div><div class="stat-label">Records Analyzed</div></div>
             <div class="stat-card"><div class="stat-value" style="color: #10B981;">Rp {collections.totalCollectedB}B</div><div class="stat-label">Total Collected</div></div>
             <div class="stat-card"><div class="stat-value">{collections.paymentsRecorded?.toLocaleString()}</div><div class="stat-label">Transactions</div></div>
-            <div class="stat-card"><div class="stat-value">Rp {Math.round(collections.avgPaymentRp/1000)}K</div><div class="stat-label">Avg Ticket Size</div></div>
+            <div class="stat-card"><div class="stat-value">Rp {Math.round(collections.avgPaymentRp / 1000)}K</div><div class="stat-label">Avg Ticket Size</div></div>
           </div>
 
           <div class="card">
@@ -530,11 +531,11 @@ export default function Analytics() {
               <tbody>
                 {collections.topBranches?.slice(0, 10).map((b, i) => (
                   <tr key={i}>
-                    <td style="font-weight: 700; color: #7B3F9E;">#{i+1}</td>
+                    <td style="font-weight: 700; color: #7B3F9E;">#{i + 1}</td>
                     <td style="font-family: monospace; font-size: 11px;">{b.branchId}</td>
                     <td>{b.collections?.toLocaleString()}</td>
-                    <td style="font-weight: 600;">Rp {Math.round(b.totalRp/1e6)}M</td>
-                    <td>Rp {Math.round(b.avgRp/1000)}K</td>
+                    <td style="font-weight: 600;">Rp {Math.round(b.totalRp / 1e6)}M</td>
+                    <td>Rp {Math.round(b.avgRp / 1000)}K</td>
                   </tr>
                 ))}
               </tbody>
@@ -544,8 +545,8 @@ export default function Analytics() {
           <div class="so-what-box" style="margin-top: 16px;">
             <div class="so-what-title">💡 Business Impact</div>
             <div class="so-what-text">
-              Top branch collected <strong>Rp {Math.round((collections.topBranches?.[0]?.totalRp || 0)/1e6)}M</strong> — 
-              {Math.round((collections.topBranches?.[0]?.totalRp || 0) / (collections.topBranches?.[9]?.totalRp || 1))}x the 10th branch. 
+              Top branch collected <strong>Rp {Math.round((collections.topBranches?.[0]?.totalRp || 0) / 1e6)}M</strong> —
+              {Math.round((collections.topBranches?.[0]?.totalRp || 0) / (collections.topBranches?.[9]?.totalRp || 1))}x the 10th branch.
               This <strong>variance analysis</strong> reveals significant performance gaps. <strong>Best practice sharing</strong> from top performers (scripts, timing, approach) could lift overall collection by 15-20%. In operations management, this is called <strong>positive deviance</strong> — learning from outliers who succeed despite similar constraints.
             </div>
           </div>
@@ -554,30 +555,30 @@ export default function Analytics() {
 
       {/* ========== SECTION 8: GEOSPATIAL ROUTE ANALYSIS ========== */}
       <SectionHeader id="routes" number="8" title="Geospatial Intelligence" subtitle="GPS data mining for route optimization (160K coordinates)" icon={MapPin} />
-      
+
       <div class="card" style="margin-bottom: 16px;">
         <p style="color: #4B5563; margin: 0 0 16px 0;">We analyzed <strong>160K GPS task records</strong> to understand field agent movement patterns. Key metrics: geographic spread (how far agents travel) and delay (time between scheduled and actual visits).</p>
-        
+
         {/* Data Cleaning Methodology */}
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px;">
           <h4 style="margin: 0 0 12px 0; color: #334155; display: flex; align-items: center; gap: 8px;">🔧 Data Cleaning Methodology</h4>
-          
+
           <div style="display: grid; gap: 12px; font-size: 13px;">
             <div style="display: flex; gap: 12px;">
               <div style="min-width: 100px; font-weight: 600; color: #64748B;">Problem:</div>
               <div style="color: #475569;">Raw GPS data contained <strong>outliers</strong> and <strong>null island</strong> coordinates (0°, 0°) from failed GPS locks or device errors.</div>
             </div>
-            
+
             <div style="display: flex; gap: 12px;">
               <div style="min-width: 100px; font-weight: 600; color: #64748B;">Solution:</div>
               <div style="color: #475569;">Applied <strong>geofencing filter</strong> — only coordinates within Indonesia's bounding box: Lat [-12°, 6°], Lng [90°, 145°].</div>
             </div>
-            
+
             <div style="background: #1E293B; color: #E2E8F0; padding: 10px 12px; border-radius: 6px; font-family: monospace; font-size: 11px;">
-              <span style="color: #94A3B8;">// Filter: valid Indonesian coordinates only</span><br/>
+              <span style="color: #94A3B8;">// Filter: valid Indonesian coordinates only</span><br />
               isValid = |lat| {'>'} 1 && |lat| {'<'} 12 && lng {'>'} 90 && lng {'<'} 145
             </div>
-            
+
             <div style="display: flex; gap: 12px;">
               <div style="min-width: 100px; font-weight: 600; color: #64748B;">Layman:</div>
               <div style="color: #475569; font-style: italic;">"We threw out GPS points that landed in the ocean or Africa — clearly phone GPS errors, not real visits."</div>
@@ -589,7 +590,7 @@ export default function Analytics() {
       {/* Visualization Interpretations */}
       <div class="card" style="margin-bottom: 16px;">
         <h4 style="margin: 0 0 16px 0; color: #334155;">📊 Visualization Guide — What Each View Shows</h4>
-        
+
         <div style="display: grid; gap: 16px;">
           {/* Branches */}
           <div style="padding: 14px; background: #F0FDF4; border-left: 4px solid #10B981; border-radius: 0 8px 8px 0;">
@@ -597,21 +598,21 @@ export default function Analytics() {
             <div style="font-size: 12px; color: #047857; margin-bottom: 8px;"><strong>Technical:</strong> Each branch plotted at its first valid GPS coordinate. Marker radius ∝ task count. Color = efficiency (based on avg delay: 🟢{'<'}2h, 🟡 2-5h, 🔴{'>'}5h).</div>
             <div style="font-size: 12px; color: #065F46;"><strong>Intuition:</strong> "Where are our branches? Bigger = busier. Red = agents arriving late ({'>'}5h delay on average)."</div>
           </div>
-          
+
           {/* Task Points */}
           <div style="padding: 14px; background: #EFF6FF; border-left: 4px solid #3B82F6; border-radius: 0 8px 8px 0;">
             <div style="font-weight: 700; color: #1E40AF; margin-bottom: 6px;">📍 Task Points View</div>
             <div style="font-size: 12px; color: #1D4ED8; margin-bottom: 8px;"><strong>Technical:</strong> Scatter plot of sampled GPS coordinates (15 per branch to avoid overplotting). Shows actual visit locations.</div>
             <div style="font-size: 12px; color: #1E40AF;"><strong>Intuition:</strong> "Each dot is a real customer visit. Clusters = dense areas. Scattered = agents traveling far."</div>
           </div>
-          
+
           {/* Routes */}
           <div style="padding: 14px; background: #FEF3C7; border-left: 4px solid #F59E0B; border-radius: 0 8px 8px 0;">
             <div style="font-weight: 700; color: #92400E; margin-bottom: 6px;">🛤️ Routes View</div>
             <div style="font-size: 12px; color: #B45309; margin-bottom: 8px;"><strong>Technical:</strong> Polylines connecting sequential task locations (chronological order). Blue dot = route start. Shows travel path topology.</div>
             <div style="font-size: 12px; color: #92400E;"><strong>Intuition:</strong> "How do agents move? Zig-zag lines = inefficient backtracking. Straight paths = optimized routes."</div>
           </div>
-          
+
           {/* Coverage */}
           <div style="padding: 14px; background: #F5F3FF; border-left: 4px solid #8B5CF6; border-radius: 0 8px 8px 0;">
             <div style="font-weight: 700; color: #5B21B6; margin-bottom: 6px;">⭕ Coverage View</div>
@@ -677,7 +678,7 @@ export default function Analytics() {
       <div class="so-what-box" style="margin-top: 16px;">
         <div class="so-what-title">💡 So What?</div>
         <div class="so-what-text">
-          <strong>{routes?.filter(r => r.efficiency === 'Poor').length} of {routes?.length} branches</strong> have "Poor" efficiency due to high geographic spread. 
+          <strong>{routes?.filter(r => r.efficiency === 'Poor').length} of {routes?.length} branches</strong> have "Poor" efficiency due to high geographic spread.
           Implementing <strong>geographic clustering</strong> (k-means on lat/lng) for task assignment could reduce travel time by 30% and enable 2+ more visits per day per agent. This is the <strong>Vehicle Routing Problem (VRP)</strong> — a classic operations research optimization with proven ROI in field service industries.
         </div>
       </div>
@@ -688,7 +689,7 @@ export default function Analytics() {
           <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #64748B;">Technical Summary</div>
           <div style="font-size: 18px; font-weight: 700; color: #334155;">How We Built This</div>
         </div>
-        
+
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px;">
           <div style="text-align: center; padding: 12px;">
             <div style="font-size: 24px; margin-bottom: 4px;">📊</div>
@@ -713,7 +714,7 @@ export default function Analytics() {
         </div>
 
         <div style="text-align: center; padding-top: 16px; border-top: 1px solid #E2E8F0; color: #64748B; font-size: 12px;">
-          <div style="font-weight: 600; margin-bottom: 4px;">Built for GDG Hackathon 2025</div>
+          <div style="font-weight: 600; margin-bottom: 4px;">UMKM Credit Intelligence Platform</div>
           <div>Feature Engineering • Behavioral Credit Scoring • Cohort Analysis • Geospatial Clustering</div>
         </div>
       </div>

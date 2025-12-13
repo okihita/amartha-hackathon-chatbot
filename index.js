@@ -57,10 +57,42 @@ const analyticsLimiter = rateLimit({
 
 // Middleware
 app.use(bodyParser.json());
-app.use(cors());
+
+// CORS configuration - allow Vercel frontend, localhost, and Cloud Run
+const corsOptions = {
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      // Local development
+      'http://localhost:5173',
+      'http://localhost:8080',
+      // Vercel deployments
+      /\.vercel\.app$/,
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+    ];
+
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const isAllowed = allowedOrigins.some(allowed =>
+      typeof allowed === 'string' ? allowed === origin : allowed.test(origin)
+    );
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      // Still allow for development, but log warning
+      console.warn(`CORS warning: origin ${origin} not in allowlist`);
+      callback(null, true);
+    }
+  },
+  credentials: true
+};
+app.use(cors(corsOptions));
 
 // Health check
-app.get('/health', (req, res) => res.status(200).send('🤖 Akademi-AI (Modular) is Online!'));
+app.get('/health', (req, res) => res.status(200).send('🤖 UMKM Assistant API is Online!'));
 
 // SSE endpoint for real-time updates
 app.get('/api/events/:phone', (req, res) => {

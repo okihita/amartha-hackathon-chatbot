@@ -12,3 +12,4 @@ server.pid
 # Hackathon dataset (large files)
 docs/dataset/
 *.csv
+.vercel

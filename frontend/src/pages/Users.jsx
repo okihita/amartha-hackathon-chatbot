@@ -5,6 +5,7 @@ import Toast from '../components/Toast';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useFeedback } from '../hooks/useFeedback';
 import { userApi, majelisApi, superadminApi } from '../services/api';
+import { API_BASE_URL } from '../config';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -16,9 +17,9 @@ export default function Users() {
 
   useEffect(() => {
     fetchData();
-    
+
     // SSE for real-time updates
-    const eventSource = new EventSource('/api/events/users');
+    const eventSource = new EventSource(`${API_BASE_URL}/api/events/users`);
     eventSource.onmessage = (e) => {
       const data = JSON.parse(e.data);
       if (data.type === 'user_created' && data.data) {
@@ -59,9 +60,9 @@ export default function Users() {
 
   const sortedUsers = [...users].sort((a, b) => {
     if (!sortConfig.key) return 0;
-    
+
     let aVal, bVal;
-    
+
     // Special handling for majelis_name - lookup from majelis array
     if (sortConfig.key === 'majelis_name') {
       const aMajelis = a.majelis_id ? majelis.find(m => m.id === a.majelis_id) : null;
@@ -72,7 +73,7 @@ export default function Users() {
       aVal = a[sortConfig.key] || '';
       bVal = b[sortConfig.key] || '';
     }
-    
+
     if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
     if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
     return 0;
@@ -97,7 +98,7 @@ export default function Users() {
       message: `Are you sure you want to delete ${name}?`
     });
     if (!confirmed) return;
-    
+
     setProcessing(phone);
     try {
       await userApi.delete(phone);
@@ -147,7 +148,7 @@ export default function Users() {
       <div style="margin-bottom: 24px; padding: 16px 20px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px;">
         <h1 style="margin: 0 0 8px 0; font-size: 20px; color: #1F2937;">User Management</h1>
         <p style="margin: 0; font-size: 14px; color: #64748B; line-height: 1.6;">
-          View and manage all registered borrowers. Verify pending registrations, assign users to majelis groups, 
+          View and manage all registered borrowers. Verify pending registrations, assign users to majelis groups,
           and access individual profiles for detailed credit assessment. Click on a user's name to view their complete profile.
         </p>
       </div>
@@ -182,16 +183,16 @@ export default function Users() {
               const mockCount = loading ? 0 : users.filter(u => u.is_mock).length;
               return (
                 <>
-                  <button 
-                    class="btn btn-primary" 
+                  <button
+                    class="btn btn-primary"
                     onClick={handlePopulateMockData}
                     disabled={loading || processing === 'mock' || mockCount > 0}
                     title={mockCount > 0 ? 'Mock users already exist' : ''}
                   >
                     <Dice5 size={16} /> Populate Mock
                   </button>
-                  <button 
-                    class="btn btn-danger" 
+                  <button
+                    class="btn btn-danger"
                     onClick={handleDeleteAllMock}
                     disabled={loading || processing === 'delete-all' || mockCount === 0}
                   >
@@ -295,7 +296,7 @@ export default function Users() {
           </tbody>
         </table>
       </div>
-      
+
       {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
       {confirmDialog && <ConfirmDialog {...confirmDialog} />}
     </>

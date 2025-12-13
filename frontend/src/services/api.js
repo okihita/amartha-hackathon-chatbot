@@ -1,6 +1,8 @@
 // API service layer - Single Responsibility Principle
+import { API_BASE_URL } from '../config';
+
 const apiCall = async (url, options = {}) => {
-  const response = await fetch(url, options);
+  const response = await fetch(`${API_BASE_URL}${url}`, options);
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(error.error || 'Request failed');
@@ -10,7 +12,7 @@ const apiCall = async (url, options = {}) => {
 
 // User API
 export const userApi = {
-  getAll: () => fetch('/api/users').then(r => r.json()),
+  getAll: () => fetch(`${API_BASE_URL}/api/users`).then(r => r.json()),
   verify: (phone, status) => apiCall('/api/users/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -21,7 +23,7 @@ export const userApi = {
 
 // Majelis API
 export const majelisApi = {
-  getAll: () => fetch('/api/majelis').then(r => r.json()),
+  getAll: () => fetch(`${API_BASE_URL}/api/majelis`).then(r => r.json()),
   create: (data) => apiCall('/api/majelis', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

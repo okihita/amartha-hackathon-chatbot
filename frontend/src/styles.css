@@ -77,13 +77,21 @@
 
 /* CSS Custom Properties - Consulting Theme */
 :root {
-    /* Primary Brand */
-    --amartha-eminence: #7B3F9E;
-    --amartha-eminence-dark: #5E2D7A;
-    --amartha-eminence-light: #9B5FBE;
-    --amartha-goldenrod: #F9CF79;
-    --amartha-goldenrod-dark: #E5B85A;
-    --amartha-tundora: #444444;
+    /* Primary Brand - OCBC Colors */
+    --brand-primary: #E1261B;
+    --brand-primary-dark: #B81D15;
+    --brand-primary-light: #FF4136;
+    --brand-accent: #FFD700;
+    --brand-accent-dark: #E5C100;
+    --brand-text: #2D2D2D;
+    
+    /* Legacy aliases for compatibility */
+    --amartha-eminence: #E1261B;
+    --amartha-eminence-dark: #B81D15;
+    --amartha-eminence-light: #FF4136;
+    --amartha-goldenrod: #FFD700;
+    --amartha-goldenrod-dark: #E5C100;
+    --amartha-tundora: #2D2D2D;
     
     /* Consulting Color Palette */
     --consulting-dark: #0F172A;

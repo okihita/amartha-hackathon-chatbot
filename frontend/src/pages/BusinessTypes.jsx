@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { Briefcase, RefreshCw, TrendingUp, Target, AlertTriangle, Zap, ChevronRight } from 'lucide-preact';
+import { API_BASE_URL } from '../config';
 
 const BUSINESS_ICONS = {
   'warung sembako': '🏪', 'kelontong': '🏪', 'warung makan': '🍽️',
@@ -36,7 +37,7 @@ export default function BusinessTypes() {
   const fetchBusinessTypes = async (forceRefresh = false) => {
     const CACHE_KEY = 'businessTypes';
     const CACHE_TTL = 24 * 60 * 60 * 1000;
-    
+
     try {
       if (!forceRefresh) {
         const cached = localStorage.getItem(CACHE_KEY);
@@ -50,11 +51,11 @@ export default function BusinessTypes() {
           }
         }
       }
-      
-      const res = await fetch('/api/knowledge/business-classifications');
+
+      const res = await fetch(`${API_BASE_URL}/api/knowledge/business-classifications`);
       const data = await res.json();
       const sorted = data.sort((a, b) => (a.category_number || 999) - (b.category_number || 999));
-      
+
       localStorage.setItem(CACHE_KEY, JSON.stringify({ data: sorted, timestamp: Date.now() }));
       setBusinessTypes(sorted);
       if (sorted.length > 0) setSelectedBusiness(sorted[0]);
